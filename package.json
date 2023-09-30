@@ -15,7 +15,8 @@
     "test:watch": "npx projen test:watch",
     "upgrade": "npx projen upgrade",
     "watch": "npx projen watch",
-    "projen": "npx projen"
+    "projen": "npx projen",
+    "postprojen": "cdktf get"
   },
   "author": {
     "name": "ApexCaptain",

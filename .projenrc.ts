@@ -2,7 +2,11 @@ import path from 'path';
 import { javascript, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
-import { DependencyAuxiliary, EnvironmentAuxiliary } from './manager/aux';
+import {
+  DependencyAuxiliary,
+  EnvironmentAuxiliary,
+  CdktfAuxiliary,
+} from './manager/aux';
 import { AppConfigSchema } from './src/config/app.config.schema';
 
 const constants = (() => {
@@ -17,11 +21,14 @@ const constants = (() => {
     main: 'main',
     develop: 'develop',
   };
+
+  const srcDir = 'src';
   const managerDir = 'manager';
   const dirs = {
-    dirs: ['src'],
+    dirs: [srcDir],
     devDirs: [managerDir],
     etc: {
+      cdktfCodeMarkerDir: path.join(srcDir, 'terraform'),
       envDir: 'env',
       projenAuxDataDir: path.join(managerDir, 'data'),
     },
@@ -40,7 +47,10 @@ const project = new typescript.TypeScriptAppProject({
     tsconfigPath: './tsconfig.dev.json',
     dirs: constants.dirs.dirs,
     devdirs: constants.dirs.devDirs,
-    ignorePatterns: ['/**/node_modules'],
+    ignorePatterns: [
+      '/**/node_modules/*',
+      `${constants.dirs.etc.cdktfCodeMarkerDir}/`,
+    ],
     prettier: true,
   },
   projenrcTs: true,
@@ -62,8 +72,14 @@ const project = new typescript.TypeScriptAppProject({
       noUnusedLocals: false,
       noUnusedParameters: false,
       paths: {
+        '@cdktf': ['src/cdktf'],
+        '@cdktf/*': ['src/cdktf/*'],
+        '@common': ['src/common'],
+        '@common/*': ['src/common/*'],
         '@config': ['src/config'],
         '@config/*': ['src/config/*'],
+        '@terraform': [constants.dirs.etc.cdktfCodeMarkerDir],
+        '@terraform/*': [`${constants.dirs.etc.cdktfCodeMarkerDir}/*`],
         // cdktf: ['node_modules/cdktf'],
         // constructs: ['node_modules/constructs'],
       },
@@ -116,6 +132,10 @@ const project = new typescript.TypeScriptAppProject({
 });
 
 void (async () => {
+  project.addScripts({
+    postprojen: 'cdktf get',
+  });
+
   // Add abs paths to git ignore
   project.gitignore.addPatterns(
     ...(
@@ -140,6 +160,25 @@ void (async () => {
     },
   });
   await envAux.process();
+
+  const cdktfAux = new CdktfAuxiliary(project, {
+    cdktfJsonConfig: {
+      app: 'yarn nest start',
+      language: 'typescript',
+      codeMakerOutput: constants.dirs.etc.cdktfCodeMarkerDir,
+      projectId: process.env.CDKTF_PROJECT_ID!!,
+      terraformProviders: [
+        {
+          // https://registry.terraform.io/providers/hashicorp/local/latest
+          name: 'local',
+          source: 'hashicorp/local',
+          version: '~> 2.4',
+        },
+      ],
+    },
+  });
+
+  await cdktfAux.process();
 
   project.synth();
 })();

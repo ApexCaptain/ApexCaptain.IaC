@@ -31,11 +31,29 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": false,
     "paths": {
+      "@cdktf": [
+        "src/cdktf"
+      ],
+      "@cdktf/*": [
+        "src/cdktf/*"
+      ],
+      "@common": [
+        "src/common"
+      ],
+      "@common/*": [
+        "src/common/*"
+      ],
       "@config": [
         "src/config"
       ],
       "@config/*": [
         "src/config/*"
+      ],
+      "@terraform": [
+        "src/terraform"
+      ],
+      "@terraform/*": [
+        "src/terraform/*"
       ]
     }
   },

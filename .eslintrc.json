@@ -37,7 +37,8 @@
     }
   },
   "ignorePatterns": [
-    "/**/node_modules",
+    "/**/node_modules/*",
+    "src/terraform/",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

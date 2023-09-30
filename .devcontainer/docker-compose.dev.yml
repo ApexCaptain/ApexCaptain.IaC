@@ -1,16 +1,19 @@
-version: "3.8"
+version: '3.8'
 
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
     image: mcr.microsoft.com/devcontainers/base:bullseye
     environment:
-      TZ: "Asia/Seoul"
+      TZ: 'Asia/Seoul'
       volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
       # Volume Paths
       devContainerTerraformOutputDirContainerPath: ${devContainerTerraformOutputDirContainerPath}
 
     command: sleep infinity
+
+    env_file:
+      - env/workspace.env
 
     volumes:
       # Workspace Cache

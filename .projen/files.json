@@ -15,6 +15,7 @@
     ".projen/deps.json",
     ".projen/files.json",
     ".projen/tasks.json",
+    "cdktf.json",
     "env/app.env",
     "LICENSE",
     "tsconfig.dev.json",
