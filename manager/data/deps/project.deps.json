@@ -1,0 +1,12 @@
+[
+  "@hapi/joi",
+  "@nestjs/common",
+  "@nestjs/config",
+  "@nestjs/core",
+  "cdktf",
+  "cdktf-cli",
+  "cdktf-injector",
+  "constructs",
+  "joi-extract-type",
+  "reflect-metadata"
+]

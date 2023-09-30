@@ -91,7 +91,7 @@
       "description": "Runs eslint against the codebase",
       "steps": [
         {
-          "exec": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools projenrc .projenrc.ts"
+          "exec": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src manager projenrc .projenrc.ts"
         }
       ]
     },
@@ -153,7 +153,7 @@
     },
     "upgrade": {
       "name": "upgrade",
-      "description": "upgrade dependencies",
+      "description": "Upgrade Node Deps",
       "env": {
         "CI": "0"
       },
@@ -162,13 +162,13 @@
           "exec": "yarn upgrade npm-check-updates"
         },
         {
-          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/jest,@types/node,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint,jest,jest-junit,npm-check-updates,projen,ts-jest,ts-node,typescript"
+          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/flat,@types/jest,@types/node,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,deepmerge,eslint-config-prettier,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,eslint,flatley,husky,jest,jest-junit,npm-check-updates,prettier,projen,ts-jest,ts-node,typescript,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,constructs,joi-extract-type,reflect-metadata"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit npm-check-updates projen ts-jest ts-node typescript"
+          "exec": "yarn upgrade @nestjs/cli @nestjs/schematics @nestjs/testing @types/flat @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser deepmerge eslint-config-prettier eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint flatley husky jest jest-junit npm-check-updates prettier projen ts-jest ts-node typescript @hapi/joi @nestjs/common @nestjs/config @nestjs/core cdktf cdktf-cli cdktf-injector constructs joi-extract-type reflect-metadata"
         },
         {
           "exec": "npx projen"

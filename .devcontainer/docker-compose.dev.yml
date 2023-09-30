@@ -6,8 +6,9 @@ services:
     image: mcr.microsoft.com/devcontainers/base:bullseye
     environment:
       TZ: "Asia/Seoul"
-      # Volume Paths
       volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
+      # Volume Paths
+      devContainerTerraformOutputDirContainerPath: ${devContainerTerraformOutputDirContainerPath}
 
     command: sleep infinity
 
