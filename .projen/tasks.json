@@ -61,7 +61,7 @@
       "description": "Only compile",
       "steps": [
         {
-          "exec": "tsc --build"
+          "exec": "nest build"
         }
       ]
     },

@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { javascript, typescript } from 'projen';
-import { GithubCredentials } from 'projen/lib/github';
+import { TaskStep, javascript, typescript } from 'projen';
+import { GithubCredentials, GithubWorkflow } from 'projen/lib/github';
+import { Job, JobStep } from 'projen/lib/github/workflows-model';
 import { ArrowParens } from 'projen/lib/javascript';
 import {
   DependencyAuxiliary,
@@ -141,13 +142,40 @@ const project = new typescript.TypeScriptAppProject({
   devDeps: ['flatley', '@types/flat', 'deepmerge', 'husky'],
 });
 
+const modifyWorkflows = async () => {
+  const buildWorkflow = project.buildWorkflow;
+  if (buildWorkflow) {
+    const nestedWorkflow: GithubWorkflow = buildWorkflow['workflow'.toString()];
+    const buildJob: Job = nestedWorkflow['jobs'.toString()].build;
+
+    const buildJobSteps: JobStep[] = buildJob['steps'.toString()]();
+    buildJobSteps.splice(
+      buildJobSteps.findIndex(eachStep => eachStep.name == 'build'),
+      0,
+      {
+        name: 'Init projen',
+        run: 'yarn projen',
+      },
+    );
+    (buildJob as any).steps = () => buildJobSteps;
+  }
+};
+
 void (async () => {
+  // Workflows
+  await modifyWorkflows();
+
   // Set package scripts
   project.addScripts({
     postprojen: 'cdktf get',
     'tf@build': 'cdktf synth',
     'tf@deploy':
       'cdktf deploy --outputs-file ./out/output.json --outputs-file-include-sensitive-outputs --parallelism 1',
+  });
+
+  // Tasks
+  (project.compileTask as any)._steps = new Array<TaskStep>({
+    exec: 'nest build',
   });
 
   // Create output dir for terraform if it doesn't exist
