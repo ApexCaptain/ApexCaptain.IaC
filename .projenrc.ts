@@ -153,6 +153,13 @@ const modifyWorkflows = async () => {
       buildJobSteps.findIndex(eachStep => eachStep.name == 'build'),
       0,
       {
+        name: 'Load secrets to environment',
+        uses: 'oNaiPs/secrets-to-env-action@v1',
+        with: {
+          secrets: '${{ toJSON(secrets) }}',
+        },
+      },
+      {
         name: 'Init projen',
         run: 'yarn projen',
       },
@@ -181,15 +188,6 @@ void (async () => {
   // Create output dir for terraform if it doesn't exist
   if (!fs.existsSync(constants.dirs.etc.cdktfOutDirAbsPath))
     fs.mkdirSync(constants.dirs.etc.cdktfOutDirAbsPath);
-
-  // Add abs paths to git ignore
-  project.gitignore.addPatterns(
-    ...(
-      [process.env.devContainerTerraformOutputDirContainerPath].filter(
-        eachAbsPath => eachAbsPath != undefined,
-      ) as Array<string>
-    ).map(eachAbsPath => `/${path.relative(project.outdir, eachAbsPath)}`),
-  );
 
   // Aux
   const depsAux = new DependencyAuxiliary(project, {

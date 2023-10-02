@@ -19,8 +19,7 @@ devcontainerId = $devcontainerId
 
 # Workspace
 ## Anonymous Volume Arguments
-devContainerTerraformOutputDirHostPath = /devContainer/${localWorkspaceFolderBasename}/tfOutputs
-devContainerTerraformOutputDirContainerPath = ${containerWorkspaceFolder}/generated
+devContainerTerraformOutputDirPath = /devContainer/${localWorkspaceFolderBasename}/tfOutputs
 
 # Named Volume Arguments
 nodeModulesVolumeContainerPath = ${containerWorkspaceFolder}/node_modules
