@@ -52,7 +52,6 @@ junit.xml
 /lib
 /dist/
 !/.eslintrc.json
-/generated
 /env/app.env
 cdktf.json
 cdktf.out
