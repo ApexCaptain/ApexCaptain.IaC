@@ -1,0 +1,34 @@
+{
+  // Basic
+  "name": "ApexCaptain.IaC Dev Container",
+  "dockerComposeFile": "docker-compose.dev.yml",
+  "service": "workspace",
+  "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
+  // Featuring
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-contrib/features/terraform-asdf:2": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  // Custom
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "PKief.material-icon-theme",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "wayou.vscode-todo-highlight",
+        "mhutchie.git-graph",
+        "github.vscode-github-actions"
+      ]
+    }
+  },
+
+  // LifeCycles
+  "initializeCommand": "bash ./.devcontainer/commands/initializeCommand.sh ${localWorkspaceFolder} ${containerWorkspaceFolder} ${localWorkspaceFolderBasename} ${containerWorkspaceFolderBasename} ${devcontainerId}",
+  "postCreateCommand": "bash ./.devcontainer/commands/postCreateCommand.sh"
+}
