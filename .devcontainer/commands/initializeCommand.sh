@@ -24,4 +24,5 @@ devContainerTerraformOutputDirContainerPath = ${containerWorkspaceFolder}/genera
 
 # Named Volume Arguments
 nodeModulesVolumeContainerPath = ${containerWorkspaceFolder}/node_modules
+
 EOL

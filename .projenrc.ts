@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { javascript, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
@@ -24,11 +25,15 @@ const constants = (() => {
 
   const srcDir = 'src';
   const managerDir = 'manager';
+  const cdktfOutDir = 'out';
+
   const dirs = {
     dirs: [srcDir],
     devDirs: [managerDir],
     etc: {
       cdktfCodeMarkerDir: path.join(srcDir, 'terraform'),
+      cdktfOutDir,
+      cdktfOutDirAbsPath: path.join(process.cwd(), cdktfOutDir),
       envDir: 'env',
       projenAuxDataDir: path.join(managerDir, 'data'),
     },
@@ -124,7 +129,12 @@ const project = new typescript.TypeScriptAppProject({
   authorName: constants.author.name,
   authorEmail: constants.author.email,
   name: constants.project.name,
-  gitignore: ['.DS_STORE', 'tmp', constants.dirs.etc.envDir],
+  gitignore: [
+    '.DS_STORE',
+    'tmp',
+    constants.dirs.etc.envDir,
+    constants.dirs.etc.cdktfOutDir,
+  ],
 
   // TMP
   deps: ['flat@5.0.2'],
@@ -132,9 +142,17 @@ const project = new typescript.TypeScriptAppProject({
 });
 
 void (async () => {
+  // Set package scripts
   project.addScripts({
     postprojen: 'cdktf get',
+    'tf@build': 'cdktf synth',
+    'tf@deploy':
+      'cdktf deploy --outputs-file ./out/output.json --outputs-file-include-sensitive-outputs --parallelism 1',
   });
+
+  // Create output dir for terraform if it doesn't exist
+  if (!fs.existsSync(constants.dirs.etc.cdktfOutDirAbsPath))
+    fs.mkdirSync(constants.dirs.etc.cdktfOutDirAbsPath);
 
   // Add abs paths to git ignore
   project.gitignore.addPatterns(
@@ -154,9 +172,26 @@ void (async () => {
 
   const envAux = new EnvironmentAuxiliary<typeof AppConfigSchema>(project, {
     envDirPath: constants.dirs.etc.envDir,
-    default: {},
     settings: {
-      app: {},
+      app: {
+        backendCredentials: {
+          cloudBackend: {
+            ApexCaptain: {
+              organization:
+                process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_ORGANIZATION,
+              token: process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_API_TOKEN,
+            },
+          },
+        },
+        providerCredentials: {
+          github: {
+            ApexCaptain: {
+              owner: process.env.APEX_CAPTAIN_GITHUB_OWNER,
+              token: process.env.APEX_CAPTAIN_GITHUB_TOKEN,
+            },
+          },
+        },
+      },
     },
   });
   await envAux.process();
@@ -168,11 +203,16 @@ void (async () => {
       codeMakerOutput: constants.dirs.etc.cdktfCodeMarkerDir,
       projectId: process.env.CDKTF_PROJECT_ID!!,
       terraformProviders: [
+        // Official
         {
           // https://registry.terraform.io/providers/hashicorp/local/latest
           name: 'local',
           source: 'hashicorp/local',
-          version: '~> 2.4',
+        },
+        // Partner
+        {
+          name: 'github',
+          source: 'integrations/github',
         },
       ],
     },

@@ -16,7 +16,9 @@
     "upgrade": "npx projen upgrade",
     "watch": "npx projen watch",
     "projen": "npx projen",
-    "postprojen": "cdktf get"
+    "postprojen": "cdktf get",
+    "tf@build": "cdktf synth",
+    "tf@deploy": "cdktf deploy --outputs-file ./out/output.json --outputs-file-include-sensitive-outputs --parallelism 1"
   },
   "author": {
     "name": "ApexCaptain",

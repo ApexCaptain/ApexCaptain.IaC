@@ -1,31 +1,50 @@
-import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { AppCdktfService } from '@cdktf/app.cdktf.service';
+import { CloudBackend, NamedCloudWorkspace } from 'cdktf';
+import { CdktfAppService } from '@cdktf/cdktf.app.service';
+import { CdktfCredentialService } from '@cdktf/cdktf.credential.service';
 import { AbstractStack } from '@common';
-import { File } from '@terraform/providers/local/file';
+import { GithubProvider } from '@terraform/providers/github/provider';
+import { Repository } from '@terraform/providers/github/repository';
 import { LocalProvider } from '@terraform/providers/local/provider';
 
 @Injectable()
-export class ProjenAuxStack extends AbstractStack {
+export class GitHubApexCaptainProjenAuxStack extends AbstractStack {
+  protected backendConfig = this.backend(CloudBackend, () => ({
+    ...this.cdktfCredentialService.backendConfig.cloudBackend.ApexCaptain,
+    workspaces: new NamedCloudWorkspace(this.id),
+  }));
+
   protected providers = {
-    local: this.provide(LocalProvider, 'local-provider', () => ({})),
+    local: this.provide(
+      LocalProvider,
+      'local-provider',
+      () => this.cdktfCredentialService.providersConfig.local.default,
+    ),
+    github: this.provide(
+      GithubProvider,
+      'github-provider',
+      () => this.cdktfCredentialService.providersConfig.github.ApexCaptain,
+    ),
   };
-
-  protected backends = {};
-
   data = {};
 
   resources = {
-    tmpFile: this.provide(File, 'tmp-file', () => ({
-      content: 'sample',
-      filename: path.join(process.cwd(), 'tmp', 'tmp.txt'),
+    repository: this.provide(Repository, 'repo', () => ({
+      name: 'projen-aux',
+      description: 'Packages hub for projen auxiliaries',
+      visibility: 'public',
+      autoInit: true,
+      lifecycle: {
+        preventDestroy: true,
+      },
     })),
   };
 
   constructor(
-    // Global
-    readonly appCdktfService: AppCdktfService,
+    // Cdktf Root
+    readonly cdktfAppService: CdktfAppService,
+    private readonly cdktfCredentialService: CdktfCredentialService,
   ) {
-    super(appCdktfService.cdktfApp, __filename);
+    super(cdktfAppService.cdktfApp, GitHubApexCaptainProjenAuxStack.name);
   }
 }

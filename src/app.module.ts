@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AppCdktfModule } from './cdktf/app.cdktf.module';
+import { AppCdktfModule } from './cdktf/cdktf.module';
 import { AppConfigModule } from '@config/app.config.module';
 
 @Module({

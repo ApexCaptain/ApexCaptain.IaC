@@ -19,12 +19,10 @@ export abstract class AbstractStack extends TerraformInjectorStackAsync {
     >;
   };
 
-  protected abstract backends: {
-    [key: string]: TerraformInjectorElementContainerAsync<
-      TerraformBackend,
-      any
-    >;
-  };
+  protected abstract backendConfig: TerraformInjectorElementContainerAsync<
+    TerraformBackend,
+    any
+  >;
 
   abstract data: {
     [key: string]: TerraformInjectorElementContainerAsync<
@@ -40,13 +38,11 @@ export abstract class AbstractStack extends TerraformInjectorStackAsync {
     >;
   };
 
-  constructor(app: App, stackPath: string) {
-    const relativeStackPaths = path
-      .relative(process.cwd(), stackPath)
-      .split('/');
-    const id = relativeStackPaths
-      .slice(relativeStackPaths.indexOf('stacks') + 1)
-      .join('.');
-    super(app, id);
+  constructor(
+    app: App,
+    protected id: string,
+    protected description?: string,
+  ) {
+    super(app, id, description);
   }
 }

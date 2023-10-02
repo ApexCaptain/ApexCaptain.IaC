@@ -13,7 +13,9 @@ services:
     command: sleep infinity
 
     env_file:
+      - env/tf-cloud.env
       - env/workspace.env
+      - env/github.env
 
     volumes:
       # Workspace Cache

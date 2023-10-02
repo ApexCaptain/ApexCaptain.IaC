@@ -33,6 +33,7 @@ jspm_packages/
 .DS_STORE
 tmp
 env
+out
 !/.projenrc.js
 /test-reports/
 junit.xml
