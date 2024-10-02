@@ -1,10 +1,6 @@
 {
   "dependencies": [
     {
-      "name": "@types/jest",
-      "type": "build"
-    },
-    {
       "name": "@types/node",
       "type": "build"
     },
@@ -24,6 +20,10 @@
       "type": "build"
     },
     {
+      "name": "eslint-config-prettier",
+      "type": "build"
+    },
+    {
       "name": "eslint-import-resolver-typescript",
       "type": "build"
     },
@@ -32,25 +32,20 @@
       "type": "build"
     },
     {
+      "name": "eslint-plugin-prettier",
+      "type": "build"
+    },
+    {
       "name": "eslint",
       "version": "^8",
       "type": "build"
     },
     {
-      "name": "jest",
-      "type": "build"
-    },
-    {
-      "name": "jest-junit",
-      "version": "^15",
+      "name": "prettier",
       "type": "build"
     },
     {
       "name": "projen",
-      "type": "build"
-    },
-    {
-      "name": "ts-jest",
       "type": "build"
     },
     {
