@@ -1,0 +1,24 @@
+
+services:
+  workspace:
+    container_name: apex_captain_iac_devcon_workspace
+    # https://mcr.microsoft.com/en-us/product/devcontainers/base/about
+    image: mcr.microsoft.com/devcontainers/base:noble
+    environment:
+      TZ: 'Asia/Seoul'
+      IS_DEV_CONTAINER: true
+      volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
+    
+    command: sleep infinity
+
+    # env_file @ToDo 나중에 다시 확인
+
+    volumes:
+      # Workspace Cache
+      - ..:${containerWorkspaceFolder}:cached
+      # Named Volume
+      ## Node Modules
+      - ApexCaptain.IaC-node_modules:${nodeModulesVolumeContainerPath}
+      
+volumes:
+  ApexCaptain.IaC-node_modules:
