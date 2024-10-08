@@ -13,6 +13,11 @@
       "type": "build"
     },
     {
+      "name": "@types/flat",
+      "version": "5.0.2",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "type": "build"
     },
@@ -69,6 +74,10 @@
       "type": "build"
     },
     {
+      "name": "@hapi/joi",
+      "type": "runtime"
+    },
+    {
       "name": "@nestjs/common",
       "type": "runtime"
     },
@@ -94,6 +103,15 @@
     },
     {
       "name": "constructs",
+      "type": "runtime"
+    },
+    {
+      "name": "flat",
+      "version": "5.0.2",
+      "type": "runtime"
+    },
+    {
+      "name": "joi-extract-type",
       "type": "runtime"
     },
     {

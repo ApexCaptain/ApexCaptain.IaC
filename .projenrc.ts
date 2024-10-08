@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import path from 'path';
 import { javascript, JsonFile, TaskStep, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
@@ -139,8 +138,16 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/common',
     '@nestjs/config',
     '@nestjs/core',
+    '@hapi/joi',
+    'joi-extract-type',
+    'flat@5.0.2',
   ],
-  devDeps: ['@nestjs/cli', '@nestjs/schematics', '@nestjs/testing'],
+  devDeps: [
+    '@nestjs/cli',
+    '@nestjs/schematics',
+    '@nestjs/testing',
+    '@types/flat@5.0.2',
+  ],
 });
 
 void (async () => {
@@ -152,6 +159,9 @@ void (async () => {
   // Set Package Scripts
   project.addScripts({
     postprojen: 'cdktf get',
+    'tf@build': 'cdktf synth',
+    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.etc.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 4`,
+    'tf@plan': 'cdktf diff',
   });
 
   // TMP
