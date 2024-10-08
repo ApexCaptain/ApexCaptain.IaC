@@ -1,5 +1,6 @@
+import crypto from 'crypto';
 import path from 'path';
-import { javascript, typescript } from 'projen';
+import { javascript, JsonFile, TaskStep, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 
@@ -41,7 +42,7 @@ const constants = (() => {
     project,
     author,
     branches,
-    dirs: paths,
+    paths,
     projenCredentials,
   };
 })();
@@ -50,10 +51,10 @@ const project = new typescript.TypeScriptAppProject({
   // TypeScript Project Options
   eslintOptions: {
     tsconfigPath: './tsconfig.dev.json',
-    dirs: constants.dirs.dirs,
+    dirs: constants.paths.dirs,
     ignorePatterns: [
       '/**/node_modules/*',
-      `${constants.dirs.etc.generatedSrcDir}/`,
+      `${constants.paths.etc.generatedSrcDir}/`,
     ],
     prettier: true,
   },
@@ -68,7 +69,6 @@ const project = new typescript.TypeScriptAppProject({
       target: 'es2017',
       outDir: './dist',
       baseUrl: './',
-      rootDir: './',
       skipLibCheck: true,
       strictNullChecks: true,
       noImplicitAny: false,
@@ -78,7 +78,6 @@ const project = new typescript.TypeScriptAppProject({
       noUnusedParameters: false,
       paths: {
         '@/*': ['src/*'],
-        '@lib/*': ['lib/*'],
       },
     },
     exclude: ['node_modules'],
@@ -126,15 +125,59 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
-    `/${constants.dirs.etc.cdktfOutFilePath}`,
-    constants.dirs.etc.generatedSrcDir,
-    `/${constants.dirs.etc.envDir}`,
+    `/${constants.paths.etc.cdktfOutFilePath}`,
+    constants.paths.etc.generatedSrcDir,
+    `/${constants.paths.etc.envDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
-  // deps: ['flat@5.0.2', '@hapi/joi', 'joi-extract-type'],
-  // devDeps: ['flatley', '@types/flat', 'deepmerge', 'husky@8'],
+  deps: [
+    'cdktf',
+    'cdktf-cli',
+    'cdktf-injector',
+    'constructs',
+    'reflect-metadata',
+    '@nestjs/common',
+    '@nestjs/config',
+    '@nestjs/core',
+  ],
+  devDeps: ['@nestjs/cli', '@nestjs/schematics', '@nestjs/testing'],
 });
 
 void (async () => {
+  // Tasks
+  (project.compileTask as any)._steps = new Array<TaskStep>({
+    exec: 'nest build',
+  });
+
+  // Set Package Scripts
+  project.addScripts({
+    postprojen: 'cdktf get',
+  });
+
+  // TMP
+  new JsonFile(project, 'cdktf.json', {
+    obj: {
+      output: constants.paths.etc.cdktfOutFilePath,
+      codeMakerOutput: path.join(
+        constants.paths.etc.generatedSrcDir,
+        'terraform',
+      ),
+      sendCrashReports: false,
+      app: 'yarn nest start',
+      language: 'typescript',
+      projectId: '90c97a39-d903-4bee-8832-b9f851b70889',
+      terraformProviders: [
+        {
+          name: 'local',
+          source: 'hashicorp/local',
+        },
+        {
+          name: 'github',
+          source: 'integrations/github',
+        },
+      ],
+    },
+  });
+
   project.synth();
 })();

@@ -28,15 +28,11 @@
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "rootDir": "./",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": false,
     "paths": {
       "@/*": [
         "src/*"
-      ],
-      "@lib/*": [
-        "lib/*"
       ]
     }
   },
