@@ -21,16 +21,23 @@ const constants = (() => {
   };
 
   const srcDir = 'src';
+  const libDir = 'lib';
+  const envDir = 'env';
+  const cdktfOutDir = 'cdktf.out';
+
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
 
   const paths = {
-    dirs: [srcDir],
-    etc: {
+    dirs: {
+      srcDir,
+      libDir,
+      envDir,
+      cdktfOutDir,
+    },
+    files: {
       cdktfConfigFilePath,
       cdktfOutFilePath,
-      generatedSrcDir: path.join(srcDir, 'generated'),
-      envDir: 'env',
     },
   };
 
@@ -54,11 +61,8 @@ const project = new typescript.TypeScriptAppProject({
   // TypeScript Project Options
   eslintOptions: {
     tsconfigPath: './tsconfig.dev.json',
-    dirs: constants.paths.dirs,
-    ignorePatterns: [
-      '/**/node_modules/*',
-      `${constants.paths.etc.generatedSrcDir}/`,
-    ],
+    dirs: [constants.paths.dirs.srcDir],
+    ignorePatterns: ['/**/node_modules/*', `${constants.paths.dirs.libDir}/`],
     prettier: true,
   },
   projenrcTs: true,
@@ -71,6 +75,7 @@ const project = new typescript.TypeScriptAppProject({
       allowSyntheticDefaultImports: true,
       target: 'es2017',
       outDir: './dist',
+      rootDir: './',
       baseUrl: './',
       skipLibCheck: true,
       strictNullChecks: true,
@@ -81,6 +86,7 @@ const project = new typescript.TypeScriptAppProject({
       noUnusedParameters: false,
       paths: {
         '@/*': ['src/*'],
+        '@lib/*': ['lib/*'],
       },
     },
     exclude: ['node_modules'],
@@ -128,11 +134,10 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
-    `/${constants.paths.etc.cdktfConfigFilePath}`,
-    `/${constants.paths.etc.cdktfOutFilePath}`,
-    constants.paths.etc.generatedSrcDir,
-
-    `/${constants.paths.etc.envDir}`,
+    `/${constants.paths.files.cdktfConfigFilePath}`,
+    `/${constants.paths.files.cdktfOutFilePath}`,
+    `/${constants.paths.dirs.envDir}`,
+    `/${constants.paths.dirs.cdktfOutDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
   deps: [
@@ -167,19 +172,16 @@ void (async () => {
   project.addScripts({
     postprojen: 'cdktf get',
     'tf@build': 'cdktf synth',
-    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.etc.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 4`,
+    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 4`,
     'tf@plan': 'cdktf diff',
   });
 
   // TMP
   // CDKTF
-  new JsonFile(project, constants.paths.etc.cdktfConfigFilePath, {
+  new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {
-      output: constants.paths.etc.cdktfOutFilePath,
-      codeMakerOutput: path.join(
-        constants.paths.etc.generatedSrcDir,
-        'terraform',
-      ),
+      output: constants.paths.dirs.cdktfOutDir,
+      codeMakerOutput: path.join(constants.paths.dirs.libDir, 'terraform'),
       sendCrashReports: false,
       app: 'yarn nest start',
       language: 'typescript',
@@ -201,13 +203,25 @@ void (async () => {
   // ENV
   const environment: GlobalConfigType = {
     terraform: {
-      credential: {
+      config: {
         backends: {
           cloudBackend: {
             ApexCaptain: {
               organization:
                 process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_ORGANIZATION!!,
               token: process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_API_TOKEN!!,
+              projects: {
+                iacProject:
+                  process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_IAC_PROJECT!!,
+              },
+            },
+          },
+        },
+        providers: {
+          github: {
+            ApexCaptain: {
+              owner: process.env.APEX_CAPTAIN_GITHUB_OWNER!!,
+              token: process.env.APEX_CAPTAIN_GITHUB_PAT!!,
             },
           },
         },

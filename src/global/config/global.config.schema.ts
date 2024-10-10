@@ -4,7 +4,7 @@ import { TerraformConfigService } from '../../terraform/terraform.config.service
 
 export const GlobalConfigSchema = Joi.object({
   terraform: Joi.object({
-    credential: TerraformConfigService.SCHEMA,
+    config: TerraformConfigService.SCHEMA,
   }).required(),
 }).required();
 export const GlobalConfigName = 'globalConfig';

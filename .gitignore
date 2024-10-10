@@ -31,8 +31,8 @@ jspm_packages/
 .cache
 .DS_STORE
 /cdktf.out.json
-src/generated
 /env
+/cdktf.out
 !/.github/pull_request_template.md
 !/.prettierignore
 !/.prettierrc.json

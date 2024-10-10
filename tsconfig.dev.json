@@ -27,12 +27,16 @@
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
+    "rootDir": "./",
     "baseUrl": "./",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": false,
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "@lib/*": [
+        "lib/*"
       ]
     }
   },

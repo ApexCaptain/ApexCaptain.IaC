@@ -4,7 +4,7 @@ import { TerraformInjectorFactory } from 'cdktf-injector';
 
 @Injectable()
 export class TerraformAppService {
-  cdktfApp = new App();
+  readonly cdktfApp = new App();
   async synth() {
     await TerraformInjectorFactory.scopesOnAsync(this.cdktfApp).inject();
     this.cdktfApp.synth();

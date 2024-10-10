@@ -36,7 +36,7 @@
   },
   "ignorePatterns": [
     "/**/node_modules/*",
-    "src/generated/",
+    "lib/",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],
