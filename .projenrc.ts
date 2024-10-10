@@ -1,7 +1,9 @@
 import path from 'path';
-import { javascript, JsonFile, TaskStep, typescript } from 'projen';
+import { flatten } from 'flat';
+import { IniFile, javascript, JsonFile, TaskStep, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
+import { GlobalConfigType } from './src/global/config/global.config.schema';
 
 const constants = (() => {
   const project = {
@@ -19,11 +21,13 @@ const constants = (() => {
   };
 
   const srcDir = 'src';
+  const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
 
   const paths = {
     dirs: [srcDir],
     etc: {
+      cdktfConfigFilePath,
       cdktfOutFilePath,
       generatedSrcDir: path.join(srcDir, 'generated'),
       envDir: 'env',
@@ -124,8 +128,10 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
+    `/${constants.paths.etc.cdktfConfigFilePath}`,
     `/${constants.paths.etc.cdktfOutFilePath}`,
     constants.paths.etc.generatedSrcDir,
+
     `/${constants.paths.etc.envDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
@@ -147,6 +153,7 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
+    'constructs@^10.3.0',
   ],
 });
 
@@ -165,7 +172,8 @@ void (async () => {
   });
 
   // TMP
-  new JsonFile(project, 'cdktf.json', {
+  // CDKTF
+  new JsonFile(project, constants.paths.etc.cdktfConfigFilePath, {
     obj: {
       output: constants.paths.etc.cdktfOutFilePath,
       codeMakerOutput: path.join(
@@ -175,7 +183,7 @@ void (async () => {
       sendCrashReports: false,
       app: 'yarn nest start',
       language: 'typescript',
-      projectId: '90c97a39-d903-4bee-8832-b9f851b70889',
+      projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         {
           name: 'local',
@@ -187,6 +195,30 @@ void (async () => {
         },
       ],
     },
+    committed: false,
+  });
+
+  // ENV
+  const environment: GlobalConfigType = {
+    terraform: {
+      credential: {
+        backends: {
+          cloudBackend: {
+            ApexCaptain: {
+              organization:
+                process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_ORGANIZATION!!,
+              token: process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_API_TOKEN!!,
+            },
+          },
+        },
+      },
+    },
+  };
+  new IniFile(project, 'env/prod.env', {
+    obj: flatten(environment, {
+      delimiter: '_',
+    }),
+    committed: false,
   });
 
   project.synth();

@@ -1,4 +1,3 @@
-
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
@@ -8,10 +7,13 @@ services:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
       volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
-    
+
     command: sleep infinity
 
-    # env_file @ToDo 나중에 다시 확인
+    env_file:
+      - env/github.env
+      - env/tf-cloud.env
+      - env/workspace.env
 
     volumes:
       # Workspace Cache
@@ -19,6 +21,6 @@ services:
       # Named Volume
       ## Node Modules
       - ApexCaptain.IaC-node_modules:${nodeModulesVolumeContainerPath}
-      
+
 volumes:
   ApexCaptain.IaC-node_modules:

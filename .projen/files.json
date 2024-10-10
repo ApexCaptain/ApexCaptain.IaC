@@ -11,6 +11,7 @@
     ".projen/files.json",
     ".projen/tasks.json",
     "cdktf.json",
+    "env/prod.env",
     "LICENSE",
     "tsconfig.dev.json",
     "tsconfig.json"

@@ -43,5 +43,6 @@ src/generated
 /lib
 /dist/
 !/.eslintrc.json
-!/cdktf.json
+/cdktf.json
+/env/prod.env
 !/.projenrc.ts
