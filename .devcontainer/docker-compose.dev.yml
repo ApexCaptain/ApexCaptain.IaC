@@ -3,24 +3,56 @@ services:
     container_name: apex_captain_iac_devcon_workspace
     # https://mcr.microsoft.com/en-us/product/devcontainers/base/about
     image: mcr.microsoft.com/devcontainers/base:noble
+    # depends_on:
+    #   - vault
+
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
       volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
-
-    command: sleep infinity
 
     env_file:
       - env/github.env
       - env/tf-cloud.env
       - env/workspace.env
 
+    command: sleep infinity
+
     volumes:
       # Workspace Cache
       - ..:${containerWorkspaceFolder}:cached
       # Named Volume
       ## Node Modules
-      - ApexCaptain.IaC-node_modules:${nodeModulesVolumeContainerPath}
+      - ApexCaptain.IaC.Workspace.node_modules:${nodeModulesVolumeContainerPath}
+
+  # Infrastructure
+  vault:
+    container_name: apex_captain_iac_devcon_vault
+    image: hashicorp/vault
+    environment:
+      SKIP_CHOWN: true
+      VAULT_ADDR: http://localhost:8200
+      VAULT_API_ADDR: http://localhost:8200
+      
+    command: sh -c "/startup.sh"
+
+    ports:
+      - 8200:8200
+
+    volumes:
+      # Anonymous Volumes
+      ## Startup Script
+      - ./data/vault/startup.sh:/startup.sh
+      ## Vault Config
+      - ./data/vault/config:/vault/config
+      ## Vault Logs
+      - ./data/vault/logs:/vault/logs
+
+      # Named Volumes
+      - ApexCaptain.IaC.Vault.file:/vault/file
+    cap_add:
+      - IPC_LOCK
 
 volumes:
-  ApexCaptain.IaC-node_modules:
+  ApexCaptain.IaC.Workspace.node_modules:
+  ApexCaptain.IaC.Vault.file:

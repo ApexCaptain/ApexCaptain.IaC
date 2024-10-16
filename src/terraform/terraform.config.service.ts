@@ -7,6 +7,7 @@ import {
 } from 'cdktf';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
+import { VaultProviderConfig } from '@lib/terraform/providers/vault/provider';
 
 @Injectable()
 export class TerraformConfigService {
@@ -26,6 +27,12 @@ export class TerraformConfigService {
       github: Joi.object({
         ApexCaptain: Joi.object({
           owner: Joi.string().required(),
+          token: Joi.string().required(),
+        }).required(),
+      }).required(),
+      valut: Joi.object({
+        devContIac: Joi.object({
+          adress: Joi.string().required(),
           token: Joi.string().required(),
         }).required(),
       }).required(),
@@ -96,11 +103,28 @@ export class TerraformConfigService {
         };
       },
     };
+
+    const vault = {
+      'ApexCaptain.IaC-DevContainer': (
+        config?: VaultProviderConfig,
+      ): VaultProviderConfig => {
+        return {
+          address: 'vault',
+          ...config,
+        };
+      },
+    };
+
     return {
       /**
        * @See https://github.com/
        */
       github,
+
+      /**
+       * @See https://www.vaultproject.io/
+       */
+      vault,
     };
   })();
 

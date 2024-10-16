@@ -192,6 +192,10 @@ void (async () => {
           source: 'hashicorp/local',
         },
         {
+          name: 'vault',
+          source: 'hashicorp/vault',
+        },
+        {
           name: 'github',
           source: 'integrations/github',
         },

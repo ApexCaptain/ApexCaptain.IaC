@@ -22,19 +22,6 @@ export abstract class AbstractStack extends TerraformInjectorStackAsync {
     };
   };
 
-  abstract data: {
-    [key: string]: TerraformInjectorElementContainerAsync<
-      TerraformDataSource,
-      any
-    >;
-  };
-  abstract resources: {
-    [key: string]: TerraformInjectorElementContainerAsync<
-      TerraformResource,
-      any
-    >;
-  };
-
   constructor(
     cdktfApp: App,
     protected readonly id: string,
