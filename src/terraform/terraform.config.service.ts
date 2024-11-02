@@ -1,40 +1,17 @@
-import Joi from '@hapi/joi';
 import { Injectable } from '@nestjs/common';
 import {
   CloudBackendConfig,
+  Fn,
   NamedCloudWorkspace,
   TaggedCloudWorkspaces,
 } from 'cdktf';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
+import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
 
 @Injectable()
 export class TerraformConfigService {
-  static readonly SCHEMA = Joi.object({
-    backends: Joi.object({
-      cloudBackend: Joi.object({
-        ApexCaptain: Joi.object({
-          organization: Joi.string().required(),
-          token: Joi.string().required(),
-          projects: Joi.object({
-            iacProject: Joi.string().required(),
-          }).required(),
-        }).required(),
-      }).required(),
-    }).required(),
-    providers: Joi.object({
-      github: Joi.object({
-        ApexCaptain: Joi.object({
-          owner: Joi.string().required(),
-          token: Joi.string().required(),
-        }).required(),
-      }).required(),
-    }).required(),
-  }).required();
-
-  private readonly config: Joi.extractType<
-    typeof TerraformConfigService.SCHEMA
-  > = this.globalConfigService.config.terraform.config;
+  private readonly config = this.globalConfigService.config.terraform.config;
 
   readonly backends = (() => {
     const cloudBackend = {
@@ -97,11 +74,41 @@ export class TerraformConfigService {
       },
     };
 
+    const kubernetes = {
+      ApexCaptain: {
+        workstation: (
+          config?: Partial<
+            Omit<
+              KubernetesProviderConfig,
+              'host' | 'clientCertificate' | 'clientKey' | 'insecure'
+            >
+          >,
+        ): KubernetesProviderConfig => {
+          return {
+            host: this.config.providers.kubernetes.ApexCaptain.workstation.host,
+
+            clientCertificate: Fn.base64decode(
+              this.config.providers.kubernetes.ApexCaptain.workstation
+                .clientCertificateData,
+            ),
+            clientKey: Fn.base64decode(
+              this.config.providers.kubernetes.ApexCaptain.workstation
+                .clientKeyData,
+            ),
+            insecure: true,
+            ...config,
+          };
+        },
+      },
+    };
+
     return {
       /**
        * @See https://github.com/
        */
       github,
+
+      kubernetes,
     };
   })();
 

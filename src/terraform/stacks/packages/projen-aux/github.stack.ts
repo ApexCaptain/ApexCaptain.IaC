@@ -20,7 +20,7 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
     providers: {
       github: this.provide(GithubProvider, 'githubProvider', () =>
         this.terraformConfigService.providers.github.ApexCaptain(),
-      )
+      ),
     },
   };
 
@@ -39,7 +39,6 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
     sourceBranch: 'main',
     branch: 'develop',
   }));
-
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

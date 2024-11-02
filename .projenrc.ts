@@ -195,6 +195,10 @@ void (async () => {
           name: 'github',
           source: 'integrations/github',
         },
+        {
+          name: 'kubernetes',
+          source: 'hashicorp/kubernetes',
+        },
       ],
     },
     committed: false,
@@ -222,6 +226,18 @@ void (async () => {
             ApexCaptain: {
               owner: process.env.APEX_CAPTAIN_GITHUB_OWNER!!,
               token: process.env.APEX_CAPTAIN_GITHUB_PAT!!,
+            },
+          },
+          kubernetes: {
+            ApexCaptain: {
+              workstation: {
+                host: `https://${process.env.APEX_CAPTAIN_WORKSTATION_DOMAIN}:${process.env.APEX_CAPTAIN_WORKSTATION_K8S_PORT}`,
+                clientCertificateData:
+                  process.env
+                    .APEX_CAPTAIN_WORKSTATION_K8S_CLIENT_CERTIFICATE_DATA!!,
+                clientKeyData:
+                  process.env.APEX_CAPTAIN_WORKSTATION_K8S_CLIENT_KEY_DATA!!,
+              },
             },
           },
         },

@@ -1,7 +1,6 @@
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
-    # https://mcr.microsoft.com/en-us/product/devcontainers/base/about
     image: mcr.microsoft.com/devcontainers/base:noble
 
     environment:
@@ -11,6 +10,7 @@ services:
 
     env_file:
       - env/github.env
+      - env/k8s.env
       - env/tf-cloud.env
       - env/workspace.env
 
