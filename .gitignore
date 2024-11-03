@@ -30,6 +30,7 @@ jspm_packages/
 .yarn-integrity
 .cache
 .DS_STORE
+.kube
 /cdktf.out.json
 /env
 /cdktf.out

@@ -134,6 +134,7 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
+    '.kube',
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
     `/${constants.paths.dirs.envDir}`,
@@ -231,12 +232,8 @@ void (async () => {
           kubernetes: {
             ApexCaptain: {
               workstation: {
-                host: `https://${process.env.APEX_CAPTAIN_WORKSTATION_DOMAIN}:${process.env.APEX_CAPTAIN_WORKSTATION_K8S_PORT}`,
-                clientCertificateData:
-                  process.env
-                    .APEX_CAPTAIN_WORKSTATION_K8S_CLIENT_CERTIFICATE_DATA!!,
-                clientKeyData:
-                  process.env.APEX_CAPTAIN_WORKSTATION_K8S_CLIENT_KEY_DATA!!,
+                configPath:
+                  process.env.containerWorkstationKubeconfigFilePath!!,
               },
             },
           },

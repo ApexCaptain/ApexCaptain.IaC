@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   CloudBackendConfig,
-  Fn,
   NamedCloudWorkspace,
   TaggedCloudWorkspaces,
 } from 'cdktf';
@@ -78,23 +77,13 @@ export class TerraformConfigService {
       ApexCaptain: {
         workstation: (
           config?: Partial<
-            Omit<
-              KubernetesProviderConfig,
-              'host' | 'clientCertificate' | 'clientKey' | 'insecure'
-            >
+            Omit<KubernetesProviderConfig, 'configPath' | 'insecure'>
           >,
         ): KubernetesProviderConfig => {
           return {
-            host: this.config.providers.kubernetes.ApexCaptain.workstation.host,
-
-            clientCertificate: Fn.base64decode(
+            configPath:
               this.config.providers.kubernetes.ApexCaptain.workstation
-                .clientCertificateData,
-            ),
-            clientKey: Fn.base64decode(
-              this.config.providers.kubernetes.ApexCaptain.workstation
-                .clientKeyData,
-            ),
+                .configPath,
             insecure: true,
             ...config,
           };

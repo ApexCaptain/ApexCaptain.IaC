@@ -23,9 +23,7 @@ export const TerraformConfigSchema = Joi.object({
     kubernetes: Joi.object({
       ApexCaptain: Joi.object({
         workstation: Joi.object({
-          host: Joi.string().uri().required(),
-          clientCertificateData: Joi.string().required(),
-          clientKeyData: Joi.string().required(),
+          configPath: Joi.string().required(),
         }).required(),
       }).required(),
     }).required(),

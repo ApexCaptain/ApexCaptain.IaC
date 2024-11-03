@@ -9,19 +9,21 @@ services:
       volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
 
     env_file:
-      - env/github.env
-      - env/k8s.env
-      - env/tf-cloud.env
-      - env/workspace.env
+      - .env
 
     command: sleep infinity
 
     volumes:
       # Workspace Cache
       - ..:${containerWorkspaceFolder}:cached
+      # Mount Local(Workstation) kubeconfig
+      - $HOME/.kube/config:${containerWorkstationKubeconfigFilePath}:ro
       # Named Volume
       ## Node Modules
       - ApexCaptain.IaC.Workspace.node_modules:${nodeModulesVolumeContainerPath}
+
+    extra_hosts:
+      - 'kubernetes.docker.internal:host-gateway'
 
 volumes:
   ApexCaptain.IaC.Workspace.node_modules:
