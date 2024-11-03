@@ -8,21 +8,15 @@ echo Install gocryptfs
 sudo apt-get install -y gocryptfs
 
 echo Mount secrets
-
-
 SECRET_VAULT_DIR_PATH=.devcontainer/secrets
 SECRET_SOURCE_DIR_PATH=$HOME/secrets
-
-
 fusermount -u $SECRET_SOURCE_DIR_PATH
-
 rm -rf $SECRET_SOURCE_DIR_PATH
 mkdir $SECRET_SOURCE_DIR_PATH
-
 gocryptfs -allow_other $SECRET_VAULT_DIR_PATH $SECRET_SOURCE_DIR_PATH
 
 MERGED_ENV_FILE_PATH=.devcontainer/.env
-SOURCE_ENV_DIR_PATH=.devcontainer/env
+SOURCE_ENV_DIR_PATH=$SECRET_SOURCE_DIR_PATH/env
 
 rm -f "$MERGED_ENV_FILE_PATH"
 
