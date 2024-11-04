@@ -1,6 +1,9 @@
+import path from 'path';
 import { Injectable } from '@nestjs/common';
 import {
   CloudBackendConfig,
+  LocalBackend,
+  LocalBackendConfig,
   NamedCloudWorkspace,
   TaggedCloudWorkspaces,
 } from 'cdktf';
@@ -13,51 +16,20 @@ export class TerraformConfigService {
   private readonly config = this.globalConfigService.config.terraform.config;
 
   readonly backends = (() => {
-    const cloudBackend = {
-      ApexCaptain: {
-        'ApexCaptain-IaC': (
-          option:
-            | { type: 'name'; name: string }
-            | {
-                type: 'tag';
-                tags: string[];
-              },
-        ): CloudBackendConfig => {
-          const apexCaptainCloudBakcned: Omit<
-            CloudBackendConfig,
-            'workspaces'
-          > = {
-            organization:
-              this.config.backends.cloudBackend.ApexCaptain.organization,
-            token: this.config.backends.cloudBackend.ApexCaptain.token,
-          };
-          switch (option.type) {
-            case 'name':
-              return {
-                ...apexCaptainCloudBakcned,
-                workspaces: new NamedCloudWorkspace(
-                  option.name,
-                  this.config.backends.cloudBackend.ApexCaptain.projects.iacProject,
-                ),
-              };
-            case 'tag':
-              return {
-                ...apexCaptainCloudBakcned,
-                workspaces: new TaggedCloudWorkspaces(
-                  option.tags,
-                  this.config.backends.cloudBackend.ApexCaptain.projects.iacProject,
-                ),
-              };
-          }
-        },
+    // LocalBackend
+    const localBakcned = {
+      secrets: (option: { stateId: string }): LocalBackendConfig => {
+        return {
+          path: path.join(
+            this.config.backends.localBackend.secrets.dirPath,
+            `${option.stateId}.tfstate`,
+          ),
+        };
       },
     };
 
     return {
-      /**
-       * @see https://app.terraform.io
-       */
-      cloudBackend,
+      localBakcned,
     };
   })();
   readonly providers = (() => {

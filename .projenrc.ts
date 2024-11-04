@@ -154,6 +154,7 @@ const project = new typescript.TypeScriptAppProject({
     '@hapi/joi',
     'joi-extract-type',
     'flat@5.0.2',
+    'lodash',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -161,6 +162,7 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/testing',
     '@types/flat@5.0.2',
     'constructs@^10.3.0',
+    '@types/lodash',
   ],
 });
 
@@ -189,17 +191,27 @@ void (async () => {
       language: 'typescript',
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
+        // Official
         {
+          // https://registry.terraform.io/providers/hashicorp/local/latest
           name: 'local',
           source: 'hashicorp/local',
         },
         {
-          name: 'github',
-          source: 'integrations/github',
-        },
-        {
+          // https://registry.terraform.io/providers/hashicorp/kubernetes/latest
           name: 'kubernetes',
           source: 'hashicorp/kubernetes',
+        },
+        // https://registry.terraform.io/providers/hashicorp/null/latest
+        {
+          name: 'null',
+          source: 'hashicorp/null',
+        },
+        // Partners
+        {
+          // https://registry.terraform.io/providers/integrations/github/latest
+          name: 'github',
+          source: 'integrations/github',
         },
       ],
     },
@@ -209,17 +221,26 @@ void (async () => {
   // ENV
   const environment: GlobalConfigType = {
     terraform: {
+      stacks: {
+        k8s: {
+          workstation: {
+            meta: {
+              workstationMountDirPath: {
+                ssdVolume: process.env.WORKSTATION_K8S_VOLUME_SSD_DIR_PATH!!,
+                hddVolume: process.env.WORKSTATION_K8S_VOLUME_HDD_DIR_PATH!!,
+              },
+            },
+          },
+        },
+      },
       config: {
         backends: {
-          cloudBackend: {
-            ApexCaptain: {
-              organization:
-                process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_ORGANIZATION!!,
-              token: process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_API_TOKEN!!,
-              projects: {
-                iacProject:
-                  process.env.APEX_CAPTAIN_TERRAFORM_CLOUD_IAC_PROJECT!!,
-              },
+          localBackend: {
+            secrets: {
+              dirPath: path.join(
+                process.env.CONTAINER_SECRETS_DIR_PATH!!,
+                'state',
+              ),
             },
           },
         },

@@ -2,13 +2,9 @@ import Joi from '@hapi/joi';
 
 export const TerraformConfigSchema = Joi.object({
   backends: Joi.object({
-    cloudBackend: Joi.object({
-      ApexCaptain: Joi.object({
-        organization: Joi.string().required(),
-        token: Joi.string().required(),
-        projects: Joi.object({
-          iacProject: Joi.string().required(),
-        }).required(),
+    localBackend: Joi.object({
+      secrets: Joi.object({
+        dirPath: Joi.string().required(),
       }).required(),
     }).required(),
   }).required(),

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# System Arguments
-SECRETS_DIR_PATH=/mnt/c/secrets
+# System Arguments (depend on workstation settings)
+SECRETS_DIR_PATH=/mnt/c/secrets 
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
 MERGED_ENV_FILE_PATH=.devcontainer/.env
 

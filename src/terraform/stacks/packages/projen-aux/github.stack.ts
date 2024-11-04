@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CloudBackend } from 'cdktf';
+import { LocalBackend } from 'cdktf';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -9,12 +9,9 @@ import { Repository } from '@lib/terraform/providers/github/repository';
 @Injectable()
 export class Packages_ProjenAux_Github_Stack extends AbstractStack {
   terraform = {
-    backend: this.backend(CloudBackend, () =>
-      this.terraformConfigService.backends.cloudBackend.ApexCaptain[
-        'ApexCaptain-IaC'
-      ]({
-        type: 'name',
-        name: this.id,
+    backend: this.backend(LocalBackend, () =>
+      this.terraformConfigService.backends.localBakcned.secrets({
+        stateId: this.id,
       }),
     ),
     providers: {
@@ -38,6 +35,9 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
     repository: this.repository.element.name,
     sourceBranch: 'main',
     branch: 'develop',
+    lifecycle: {
+      preventDestroy: false,
+    },
   }));
 
   constructor(

@@ -18,6 +18,10 @@
       "type": "build"
     },
     {
+      "name": "@types/lodash",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "type": "build"
     },
@@ -112,6 +116,10 @@
     },
     {
       "name": "joi-extract-type",
+      "type": "runtime"
+    },
+    {
+      "name": "lodash",
       "type": "runtime"
     },
     {

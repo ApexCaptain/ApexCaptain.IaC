@@ -21,7 +21,8 @@
         "esbenp.prettier-vscode",
         "wayou.vscode-todo-highlight",
         "mhutchie.git-graph",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker"
       ]
     }
   },
