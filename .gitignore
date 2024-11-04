@@ -31,6 +31,7 @@ jspm_packages/
 .cache
 .DS_STORE
 .kube
+.secrets
 /cdktf.out.json
 /env
 /cdktf.out

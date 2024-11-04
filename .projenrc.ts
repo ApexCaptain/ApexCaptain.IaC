@@ -135,6 +135,7 @@ const project = new typescript.TypeScriptAppProject({
   gitignore: [
     '.DS_STORE',
     '.kube',
+    '.secrets',
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
     `/${constants.paths.dirs.envDir}`,
@@ -233,7 +234,7 @@ void (async () => {
             ApexCaptain: {
               workstation: {
                 configPath:
-                  process.env.containerWorkstationKubeconfigFilePath!!,
+                  process.env.CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH!!,
               },
             },
           },

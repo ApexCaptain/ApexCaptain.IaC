@@ -6,7 +6,7 @@ services:
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
+      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH}
 
     env_file:
       - .env
@@ -15,11 +15,13 @@ services:
     volumes:
       # Workspace Cache
       - ..:${containerWorkspaceFolder}:cached
+      # Mount Secrets
+      - ${HOST_SECRETS_DIR_PATH}:${CONTAINER_SECRETS_DIR_PATH}
       # Mount Local(Workstation) kubeconfig
-      - $HOME/.kube/config:${containerWorkstationKubeconfigFilePath}:ro
+      - ${HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH}:${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}:ro
       # Named Volume
       ## Node Modules
-      - ApexCaptain.IaC.Workspace.node_modules:${nodeModulesVolumeContainerPath}
+      - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
 
     extra_hosts:
       - 'kubernetes.docker.internal:host-gateway'
