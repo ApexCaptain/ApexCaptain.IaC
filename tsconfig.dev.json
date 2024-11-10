@@ -43,6 +43,7 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
+    "scripts/**/*.ts",
     ".projenrc.ts",
     "projenrc/**/*.ts"
   ],

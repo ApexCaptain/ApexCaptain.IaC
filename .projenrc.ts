@@ -21,8 +21,10 @@ const constants = (() => {
   };
 
   const srcDir = 'src';
+  const scriptDir = 'scripts';
   const libDir = 'lib';
   const envDir = 'env';
+
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
@@ -31,6 +33,7 @@ const constants = (() => {
   const paths = {
     dirs: {
       srcDir,
+      scriptDir,
       libDir,
       envDir,
       cdktfOutDir,
@@ -62,6 +65,7 @@ const project = new typescript.TypeScriptAppProject({
   eslintOptions: {
     tsconfigPath: './tsconfig.dev.json',
     dirs: [constants.paths.dirs.srcDir],
+    devdirs: [constants.paths.dirs.scriptDir],
     ignorePatterns: ['/**/node_modules/*', `${constants.paths.dirs.libDir}/`],
     prettier: true,
   },
@@ -90,6 +94,11 @@ const project = new typescript.TypeScriptAppProject({
       },
     },
     exclude: ['node_modules'],
+  },
+  tsconfigDev: {
+    include: [constants.paths.dirs.scriptDir].map(
+      eachDevDir => `${eachDevDir}/**/*.ts`,
+    ),
   },
   // Node Project Options
   npmignoreEnabled: false,
