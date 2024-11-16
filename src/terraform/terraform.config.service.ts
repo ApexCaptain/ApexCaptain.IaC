@@ -18,12 +18,17 @@ export class TerraformConfigService {
   readonly backends = (() => {
     // LocalBackend
     const localBakcned = {
-      secrets: (option: { stateId: string }): LocalBackendConfig => {
+      secrets: (option: { stackName: string }): LocalBackendConfig => {
+        const paths = option.stackName.split('_');
+        if (paths.pop() != 'Stack') {
+          throw new Error('Invalid stack name');
+        }
+        const stateFilePath = path.join(
+          this.config.backends.localBackend.secrets.dirPath,
+          `${paths.join('/')}.tfstate`,
+        );
         return {
-          path: path.join(
-            this.config.backends.localBackend.secrets.dirPath,
-            `${option.stateId}.tfstate`,
-          ),
+          path: stateFilePath,
         };
       },
     };

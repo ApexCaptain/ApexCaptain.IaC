@@ -13,7 +13,7 @@ export class K8S_Workstation_Service_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBakcned.secrets({
-        stateId: this.id,
+        stackName: this.id,
       }),
     ),
     providers: {
@@ -23,8 +23,8 @@ export class K8S_Workstation_Service_Stack extends AbstractStack {
     },
   };
 
-  bytebaseService = this.provide(Service, 'bytebaseService', id => {
-    const metaData = this.k8sWorkstationMetaStack.bytebaseMeta.shared;
+  cloudbeaverService = this.provide(Service, 'cloudbeaverService', id => {
+    const metaData = this.k8sWorkstationMetaStack.cloudbeaverMeta.shared;
     const labels = metaData.labels;
     return {
       metadata: {
@@ -36,8 +36,8 @@ export class K8S_Workstation_Service_Stack extends AbstractStack {
         port: [
           {
             protocol: 'TCP',
-            nodePort: metaData.properties.port.nodePort,
             port: metaData.properties.port.servicePort,
+            nodePort: metaData.properties.port.nodePort,
             targetPort: metaData.properties.port.containerPort.toString(),
           },
         ],

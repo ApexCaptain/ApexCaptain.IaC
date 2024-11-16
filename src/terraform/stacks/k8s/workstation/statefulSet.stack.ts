@@ -14,7 +14,7 @@ export class K8S_Workstation_StatefulSet_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBakcned.secrets({
-        stateId: this.id,
+        stackName: this.id,
       }),
     ),
     providers: {
@@ -24,72 +24,72 @@ export class K8S_Workstation_StatefulSet_Stack extends AbstractStack {
     },
   };
 
-  bytebaseStatefulSet = this.provide(StatefulSet, 'bytebaseStatefulSet', id => {
-    const metaData = this.k8sWorkstationMetaStack.bytebaseMeta.shared;
-    const labels = metaData.labels;
-    return {
-      metadata: {
-        name: _.kebabCase(id),
-      },
-      spec: {
-        serviceName:
-          this.k8sWorkstationServiceStack.bytebaseService.element.metadata.name,
-        replicas: '1',
-        selector: {
-          matchLabels: labels,
+  cloudbeaverStatefulSet = this.provide(
+    StatefulSet,
+    'cloudbeaverStatefulSet',
+    id => {
+      const metaData = this.k8sWorkstationMetaStack.cloudbeaverMeta.shared;
+      const labels = metaData.labels;
+      return {
+        metadata: {
+          name: _.kebabCase(id),
         },
-        template: {
-          metadata: {
-            labels,
+        spec: {
+          serviceName:
+            this.k8sWorkstationServiceStack.cloudbeaverService.element.metadata
+              .name,
+          replicas: '1',
+          selector: {
+            matchLabels: labels,
           },
-          spec: {
-            container: [
-              {
-                name: 'bytebase',
-                image: 'bytebase/bytebase:3.0.0',
-                imagePullPolicy: 'Always',
-                args: [
-                  '--data',
-                  metaData.properties.volume.containerDataDirPath,
-                  '--port',
-                  metaData.properties.port.containerPort.toString(),
-                ],
-                port: [
-                  {
-                    containerPort: metaData.properties.port.containerPort,
+          template: {
+            metadata: {
+              labels,
+            },
+            spec: {
+              container: [
+                {
+                  name: 'cloudbeaver',
+                  image: 'dbeaver/cloudbeaver:24.2.0',
+                  imagePullPolicy: 'Always',
+                  port: [
+                    {
+                      containerPort: metaData.properties.port.containerPort,
+                    },
+                  ],
+                  livenessProbe: {
+                    httpGet: {
+                      path: '/',
+                      port: metaData.properties.port.containerPort.toString(),
+                    },
+                    initialDelaySeconds: 300,
+                    periodSeconds: 300,
+                    timeoutSeconds: 10,
                   },
-                ],
-                livenessProbe: {
-                  httpGet: {
-                    path: '/healthz',
-                    port: metaData.properties.port.containerPort.toString(),
-                  },
-                  initialDelaySeconds: 300,
-                  periodSeconds: 300,
-                  timeoutSeconds: 10,
+                  volumeMount: [
+                    {
+                      name: metaData.properties.volume.workspace.volumeName,
+                      mountPath:
+                        metaData.properties.volume.workspace.containerDirPath,
+                    },
+                  ],
                 },
-                volumeMount: [
-                  {
-                    name: metaData.properties.volume.dataVolumeName,
-                    mountPath: metaData.properties.volume.containerDataDirPath,
+              ],
+              volume: [
+                {
+                  name: metaData.properties.volume.workspace.volumeName,
+                  hostPath: {
+                    type: 'DirectoryOrCreate',
+                    path: metaData.properties.volume.workspace.hostDirPath,
                   },
-                ],
-              },
-            ],
-            volume: [
-              {
-                name: metaData.properties.volume.dataVolumeName,
-                hostPath: {
-                  path: metaData.properties.volume.hostDataDirPath,
-                  type: 'DirectoryOrCreate',
                 },
-              },
-            ],
+              ],
+            },
           },
         },
-      },
-    };
-  });
+      };
+    },
+  );
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

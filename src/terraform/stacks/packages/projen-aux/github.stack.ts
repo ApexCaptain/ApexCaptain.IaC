@@ -11,7 +11,7 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBakcned.secrets({
-        stateId: this.id,
+        stackName: this.id,
       }),
     ),
     providers: {
@@ -27,7 +27,7 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
     visibility: 'public',
     autoInit: true,
     lifecycle: {
-      preventDestroy: false,
+      preventDestroy: true,
     },
   }));
 
@@ -36,7 +36,7 @@ export class Packages_ProjenAux_Github_Stack extends AbstractStack {
     sourceBranch: 'main',
     branch: 'develop',
     lifecycle: {
-      preventDestroy: false,
+      preventDestroy: true,
     },
   }));
 

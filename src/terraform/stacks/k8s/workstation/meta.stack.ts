@@ -16,7 +16,7 @@ export class K8S_Workstation_Meta_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBakcned.secrets({
-        stateId: this.id,
+        stackName: this.id,
       }),
     ),
     providers: {
@@ -24,23 +24,25 @@ export class K8S_Workstation_Meta_Stack extends AbstractStack {
     },
   };
 
-  bytebaseMeta = this.provide(Resource, 'bytebaseMeta', () => {
+  cloudbeaverMeta = this.provide(Resource, 'cloudbeaverMeta', () => {
     const labels = {
-      app: 'bytebase',
+      app: 'cloudbeaver',
     };
     const properties = {
       port: {
-        containerPort: 8080,
-        servicePort: 31623,
-        nodePort: 31623,
+        containerPort: 8978,
+        servicePort: 31000,
+        nodePort: 31000,
       },
       volume: {
-        containerDataDirPath: '/var/opt/bytebase',
-        hostDataDirPath: path.join(
-          this.config.workstationMountDirPath.ssdVolume,
-          'bytebase',
-        ),
-        dataVolumeName: 'bytebase-data',
+        workspace: {
+          containerDirPath: '/opt/cloudbeaver/workspace',
+          hostDirPath: path.join(
+            this.config.workstationMountDirPath.ssdVolume,
+            'cloudbeaver/workspace',
+          ),
+          volumeName: 'cloudbeaver-workspace',
+        },
       },
     };
     return [{}, { labels, properties }];
