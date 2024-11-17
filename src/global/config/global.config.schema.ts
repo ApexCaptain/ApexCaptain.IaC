@@ -1,6 +1,5 @@
 import Joi from '@hapi/joi';
 import 'joi-extract-type';
-import { K8S_Workstation_Meta_Schema } from '../../terraform/stacks/k8s/workstation/meta.schema';
 import { TerraformConfigSchema } from '../../terraform/terraform.config.schema';
 
 export const GlobalConfigSchema = Joi.object({
@@ -8,7 +7,13 @@ export const GlobalConfigSchema = Joi.object({
     stacks: Joi.object({
       k8s: Joi.object({
         workstation: Joi.object({
-          meta: K8S_Workstation_Meta_Schema,
+          meta: Joi.object({
+            workstationDomain: Joi.string().required(),
+            workstationMountDirPath: Joi.object({
+              ssdVolume: Joi.string().required(),
+              hddVolume: Joi.string().required(),
+            }).required(),
+          }).required(),
         }).required(),
       }).required(),
     }).required(),

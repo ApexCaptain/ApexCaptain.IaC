@@ -1,14 +1,9 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import {
-  CloudBackendConfig,
-  LocalBackend,
-  LocalBackendConfig,
-  NamedCloudWorkspace,
-  TaggedCloudWorkspaces,
-} from 'cdktf';
+import { LocalBackendConfig } from 'cdktf';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
+import { HelmProviderConfig } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
 
 @Injectable()
@@ -68,13 +63,27 @@ export class TerraformConfigService {
       },
     };
 
+    const helm = {
+      ApexCaptain: {
+        workstation: (): HelmProviderConfig => {
+          return {
+            kubernetes: {
+              configPath:
+                this.config.providers.kubernetes.ApexCaptain.workstation
+                  .configPath,
+              insecure: true,
+            },
+          };
+        },
+      },
+    };
+
     return {
-      /**
-       * @See https://github.com/
-       */
       github,
 
       kubernetes,
+
+      helm,
     };
   })();
 

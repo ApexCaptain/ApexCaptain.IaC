@@ -204,6 +204,11 @@ void (async () => {
       terraformProviders: [
         // Official
         {
+          // https://registry.terraform.io/providers/hashicorp/tls/latest
+          name: 'tls',
+          source: 'hashicorp/tls',
+        },
+        {
           // https://registry.terraform.io/providers/hashicorp/local/latest
           name: 'local',
           source: 'hashicorp/local',
@@ -212,6 +217,11 @@ void (async () => {
           // https://registry.terraform.io/providers/hashicorp/kubernetes/latest
           name: 'kubernetes',
           source: 'hashicorp/kubernetes',
+        },
+        {
+          // https://registry.terraform.io/providers/hashicorp/helm/latest
+          name: 'helm',
+          source: 'hashicorp/helm',
         },
         // https://registry.terraform.io/providers/hashicorp/null/latest
         {
@@ -236,6 +246,7 @@ void (async () => {
         k8s: {
           workstation: {
             meta: {
+              workstationDomain: process.env.WORKSTATION_DOMAIN!!,
               workstationMountDirPath: {
                 ssdVolume: process.env.WORKSTATION_K8S_VOLUME_SSD_DIR_PATH!!,
                 hddVolume: process.env.WORKSTATION_K8S_VOLUME_HDD_DIR_PATH!!,
