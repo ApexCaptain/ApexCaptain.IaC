@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import * as stacks from './stacks';
 import { TerraformAppService } from './terraform.app.service';
 import { TerraformConfigService } from './terraform.config.service';
@@ -9,6 +9,6 @@ import { TerraformConfigService } from './terraform.config.service';
     TerraformConfigService,
     ...Object.values(stacks),
   ],
-  exports: [TerraformAppService],
+  exports: [TerraformAppService, TerraformConfigService],
 })
 export class TerraformModule {}

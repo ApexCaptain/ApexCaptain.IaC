@@ -234,6 +234,16 @@ void (async () => {
           name: 'github',
           source: 'integrations/github',
         },
+        {
+          // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
+          name: 'cloudflare',
+          source: 'cloudflare/cloudflare',
+        },
+        {
+          // https://registry.terraform.io/providers/oracle/oci/latest
+          name: 'oci',
+          source: 'oracle/oci',
+        },
       ],
     },
     committed: false,
@@ -243,14 +253,26 @@ void (async () => {
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
+        common: {
+          generatedKeyFilesDirRelativePath: path.join(
+            './.secrets/keys/generated',
+          ),
+        },
         k8s: {
           workstation: {
-            meta: {
-              workstationDomain: process.env.WORKSTATION_DOMAIN!!,
-              workstationMountDirPath: {
-                ssdVolume: process.env.WORKSTATION_K8S_VOLUME_SSD_DIR_PATH!!,
-                hddVolume: process.env.WORKSTATION_K8S_VOLUME_HDD_DIR_PATH!!,
+            common: {
+              domain: {
+                iptime: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
               },
+              volumeDirPath: {
+                ssdVolume:
+                  process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_SDD_VOLUME!!,
+                hddVolume:
+                  process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_HDD_VOLUME!!,
+              },
+            },
+            sftp: {
+              userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
             },
           },
         },
@@ -261,12 +283,18 @@ void (async () => {
             secrets: {
               dirPath: path.join(
                 process.env.CONTAINER_SECRETS_DIR_PATH!!,
-                'state',
+                'terraform',
               ),
             },
           },
         },
         providers: {
+          cloudflare: {
+            ApexCaptain: {
+              apiToken: process.env.APEX_CAPTAIN_CLOUDFLARE_API_TOKEN!!,
+            },
+          },
+
           github: {
             ApexCaptain: {
               owner: process.env.APEX_CAPTAIN_GITHUB_OWNER!!,
@@ -279,6 +307,16 @@ void (async () => {
                 configPath:
                   process.env.CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH!!,
               },
+            },
+          },
+
+          oci: {
+            ApexCaptain: {
+              userOcid: process.env.APEX_CAPTAIN_OCI_USER_OCID!!,
+              fingerprint: process.env.APEX_CAPTAIN_OCI_FINGERPRINT!!,
+              tenancyOcid: process.env.APEX_CAPTAIN_OCI_TENANCY_OCID!!,
+              region: process.env.APEX_CAPTAIN_OCI_REGION!!,
+              privateKey: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY!!,
             },
           },
         },

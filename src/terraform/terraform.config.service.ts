@@ -2,10 +2,11 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { LocalBackendConfig } from 'cdktf';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { CloudflareProviderConfig } from '@lib/terraform/providers/cloudflare/provider';
 import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
 import { HelmProviderConfig } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
-
+import { OciProviderConfig } from '@lib/terraform/providers/oci/provider';
 @Injectable()
 export class TerraformConfigService {
   private readonly config = this.globalConfigService.config.terraform.config;
@@ -33,6 +34,14 @@ export class TerraformConfigService {
     };
   })();
   readonly providers = (() => {
+    const cloudflare = {
+      ApexCaptain: (): CloudflareProviderConfig => {
+        return {
+          apiToken: this.config.providers.cloudflare.ApexCaptain.apiToken,
+        };
+      },
+    };
+
     const github = {
       ApexCaptain: (
         config?: Partial<Omit<GithubProviderConfig, 'owner' | 'token'>>,
@@ -78,12 +87,31 @@ export class TerraformConfigService {
       },
     };
 
+    const oci = {
+      ApexCaptain: (): OciProviderConfig => {
+        return {
+          auth: 'ApiKey',
+          userOcid: this.config.providers.oci.ApexCaptain.userOcid,
+          fingerprint: this.config.providers.oci.ApexCaptain.fingerprint,
+          tenancyOcid: this.config.providers.oci.ApexCaptain.tenancyOcid,
+          region: this.config.providers.oci.ApexCaptain.region,
+          privateKey: this.config.providers.oci.ApexCaptain.privateKey.replace(
+            /\\\n/g,
+            '\n',
+          ),
+        };
+      },
+    };
     return {
+      cloudflare,
+
       github,
 
       kubernetes,
 
       helm,
+
+      oci,
     };
   })();
 

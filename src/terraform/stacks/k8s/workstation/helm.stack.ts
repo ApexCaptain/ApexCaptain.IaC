@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+
 @Injectable()
-export class K8S_Workstation_Keys_Stack extends AbstractStack {
+export class K8S_Workstation_Helm_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBakcned.secrets({
@@ -14,20 +16,17 @@ export class K8S_Workstation_Keys_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
+      helm: this.provide(HelmProvider, 'helmProvider', () =>
+        this.terraformConfigService.providers.helm.ApexCaptain.workstation(),
+      ),
     },
   };
 
-  sftpServiceKey = this.provide(PrivateKey, 'sftpServiceKey', () => ({
-    algorithm: 'RSA',
-    rsaBits: 4096,
-  })).addOutput(
-    id => `${id}_privateKeyOpenSsh`,
-    element => ({
-      sensitive: true,
-      value: element.privateKeyOpenssh,
-    }),
-  );
+  ingressNginx = this.provide(Release, 'ingressNginx', id => ({
+    name: _.kebabCase(id),
+    repository: 'https://kubernetes.github.io/ingress-nginx',
+    chart: 'ingress-nginx',
+  }));
 
   constructor(
     private readonly terraformAppService: TerraformAppService,
@@ -35,8 +34,8 @@ export class K8S_Workstation_Keys_Stack extends AbstractStack {
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Workstation_Keys_Stack.name,
-      'Keys stack for Workstation k8s',
+      K8S_Workstation_Helm_Stack.name,
+      'Helm stack for workstation k8s',
     );
   }
 }
