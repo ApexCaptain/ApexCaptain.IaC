@@ -107,7 +107,7 @@ const project = new typescript.TypeScriptAppProject({
   defaultReleaseBranch: constants.branches.main,
   release: false,
   // @ToDo 나중에 재설정
-  depsUpgrade: false,
+  depsUpgrade: true,
   depsUpgradeOptions: {
     workflowOptions: {
       schedule: javascript.UpgradeDependenciesSchedule.WEEKLY,
