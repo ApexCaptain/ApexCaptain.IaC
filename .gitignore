@@ -6,7 +6,6 @@
 !/.github/workflows/pull-request-lint.yml
 !/package.json
 !/LICENSE
-!/.npmignore
 logs
 *.log
 npm-debug.log*
@@ -30,13 +29,16 @@ jspm_packages/
 *.tgz
 .yarn-integrity
 .cache
-/test-reports/
-junit.xml
-/coverage/
-!/.github/workflows/build.yml
-!/.mergify.yml
-!/.github/workflows/upgrade.yml
+.DS_STORE
+.kube
+.secrets
+/cdktf.out.json
+/env
+/cdktf.out
+!/.github/workflows/upgrade-develop.yml
 !/.github/pull_request_template.md
+!/.prettierignore
+!/.prettierrc.json
 !/test/
 !/tsconfig.json
 !/tsconfig.dev.json
@@ -44,4 +46,6 @@ junit.xml
 /lib
 /dist/
 !/.eslintrc.json
+/cdktf.json
+/env/prod.env
 !/.projenrc.ts

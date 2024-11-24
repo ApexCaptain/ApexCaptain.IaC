@@ -1,32 +1,34 @@
 {
-    // Basic
-    "name": "ApexCaptain.IaC Dev Container",
-    "dockerComposeFile": "docker-compose.dev.yml",
-    "service": "workspace",
-    "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
-    // Featuring
-    "features": {
-      "ghcr.io/devcontainers-contrib/features/projen:1": {},
-      "ghcr.io/devcontainers/features/github-cli:1": {},
-      "ghcr.io/devcontainers-contrib/features/terraform-asdf:2": {}
-    },
-  
-    // Custom
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "PKief.material-icon-theme",
-          "dbaeumer.vscode-eslint",
-          "esbenp.prettier-vscode",
-          "wayou.vscode-todo-highlight",
-          "mhutchie.git-graph",
-          "github.vscode-github-actions"
-        ]
-      }
-    },
-  
-    // LifeCycles
-    "initializeCommand": "bash ./.devcontainer/commands/initializeCommand.sh ${localWorkspaceFolder} ${containerWorkspaceFolder} ${localWorkspaceFolderBasename} ${containerWorkspaceFolderBasename}",
-    "updateContentCommand": "bash ./.devcontainer/commands/updateContentCommand.sh"
-  }
-  
+  // Basic
+  "name": "ApexCaptain.IaC Dev Container",
+  "dockerComposeFile": "docker-compose.dev.yml",
+  "service": "workspace",
+  "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
+  // Featuring
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/projen:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-contrib/features/terraform-asdf:2": {},
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers-extra/features/kubectl-asdf:2": {}
+  },
+
+  // Custom
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "PKief.material-icon-theme",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "wayou.vscode-todo-highlight",
+        "mhutchie.git-graph",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  // LifeCycles
+  "initializeCommand": "bash ./.devcontainer/commands/initializeCommand.sh ${localWorkspaceFolder} ${containerWorkspaceFolder} ${localWorkspaceFolderBasename} ${containerWorkspaceFolderBasename}",
+  "updateContentCommand": "bash ./.devcontainer/commands/updateContentCommand.sh"
+}

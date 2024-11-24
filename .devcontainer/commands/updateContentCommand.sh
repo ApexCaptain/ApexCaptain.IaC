@@ -14,3 +14,6 @@ sudo apt install -y \
 echo Installing global npm packages
 npm install -g \
     npm@latest
+
+echo Initialize Projen
+yarn && yarn projen

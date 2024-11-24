@@ -1,24 +1,31 @@
-
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
-    # https://mcr.microsoft.com/en-us/product/devcontainers/base/about
     image: mcr.microsoft.com/devcontainers/base:noble
+
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      volumePathsToChangeOwner: ${nodeModulesVolumeContainerPath}
-    
-    command: sleep infinity
+      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH}
 
-    # env_file @ToDo 나중에 다시 확인
+    env_file:
+      - .env
+
+    command: sleep infinity
 
     volumes:
       # Workspace Cache
       - ..:${containerWorkspaceFolder}:cached
+      # Mount Secrets
+      - ${HOST_SECRETS_DIR_PATH}:${CONTAINER_SECRETS_DIR_PATH}
+      # Mount Local(Workstation) kubeconfig
+      - ${HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH}:${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}:ro
       # Named Volume
       ## Node Modules
-      - ApexCaptain.IaC-node_modules:${nodeModulesVolumeContainerPath}
-      
+      - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
+
+    extra_hosts:
+      - 'kubernetes.docker.internal:host-gateway'
+
 volumes:
-  ApexCaptain.IaC-node_modules:
+  ApexCaptain.IaC.Workspace.node_modules:
