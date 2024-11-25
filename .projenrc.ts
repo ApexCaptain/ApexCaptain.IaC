@@ -282,7 +282,8 @@ void (async () => {
           localBackend: {
             secrets: {
               dirPath: path.join(
-                process.env.CONTAINER_SECRETS_DIR_PATH!!,
+                process.env.CONTAINER_SECRETS_DIR_PATH ??
+                  path.join(project.outdir, '.secrets'),
                 'terraform',
               ),
             },
