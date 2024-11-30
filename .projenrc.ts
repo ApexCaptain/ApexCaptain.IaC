@@ -4,6 +4,7 @@ import { IniFile, javascript, JsonFile, TaskStep, typescript } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
+import dns from 'dns/promises';
 
 const constants = (() => {
   const project = {
@@ -22,6 +23,8 @@ const constants = (() => {
 
   const srcDir = 'src';
   const scriptDir = 'scripts';
+  const kubeConfigDirPath = '.kube';
+  const keysDir = 'keys';
   const libDir = 'lib';
   const envDir = 'env';
 
@@ -34,6 +37,8 @@ const constants = (() => {
     dirs: {
       srcDir,
       scriptDir,
+      kubeConfigDirPath,
+      keysDir,
       libDir,
       envDir,
       cdktfOutDir,
@@ -143,12 +148,13 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
-    '.kube',
     '.secrets',
+    `/${constants.paths.dirs.kubeConfigDirPath}`,
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
+    `/${constants.paths.dirs.keysDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
   deps: [
@@ -254,9 +260,18 @@ void (async () => {
     terraform: {
       stacks: {
         common: {
-          generatedKeyFilesDirRelativePath: path.join(
-            './.secrets/keys/generated',
-          ),
+          generatedKeyFilesDirRelativePaths: {
+            secrets: './.secrets/keys/generated',
+            keys: constants.paths.dirs.keysDir,
+          },
+          kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
+        },
+        oci: {
+          bastion: {
+            clientCidrBlockAllowList: [
+              `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
+            ],
+          },
         },
         k8s: {
           workstation: {

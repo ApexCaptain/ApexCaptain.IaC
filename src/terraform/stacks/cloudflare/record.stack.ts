@@ -23,6 +23,17 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
+  defaultRecord = this.provide(Record, 'defaultRecord', () => ({
+    name: 'www',
+    type: 'CNAME',
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    comment: 'Cloudflare DNS record for default service',
+  }));
+
   cloudbeaverRecord = this.provide(Record, 'cloudbeaverRecord', () => ({
     name: 'cloudbeaver',
     type: 'CNAME',

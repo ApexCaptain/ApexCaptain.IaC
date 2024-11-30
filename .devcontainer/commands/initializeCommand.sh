@@ -24,6 +24,7 @@ CONTAINER_NODE_MODULES_DIR_PATH = ${containerWorkspaceFolder}/node_modules
 
 # Unonymous Volume Arguments
 HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH = $HOME/.kube/config
+CONTAINER_KUBE_CONFIG_DIR_PATH = ${containerWorkspaceFolder}/.kube
 CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH = ${containerWorkspaceFolder}/.kube/workstation.config
 
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH

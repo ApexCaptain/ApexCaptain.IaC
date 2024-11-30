@@ -74,14 +74,29 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
     rsaBits: 4096,
   }));
 
-  sftpPrivateKeyOpenSshFile = this.provide(
+  sftpPrivateKeyOpenSshFileInSecrets = this.provide(
     File,
-    'sftpPrivateKeyOpenSshFile',
+    'sftpPrivateKeyOpenSshFileInSecrets',
     id => ({
       filename: path.join(
         process.cwd(),
         this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirRelativePath,
+          .generatedKeyFilesDirRelativePaths.secrets,
+        K8S_Workstation_SftpApp_Stack.name,
+        `${id}.key`,
+      ),
+      content: this.sftpPrivateKey.element.privateKeyOpenssh,
+    }),
+  );
+
+  sftpPrivateKeyOpenSshFileInKeys = this.provide(
+    File,
+    'sftpPrivateKeyOpenSshFileInKeys',
+    id => ({
+      filename: path.join(
+        process.cwd(),
+        this.globalConfigService.config.terraform.stacks.common
+          .generatedKeyFilesDirRelativePaths.keys,
         K8S_Workstation_SftpApp_Stack.name,
         `${id}.key`,
       ),
@@ -198,10 +213,13 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
   }));
 
   constructor(
-    private readonly terraformAppService: TerraformAppService,
-    private readonly terraformConfigService: TerraformConfigService,
     // Global
     private readonly globalConfigService: GlobalConfigService,
+
+    // Terraform
+    private readonly terraformAppService: TerraformAppService,
+    private readonly terraformConfigService: TerraformConfigService,
+
     // Stack
     private readonly k8sWorkstationNamespaceStack: K8S_Workstation_Namespace_Stack,
   ) {

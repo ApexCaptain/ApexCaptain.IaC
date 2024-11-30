@@ -7,6 +7,7 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
+import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 
 @Injectable()
@@ -40,6 +41,15 @@ export class Oci_RootData_Stack extends AbstractStack {
     () => ({
       id: this.globalConfigService.config.terraform.config.providers.oci
         .ApexCaptain.tenancyOcid,
+    }),
+  );
+
+  dataAvailabilityDomain = this.provide(
+    DataOciIdentityAvailabilityDomain,
+    'dataAvailabilityDomain',
+    () => ({
+      compartmentId: this.dataRootCompartment.element.id,
+      adNumber: 1,
     }),
   );
 
