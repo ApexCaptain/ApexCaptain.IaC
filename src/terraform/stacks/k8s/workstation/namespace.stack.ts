@@ -10,7 +10,7 @@ import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider
 export class K8S_Workstation_Namespace_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),

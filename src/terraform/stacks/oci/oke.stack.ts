@@ -16,16 +16,19 @@ import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import path from 'path';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class Oci_Oke_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       oci: this.provide(OciProvider, 'ociProvider', () =>
@@ -34,139 +37,150 @@ export class Oci_Oke_Stack extends AbstractStack {
     },
   };
 
-  // dataOkeNodePoolOption = this.provide(
-  //   DataOciContainerengineNodePoolOption,
-  //   'dataOkeNodePoolOption',
-  //   () => ({
-  //     compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
-  //     nodePoolOptionId: this.okeCluster.element.id,
-  //   }),
-  // ).addOutput(
-  //   id => `${id}_output`,
-  //   ele => ({
-  //     value: ele.sources,
-  //   }),
-  // );
+  meta = {
+    okeArmNodePoolSize: 4,
+  };
 
-  // dataOkeClusterKubeConfig = this.provide(
-  //   DataOciContainerengineClusterKubeConfig,
-  //   'dataOkeClusterKubeConfig',
-  //   () => ({
-  //     clusterId: this.okeCluster.element.id,
-  //     endpoint: this.okeCluster.element.endpoints[0],
-  //   }),
-  // );
+  okeNodePoolSshKey = this.provide(Resource, 'okeNodePoolSshKey', idPrefix => {
+    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
 
-  // okeClusterKubeConfigFile = this.provide(
-  //   File,
-  //   'okeClusterKubeConfigFile',
-  //   id => ({
-  //     filename: path.join(
-  //       process.cwd(),
-  //       this.globalConfigService.config.terraform.stacks.common
-  //         .kubeConfigDirRelativePath,
-  //       `${id}.config`,
-  //     ),
-  //     content: this.dataOkeClusterKubeConfig.element.content,
-  //   }),
-  // );
+    const privateSshKeyFileInSecrets = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInSecrets`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.secrets,
+          Oci_Oke_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+      }),
+    );
 
-  // okeNodePoolSshKey = this.provide(PrivateKey, 'okeNodePoolSshKey', () => ({
-  //   algorithm: 'RSA',
-  //   rsaBits: 4096,
-  // }));
+    const privateSshKeyFileInKeys = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInKeys`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.keys,
+          Oci_Oke_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+        filePermission: '0600',
+      }),
+    );
 
-  // okeNodePoolSshKeyPrivateOpenSshFileInSecrets = this.provide(
-  //   File,
-  //   'okeNodePoolSshKeyPrivateOpenSshFileInSecrets',
-  //   id => ({
-  //     filename: path.join(
-  //       process.cwd(),
-  //       this.globalConfigService.config.terraform.stacks.common
-  //         .generatedKeyFilesDirRelativePaths.secrets,
-  //       Oci_Oke_Stack.name,
-  //       `${id}.key`,
-  //     ),
-  //     content: this.okeNodePoolSshKey.element.privateKeyOpenssh,
-  //   }),
-  // );
+    return [
+      {},
+      {
+        key,
+        privateSshKeyFileInSecrets,
+        privateSshKeyFileInKeys,
+      },
+    ];
+  });
 
-  // okeNodePoolSshKeyPrivateOpenSshFileInKeys = this.provide(
-  //   File,
-  //   'okeNodePoolSshKeyPrivateOpenSshFileInKeys',
-  //   id => ({
-  //     filename: path.join(
-  //       process.cwd(),
-  //       this.globalConfigService.config.terraform.stacks.common
-  //         .generatedKeyFilesDirRelativePaths.keys,
-  //       Oci_Oke_Stack.name,
-  //       `${id}.key`,
-  //     ),
-  //     content: this.okeNodePoolSshKey.element.privateKeyOpenssh,
-  //     filePermission: '0600',
-  //   }),
-  // );
+  okeCluster = this.provide(ContainerengineCluster, 'okeCluster', id => ({
+    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    displayName: id,
+    kubernetesVersion: 'v1.31.1',
+    name: id,
+    vcnId: this.ociNetworkStack.okeVcn.element.id,
 
-  // okeCluster = this.provide(ContainerengineCluster, 'okeCluster', id => ({
-  //   compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
-  //   displayName: id,
-  //   kubernetesVersion: 'v1.31.1',
-  //   name: id,
-  //   vcnId: this.ociNetworkStack.okeVcn.element.id,
+    clusterPodNetworkOptions: [{ cniType: 'FLANNEL_OVERLAY' }],
+    endpointConfig: {
+      isPublicIpEnabled: false,
+      subnetId: this.ociNetworkStack.okeK8sEndpointPrivateSubnet.element.id,
+    },
+    options: {
+      serviceLbSubnetIds: [
+        this.ociNetworkStack.okeServiceLoadBalancerPublicSubnet.element.id,
+      ],
+    },
+    type: 'BASIC_CLUSTER',
+  }));
 
-  //   clusterPodNetworkOptions: [{ cniType: 'FLANNEL_OVERLAY' }],
-  //   endpointConfig: {
-  //     isPublicIpEnabled: false,
-  //     subnetId: this.ociNetworkStack.okeK8sEndpointPrivateSubnet.element.id,
-  //   },
-  //   options: {
-  //     serviceLbSubnetIds: [
-  //       this.ociNetworkStack.okeServiceLoadBalancerPublicSubnet.element.id,
-  //     ],
-  //   },
-  //   type: 'BASIC_CLUSTER',
-  // }));
+  okeKubeConfig = this.provide(Resource, 'okeKubeConfig', idPrefix => {
+    const dataKubeConfig = this.provide(
+      DataOciContainerengineClusterKubeConfig,
+      `${idPrefix}-dataKubeConfig`,
+      () => ({
+        clusterId: this.okeCluster.element.id,
+        endpoint: this.okeCluster.element.endpoints[0],
+      }),
+    );
 
-  // okeArmNodePool = this.provide(
-  //   ContainerengineNodePool,
-  //   'okeArmNodePool',
-  //   id => ({
-  //     clusterId: this.okeCluster.element.id,
-  //     compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
-  //     displayName: id,
-  //     name: id,
+    const kubeConfigFile = this.provide(
+      File,
+      `${idPrefix}-kubeConfigFile`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .kubeConfigDirRelativePath,
+          `${id}.config`,
+        ),
+        content: dataKubeConfig.element.content,
+      }),
+    );
 
-  //     nodeConfigDetails: {
-  //       placementConfigs: [
-  //         {
-  //           availabilityDomain:
-  //             this.ociRootDataStack.dataAvailabilityDomain.element.name,
-  //           subnetId:
-  //             this.ociNetworkStack.okeWorkerNodePrivateSubnet.element.id,
-  //         },
-  //       ],
-  //       size: 4,
+    return [
+      {},
+      {
+        dataKubeConfig,
+        kubeConfigFile,
+      },
+    ];
+  });
 
-  //       nodePoolPodNetworkOptionDetails: {
-  //         cniType: 'FLANNEL_OVERLAY',
-  //       },
-  //     },
-  //     nodeSourceDetails: {
-  //       // @Note: 무슨 이유에서인지 dataCoreImages로는 검색이 안 됨. 별도로 output만들어서 수동으로 가져옴
-  //       // @ToDo: 추후 자동화 필요
-  //       // @See: https://github.com/oracle/terraform-provider-oci/issues/1771
-  //       imageId:
-  //         'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaahe7qtoxzq42rdvll5mhx7bpgibtvguxipbt5ueyrmzc7q3hrwlla',
-  //       sourceType: 'IMAGE',
-  //     },
-  //     nodeShape: 'VM.Standard.A1.Flex',
-  //     nodeShapeConfig: {
-  //       memoryInGbs: 6,
-  //       ocpus: 1,
-  //     },
-  //     sshPublicKey: this.okeNodePoolSshKey.element.publicKeyOpenssh,
-  //   }),
-  // );
+  okeArmNodePool = this.provide(
+    ContainerengineNodePool,
+    'okeArmNodePool',
+    id => ({
+      clusterId: this.okeCluster.element.id,
+      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      displayName: id,
+      name: id,
+
+      nodeConfigDetails: {
+        placementConfigs: [
+          {
+            availabilityDomain:
+              this.ociRootDataStack.dataAvailabilityDomain.element.name,
+            subnetId:
+              this.ociNetworkStack.okeWorkerNodePrivateSubnet.element.id,
+          },
+        ],
+        size: this.meta.okeArmNodePoolSize,
+
+        nodePoolPodNetworkOptionDetails: {
+          cniType: 'FLANNEL_OVERLAY',
+        },
+      },
+      nodeSourceDetails: {
+        // @Note: 무슨 이유에서인지 dataCoreImages로는 검색이 안 됨. 별도로 output만들어서 수동으로 가져옴
+        // @ToDo: 추후 자동화 필요
+        // @See: https://github.com/oracle/terraform-provider-oci/issues/1771
+        imageId:
+          'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaahe7qtoxzq42rdvll5mhx7bpgibtvguxipbt5ueyrmzc7q3hrwlla',
+        sourceType: 'IMAGE',
+      },
+      nodeShape: 'VM.Standard.A1.Flex',
+      nodeShapeConfig: {
+        memoryInGbs: 6,
+        ocpus: 1,
+      },
+      sshPublicKey: this.okeNodePoolSshKey.shared.key.element.publicKeyOpenssh,
+    }),
+  );
 
   constructor(
     // Global

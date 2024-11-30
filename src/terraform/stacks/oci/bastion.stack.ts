@@ -15,6 +15,9 @@ import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
 import { Oci_Oke_Stack } from './oke.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import _ from 'lodash';
 
 @Injectable()
 export class Oci_Bastion_Stack extends AbstractStack {
@@ -23,11 +26,12 @@ export class Oci_Bastion_Stack extends AbstractStack {
 
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       oci: this.provide(OciProvider, 'ociProvider', () =>
@@ -36,106 +40,69 @@ export class Oci_Bastion_Stack extends AbstractStack {
     },
   };
 
-  // okeBastionSshKey = this.provide(PrivateKey, 'okeBastionSshKey', () => ({
-  //   algorithm: 'RSA',
-  //   rsaBits: 4096,
-  // }));
+  okeBastionSshKey = this.provide(Resource, 'okeBastionSshKey', idPrefix => {
+    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
 
-  // okeBastionSshKeyPrivateOpenSshFileInSecrets = this.provide(
-  //   File,
-  //   'okeBastionSshKeyPrivateOpenSshFileInSecrets',
-  //   id => ({
-  //     filename: path.join(
-  //       process.cwd(),
-  //       this.globalConfigService.config.terraform.stacks.common
-  //         .generatedKeyFilesDirRelativePaths.secrets,
-  //       Oci_Bastion_Stack.name,
-  //       `${id}.key`,
-  //     ),
-  //     content: this.okeBastionSshKey.element.privateKeyOpenssh,
-  //   }),
-  // );
+    const privateSshKeyFileInSecrets = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInSecrets`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.secrets,
+          Oci_Bastion_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+      }),
+    );
 
-  // okeBastionSshKeyPrivateOpenSshFileInKeys = this.provide(
-  //   File,
-  //   'okeBastionSshKeyPrivateOpenSshFileInKeys',
-  //   id => ({
-  //     filename: path.join(
-  //       process.cwd(),
-  //       this.globalConfigService.config.terraform.stacks.common
-  //         .generatedKeyFilesDirRelativePaths.keys,
-  //       Oci_Bastion_Stack.name,
-  //       `${id}.key`,
-  //     ),
-  //     content: this.okeBastionSshKey.element.privateKeyOpenssh,
-  //     filePermission: '0600',
-  //   }),
-  // );
+    const privateSshKeyFileInKeys = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInKeys`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.keys,
+          Oci_Bastion_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+        filePermission: '0600',
+      }),
+    );
 
-  // okeBastion = this.provide(BastionBastion, 'okeBastion', id => ({
-  //   bastionType: 'STANDARD',
-  //   compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
-  //   displayName: id,
-  //   name: id,
-  //   targetSubnetId: this.ociNetworkStack.okeBastionPrivateSubnet.element.id,
-  //   clientCidrBlockAllowList: this.config.clientCidrBlockAllowList,
-  //   dnsProxyStatus: 'ENABLED',
-  // }));
+    return [{}, { key, privateSshKeyFileInSecrets, privateSshKeyFileInKeys }];
+  });
 
-  // okeBastionK8sEndpointSession = this.provide(
-  //   BastionSession,
-  //   'okeBastionK8sEndpointSession',
-  //   id => {
-  //     const k8sEndpointInfo = Fn.split(
-  //       ':',
-  //       Fn.lookup(
-  //         Fn.element(this.ociOkeStack.okeCluster.element.endpoints, 0),
-  //         'private_endpoint',
-  //       ),
-  //     );
-  //     return {
-  //       bastionId: this.okeBastion.element.id,
-  //       keyDetails: {
-  //         publicKeyContent: this.okeBastionSshKey.element.publicKeyOpenssh,
-  //       },
-  //       targetResourceDetails: {
-  //         sessionType: 'PORT_FORWARDING',
-  //         targetResourcePrivateIpAddress: Fn.element(k8sEndpointInfo, 0),
-  //         targetResourcePort: Fn.element(k8sEndpointInfo, 1),
-  //       },
-  //       displayName: `${id}_${this.ociOkeStack.okeCluster.element.name}`,
-  //       keyType: 'PUB',
-  //       sessionTtlInSeconds: this.okeBastion.element.maxSessionTtlInSeconds,
-  //     };
-  //   },
-  // );
+  okeBastion = this.provide(BastionBastion, 'okeBastion', id => ({
+    bastionType: 'STANDARD',
+    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    displayName: id,
+    name: id,
+    targetSubnetId: this.ociNetworkStack.okeBastionPrivateSubnet.element.id,
+    clientCidrBlockAllowList: this.config.clientCidrBlockAllowList,
+    dnsProxyStatus: 'ENABLED',
+  }));
 
-  // okeBastionArmNodePoolSessions = this.provide(
-  //   BastionSession,
-  //   'okeBastionArmNodePoolSessions',
-  //   id => {
-  //     const nodes = TerraformIterator.fromComplexList(
-  //       this.ociOkeStack.okeArmNodePool.element.nodes,
-  //       'id',
-  //     );
-
-  //     return {
-  //       forEach: nodes,
-  //       bastionId: this.okeBastion.element.id,
-  //       keyDetails: {
-  //         publicKeyContent: this.okeBastionSshKey.element.publicKeyOpenssh,
-  //       },
-  //       targetResourceDetails: {
-  //         sessionType: 'MANAGED_SSH',
-  //         targetResourceId: nodes.getString('id'),
-  //         targetResourceOperatingSystemUserName: 'opc',
-  //       },
-  //       displayName: `${id}_${nodes.getString('name')}`,
-  //       keyType: 'PUB',
-  //       sessionTtlInSeconds: this.okeBastion.element.maxSessionTtlInSeconds,
-  //     };
-  //   },
-  // );
+  okeBastionSession = this.provide(BastionSession, 'okeBastionSession', id => ({
+    bastionId: this.okeBastion.element.id,
+    keyDetails: {
+      publicKeyContent:
+        this.okeBastionSshKey.shared.key.element.publicKeyOpenssh,
+    },
+    targetResourceDetails: {
+      sessionType: 'DYNAMIC_PORT_FORWARDING',
+    },
+    displayName: id,
+    keyType: 'PUB',
+    sessionTtlInSeconds: this.okeBastion.element.maxSessionTtlInSeconds,
+  }));
 
   constructor(
     // Global

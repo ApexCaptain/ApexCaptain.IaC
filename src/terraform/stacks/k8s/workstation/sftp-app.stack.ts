@@ -15,6 +15,8 @@ import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
@@ -23,11 +25,12 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
 
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
@@ -69,41 +72,52 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
     },
   };
 
-  sftpPrivateKey = this.provide(PrivateKey, 'sftpPrivateKey', () => ({
-    algorithm: 'RSA',
-    rsaBits: 4096,
-  }));
+  sftpPrivateKey = this.provide(Resource, 'sftpPrivateKey', idPrefix => {
+    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
 
-  sftpPrivateKeyOpenSshFileInSecrets = this.provide(
-    File,
-    'sftpPrivateKeyOpenSshFileInSecrets',
-    id => ({
-      filename: path.join(
-        process.cwd(),
-        this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirRelativePaths.secrets,
-        K8S_Workstation_SftpApp_Stack.name,
-        `${id}.key`,
-      ),
-      content: this.sftpPrivateKey.element.privateKeyOpenssh,
-    }),
-  );
+    const privateSshKeyFileInSecrets = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInSecrets`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.secrets,
+          K8S_Workstation_SftpApp_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+      }),
+    );
 
-  sftpPrivateKeyOpenSshFileInKeys = this.provide(
-    File,
-    'sftpPrivateKeyOpenSshFileInKeys',
-    id => ({
-      filename: path.join(
-        process.cwd(),
-        this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirRelativePaths.keys,
-        K8S_Workstation_SftpApp_Stack.name,
-        `${id}.key`,
-      ),
-      content: this.sftpPrivateKey.element.privateKeyOpenssh,
-      filePermission: '0600',
-    }),
-  );
+    const privateSshKeyFileInKeys = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInKeys`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.keys,
+          K8S_Workstation_SftpApp_Stack.name,
+          `${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+        filePermission: '0600',
+      }),
+    );
+
+    return [
+      {},
+      {
+        key,
+        privateSshKeyFileInSecrets,
+        privateSshKeyFileInKeys,
+      },
+    ];
+  });
 
   sftpConfigMap = this.provide(ConfigMap, 'sftpConfigMap', id => ({
     metadata: {
@@ -113,7 +127,7 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
           .name,
     },
     data: {
-      'ssh-public-key': this.sftpPrivateKey.element.publicKeyOpenssh,
+      'ssh-public-key': this.sftpPrivateKey.shared.key.element.publicKeyOpenssh,
     },
   }));
 

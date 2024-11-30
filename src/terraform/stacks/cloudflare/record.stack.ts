@@ -12,7 +12,7 @@ import { Record } from '@lib/terraform/providers/cloudflare/record';
 export class Cloudflare_Record_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),

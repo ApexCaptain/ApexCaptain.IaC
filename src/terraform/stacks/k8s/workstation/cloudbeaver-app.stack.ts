@@ -15,7 +15,7 @@ import { Service } from '@lib/terraform/providers/kubernetes/service';
 export class K8S_Workstation_CloudbeaverApp_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),

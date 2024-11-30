@@ -11,7 +11,7 @@ import { OciProvider } from '@lib/terraform/providers/oci/provider';
 export class Oci_Compartment_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),

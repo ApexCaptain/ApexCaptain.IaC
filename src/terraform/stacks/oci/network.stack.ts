@@ -24,7 +24,7 @@ import { CoreSecurityList } from '@lib/terraform/providers/oci/core-security-lis
 export class Oci_Network_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
@@ -55,8 +55,7 @@ export class Oci_Network_Stack extends AbstractStack {
     cidrBlock: this.cidrBlockMeta.okeVcnCidrBlock,
     compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
     displayName: id,
-    dnsLabel: 'default',
-
+    dnsLabel: 'oke',
     lifecycle: {
       preventDestroy: true,
     },
@@ -229,6 +228,7 @@ export class Oci_Network_Stack extends AbstractStack {
       securityListIds: [
         this.okeK8sEndpointPrivateSubnetSecurityList.element.id,
       ],
+      dnsLabel: 'endpoint',
     }),
   );
 
@@ -360,6 +360,7 @@ export class Oci_Network_Stack extends AbstractStack {
       prohibitPublicIpOnVnic: true,
       routeTableId: this.okeWorkerNodePrivateSubnetRouteTable.element.id,
       securityListIds: [this.okeWorkerNodePrivateSubnetSecurityList.element.id],
+      dnsLabel: 'worker',
     }),
   );
 
@@ -422,6 +423,7 @@ export class Oci_Network_Stack extends AbstractStack {
       securityListIds: [
         this.okeServiceLoadBalancerPublicSubnetSecurityList.element.id,
       ],
+      dnsLabel: 'lb',
     }),
   );
 
@@ -467,6 +469,7 @@ export class Oci_Network_Stack extends AbstractStack {
       vcnId: this.okeVcn.element.id,
       prohibitPublicIpOnVnic: true,
       securityListIds: [this.okeBastionPrivateSubnetSecurityList.element.id],
+      dnsLabel: 'bastion',
     }),
   );
 

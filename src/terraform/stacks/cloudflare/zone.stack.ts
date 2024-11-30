@@ -11,7 +11,7 @@ import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider
 export class Cloudflare_Zone_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
