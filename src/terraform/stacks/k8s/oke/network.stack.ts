@@ -9,7 +9,6 @@ import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import { CoreVcn } from '@lib/terraform/providers/oci/core-vcn';
-import { Oci_Compartment_Stack } from './compartment.stack';
 import { CoreSubnet } from '@lib/terraform/providers/oci/core-subnet';
 import { CoreInternetGateway } from '@lib/terraform/providers/oci/core-internet-gateway';
 import { CoreNatGateway } from '@lib/terraform/providers/oci/core-nat-gateway';
@@ -18,10 +17,10 @@ import { CoreServiceGateway } from '@lib/terraform/providers/oci/core-service-ga
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { CoreDhcpOptions } from '@lib/terraform/providers/oci/core-dhcp-options';
 import { CoreSecurityList } from '@lib/terraform/providers/oci/core-security-list';
+import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 
-// https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-flannel-cni-privatek8sapi_privateworkers_publiclb
 @Injectable()
-export class Oci_Network_Stack extends AbstractStack {
+export class K8S_Oke_Network_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -53,7 +52,7 @@ export class Oci_Network_Stack extends AbstractStack {
   // VCN
   okeVcn = this.provide(CoreVcn, 'okeVcn', id => ({
     cidrBlock: this.cidrBlockMeta.okeVcnCidrBlock,
-    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     dnsLabel: 'oke',
     lifecycle: {
@@ -65,7 +64,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreInternetGateway,
     'okeInternetGateway',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       enabled: true,
@@ -73,7 +72,7 @@ export class Oci_Network_Stack extends AbstractStack {
   );
 
   okeNatGateway = this.provide(CoreNatGateway, 'okeNatGateway', id => ({
-    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     vcnId: this.okeVcn.element.id,
   }));
@@ -82,7 +81,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreServiceGateway,
     'okeServiceGateway',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       services: [
@@ -94,7 +93,7 @@ export class Oci_Network_Stack extends AbstractStack {
   );
 
   okeDhcpOption = this.provide(CoreDhcpOptions, 'okeDhcpOption', id => ({
-    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     vcnId: this.okeVcn.element.id,
     options: [
@@ -110,7 +109,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreRouteTable,
     'okeK8sEndpointPrivateSubnetRouteTable',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       routeRules: [
@@ -131,7 +130,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreSecurityList,
     'okeK8sEndpointPrivateSubnetSecurityList',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       ingressSecurityRules: [
@@ -220,7 +219,7 @@ export class Oci_Network_Stack extends AbstractStack {
     'okeK8sEndpointPrivateSubnet',
     id => ({
       cidrBlock: this.cidrBlockMeta.okeK8sEndpointPrivateSubnetCidrBlock,
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       prohibitPublicIpOnVnic: true,
@@ -237,7 +236,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreRouteTable,
     'okeWorkerNodePrivateSubnetRouteTable',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       routeRules: [
@@ -258,7 +257,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreSecurityList,
     'okeWorkerNodePrivateSubnetSecurityList',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       ingressSecurityRules: [
@@ -354,7 +353,7 @@ export class Oci_Network_Stack extends AbstractStack {
     'okeWorkerNodePrivateSubnet',
     id => ({
       cidrBlock: this.cidrBlockMeta.okeWorkerNodePrivateSubnetCidrBlock,
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       prohibitPublicIpOnVnic: true,
@@ -369,7 +368,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreRouteTable,
     'okeServiceLoadBalancerPublicSubnetRouteTable',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       routeRules: [
@@ -385,7 +384,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreSecurityList,
     'okeServiceLoadBalancerPublicSubnetSecurityList',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       // @ToDo 로드 밸런서 ingress는 모든 포트/프로토콜에 대해 허용됨
@@ -415,7 +414,7 @@ export class Oci_Network_Stack extends AbstractStack {
     'okeServiceLoadBalancerPublicSubnet',
     id => ({
       cidrBlock: this.cidrBlockMeta.okeServiceLoadBalancerPublicSubnetCidrBlock,
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       routeTableId:
@@ -432,7 +431,7 @@ export class Oci_Network_Stack extends AbstractStack {
     CoreSecurityList,
     'okeBastionPrivateSubnetSecurityList',
     id => ({
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       egressSecurityRules: [
@@ -464,7 +463,7 @@ export class Oci_Network_Stack extends AbstractStack {
     'okeBastionPrivateSubnet',
     id => ({
       cidrBlock: this.cidrBlockMeta.okeBastionPrivateSubnetCidrBlock,
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       vcnId: this.okeVcn.element.id,
       prohibitPublicIpOnVnic: true,
@@ -479,12 +478,12 @@ export class Oci_Network_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly ociCompartmentStack: Oci_Compartment_Stack,
+    private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      Oci_Network_Stack.name,
-      'OCI network stack',
+      K8S_Oke_Network_Stack.name,
+      'Kubernetes OKE network stack',
     );
   }
 }

@@ -176,7 +176,7 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.3.0',
+    'constructs@^10.4.2',
     '@types/lodash',
   ],
 });
@@ -256,6 +256,7 @@ void (async () => {
   });
 
   // ENV
+
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
@@ -266,14 +267,15 @@ void (async () => {
           },
           kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
         },
-        oci: {
-          bastion: {
-            clientCidrBlockAllowList: [
-              `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
-            ],
-          },
-        },
+
         k8s: {
+          oke: {
+            bastion: {
+              clientCidrBlockAllowList: [
+                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
+              ],
+            },
+          },
           workstation: {
             common: {
               domain: {

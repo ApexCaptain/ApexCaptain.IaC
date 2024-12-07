@@ -1,15 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import { Cloudflare_Zone_Stack } from './zone.stack';
 import { AbstractStack } from '@/common';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
-import { Record } from '@lib/terraform/providers/cloudflare/record';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { Ruleset } from '@lib/terraform/providers/cloudflare/ruleset';
+import { Cloudflare_Zone_Stack } from './zone.stack';
 
 @Injectable()
-export class Cloudflare_Record_Stack extends AbstractStack {
+export class Cloudflare_Firewall_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -23,21 +22,22 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
-  cloudbeaverRecord = this.provide(Record, 'cloudbeaverRecord', () => ({
-    name: 'cloudbeaver',
-    type: 'CNAME',
-    content:
-      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-        .domain.iptime,
-    proxied: true,
+  countryBasedRuleset = this.provide(Ruleset, 'countryBasedRuleset', id => ({
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    comment: 'Cloudflare DNS record for CloudBeaver service',
+    name: id,
+    description: 'Block countries except Korea and Japan',
+    kind: 'zone',
+    phase: 'http_request_firewall_custom',
+    rules: [
+      {
+        action: 'block',
+        expression: '(ip.geoip.country ne "KR" and ip.geoip.country ne "JP")',
+        enabled: true,
+      },
+    ],
   }));
 
   constructor(
-    // Global
-    private readonly globalConfigService: GlobalConfigService,
-
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
@@ -47,8 +47,8 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   ) {
     super(
       terraformAppService.cdktfApp,
-      Cloudflare_Record_Stack.name,
-      'Cloudflare record stack',
+      Cloudflare_Firewall_Stack.name,
+      'Cloudflare firewall stack',
     );
   }
 }

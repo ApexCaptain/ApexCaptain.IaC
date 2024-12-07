@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import { Oci_RootData_Stack } from './root-data.stack';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { Injectable } from '@nestjs/common';
+import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { IdentityCompartment } from '@lib/terraform/providers/oci/identity-compartment';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
+import { LocalBackend } from 'cdktf';
 
 @Injectable()
-export class Oci_Compartment_Stack extends AbstractStack {
+export class K8S_Oke_Compartment_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -22,18 +22,14 @@ export class Oci_Compartment_Stack extends AbstractStack {
     },
   };
 
-  kubernetesCompartment = this.provide(
-    IdentityCompartment,
-    'kubernetesCompartment',
-    id => ({
-      compartmentId: this.ociRootDataStack.dataRootCompartment.element.id,
-      name: id,
-      description: `Kubernetes compartment`,
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
+  okeCompartment = this.provide(IdentityCompartment, 'okeCompartment', id => ({
+    compartmentId: this.k8sOkeOciStack.dataRootCompartment.element.id,
+    name: id,
+    description: 'Compartment for Oracle Kubernetes Engine Cluster',
+    lifecycle: {
+      preventDestroy: true,
+    },
+  }));
 
   constructor(
     // Terraform
@@ -41,12 +37,8 @@ export class Oci_Compartment_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly ociRootDataStack: Oci_RootData_Stack,
+    private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
   ) {
-    super(
-      terraformAppService.cdktfApp,
-      Oci_Compartment_Stack.name,
-      'OCI compartment stack',
-    );
+    super(terraformAppService.cdktfApp, K8S_Oke_Compartment_Stack.name);
   }
 }

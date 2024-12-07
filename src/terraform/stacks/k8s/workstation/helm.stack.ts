@@ -22,11 +22,11 @@ export class K8S_Workstation_Helm_Stack extends AbstractStack {
     },
   };
 
-  ingressNginx = this.provide(Release, 'ingressNginx', id => ({
-    name: _.kebabCase(id),
-    repository: 'https://kubernetes.github.io/ingress-nginx',
-    chart: 'ingress-nginx',
-  }));
+  // ingressNginx = this.provide(Release, 'ingressNginx', id => ({
+  //   name: _.kebabCase(id),
+  //   repository: 'https://kubernetes.github.io/ingress-nginx',
+  //   chart: 'ingress-nginx',
+  // }));
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

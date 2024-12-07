@@ -2,27 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { Fn, LocalBackend, TerraformIterator } from 'cdktf';
+import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
 import path from 'path';
 import { File } from '@lib/terraform/providers/local/file';
 import { BastionBastion } from '@lib/terraform/providers/oci/bastion-bastion';
-import { Oci_Compartment_Stack } from './compartment.stack';
-import { Oci_Network_Stack } from './network.stack';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
-import { Oci_Oke_Stack } from './oke.stack';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import _ from 'lodash';
+import { LocalBackend } from 'cdktf';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { K8S_Oke_Compartment_Stack } from './compartment.stack';
+import { K8S_Oke_Network_Stack } from './network.stack';
 
 @Injectable()
-export class Oci_Bastion_Stack extends AbstractStack {
+export class K8S_Oke_Bastion_Stack extends AbstractStack {
   private readonly config =
-    this.globalConfigService.config.terraform.stacks.oci.bastion;
+    this.globalConfigService.config.terraform.stacks.k8s.oke.bastion;
 
   terraform = {
     backend: this.backend(LocalBackend, () =>
@@ -40,7 +38,7 @@ export class Oci_Bastion_Stack extends AbstractStack {
     },
   };
 
-  okeBastionSshKey = this.provide(Resource, 'okeBastionSshKey', idPrefix => {
+  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
@@ -54,8 +52,7 @@ export class Oci_Bastion_Stack extends AbstractStack {
           process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
             .generatedKeyFilesDirRelativePaths.secrets,
-          Oci_Bastion_Stack.name,
-          `${id}.key`,
+          `${K8S_Oke_Bastion_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
       }),
@@ -69,23 +66,29 @@ export class Oci_Bastion_Stack extends AbstractStack {
           process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
             .generatedKeyFilesDirRelativePaths.keys,
-          Oci_Bastion_Stack.name,
-          `${id}.key`,
+          `${K8S_Oke_Bastion_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
       }),
     );
 
-    return [{}, { key, privateSshKeyFileInSecrets, privateSshKeyFileInKeys }];
+    return [
+      {},
+      {
+        key,
+        privateSshKeyFileInSecrets,
+        privateSshKeyFileInKeys,
+      },
+    ];
   });
 
   okeBastion = this.provide(BastionBastion, 'okeBastion', id => ({
     bastionType: 'STANDARD',
-    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     name: id,
-    targetSubnetId: this.ociNetworkStack.okeBastionPrivateSubnet.element.id,
+    targetSubnetId: this.k8sOkeNetworkStack.okeBastionPrivateSubnet.element.id,
     clientCidrBlockAllowList: this.config.clientCidrBlockAllowList,
     dnsProxyStatus: 'ENABLED',
   }));
@@ -93,8 +96,7 @@ export class Oci_Bastion_Stack extends AbstractStack {
   okeBastionSession = this.provide(BastionSession, 'okeBastionSession', id => ({
     bastionId: this.okeBastion.element.id,
     keyDetails: {
-      publicKeyContent:
-        this.okeBastionSshKey.shared.key.element.publicKeyOpenssh,
+      publicKeyContent: this.privateKey.shared.key.element.publicKeyOpenssh,
     },
     targetResourceDetails: {
       sessionType: 'DYNAMIC_PORT_FORWARDING',
@@ -113,14 +115,13 @@ export class Oci_Bastion_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly ociCompartmentStack: Oci_Compartment_Stack,
-    private readonly ociNetworkStack: Oci_Network_Stack,
-    private readonly ociOkeStack: Oci_Oke_Stack,
+    private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      Oci_Bastion_Stack.name,
-      'OCI bastion stack',
+      K8S_Oke_Bastion_Stack.name,
+      'K8S OKE Bastion Stack',
     );
   }
 }

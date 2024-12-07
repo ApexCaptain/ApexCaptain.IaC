@@ -1,26 +1,26 @@
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend, TerraformIterator } from 'cdktf';
-import { File } from '@lib/terraform/providers/local/file';
+import { K8S_Oke_Compartment_Stack } from './compartment.stack';
+import { K8S_Oke_Network_Stack } from './network.stack';
+import { K8S_Oke_Oci_Stack } from './oci.stack';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { ContainerengineCluster } from '@lib/terraform/providers/oci/containerengine-cluster';
 import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
-import { Oci_Compartment_Stack } from './compartment.stack';
-import { Oci_Network_Stack } from './network.stack';
-import { Oci_RootData_Stack } from './root-data.stack';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { LocalBackend } from 'cdktf';
+import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import path from 'path';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import path from 'path';
 
 @Injectable()
-export class Oci_Oke_Stack extends AbstractStack {
+export class K8S_Oke_Cluster_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -37,11 +37,7 @@ export class Oci_Oke_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    okeArmNodePoolSize: 4,
-  };
-
-  okeNodePoolSshKey = this.provide(Resource, 'okeNodePoolSshKey', idPrefix => {
+  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
@@ -55,8 +51,7 @@ export class Oci_Oke_Stack extends AbstractStack {
           process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
             .generatedKeyFilesDirRelativePaths.secrets,
-          Oci_Oke_Stack.name,
-          `${id}.key`,
+          `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
       }),
@@ -70,8 +65,7 @@ export class Oci_Oke_Stack extends AbstractStack {
           process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
             .generatedKeyFilesDirRelativePaths.keys,
-          Oci_Oke_Stack.name,
-          `${id}.key`,
+          `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
@@ -89,20 +83,20 @@ export class Oci_Oke_Stack extends AbstractStack {
   });
 
   okeCluster = this.provide(ContainerengineCluster, 'okeCluster', id => ({
-    compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+    compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     kubernetesVersion: 'v1.31.1',
     name: id,
-    vcnId: this.ociNetworkStack.okeVcn.element.id,
+    vcnId: this.k8sOkeNetworkStack.okeVcn.element.id,
 
     clusterPodNetworkOptions: [{ cniType: 'FLANNEL_OVERLAY' }],
     endpointConfig: {
       isPublicIpEnabled: false,
-      subnetId: this.ociNetworkStack.okeK8sEndpointPrivateSubnet.element.id,
+      subnetId: this.k8sOkeNetworkStack.okeK8sEndpointPrivateSubnet.element.id,
     },
     options: {
       serviceLbSubnetIds: [
-        this.ociNetworkStack.okeServiceLoadBalancerPublicSubnet.element.id,
+        this.k8sOkeNetworkStack.okeServiceLoadBalancerPublicSubnet.element.id,
       ],
     },
     type: 'BASIC_CLUSTER',
@@ -146,7 +140,7 @@ export class Oci_Oke_Stack extends AbstractStack {
     'okeArmNodePool',
     id => ({
       clusterId: this.okeCluster.element.id,
-      compartmentId: this.ociCompartmentStack.kubernetesCompartment.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,
       name: id,
 
@@ -154,12 +148,12 @@ export class Oci_Oke_Stack extends AbstractStack {
         placementConfigs: [
           {
             availabilityDomain:
-              this.ociRootDataStack.dataAvailabilityDomain.element.name,
+              this.k8sOkeOciStack.dataAvailabilityDomain.element.name,
             subnetId:
-              this.ociNetworkStack.okeWorkerNodePrivateSubnet.element.id,
+              this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
           },
         ],
-        size: this.meta.okeArmNodePoolSize,
+        size: 4,
 
         nodePoolPodNetworkOptionDetails: {
           cniType: 'FLANNEL_OVERLAY',
@@ -178,7 +172,7 @@ export class Oci_Oke_Stack extends AbstractStack {
         memoryInGbs: 6,
         ocpus: 1,
       },
-      sshPublicKey: this.okeNodePoolSshKey.shared.key.element.publicKeyOpenssh,
+      sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
     }),
   );
 
@@ -191,10 +185,14 @@ export class Oci_Oke_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly ociCompartmentStack: Oci_Compartment_Stack,
-    private readonly ociNetworkStack: Oci_Network_Stack,
-    private readonly ociRootDataStack: Oci_RootData_Stack,
+    private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
+    private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
-    super(terraformAppService.cdktfApp, Oci_Oke_Stack.name, 'OCI OKE stack');
+    super(
+      terraformAppService.cdktfApp,
+      K8S_Oke_Cluster_Stack.name,
+      'K8S OKE Cluster stack',
+    );
   }
 }
