@@ -22,8 +22,12 @@ export class K8S_Workstation_Helm_Stack extends AbstractStack {
     },
   };
 
+  // @ToDo: helm provider와 호환 문제로 일단 주석 처리
+  // 임시로 helm upgrade --install ingress-nginx ingress-nginx    --repo https://kubernetes.github.io/ingress-nginx
+  // 커맨드 써서 수동으로 설치함, 추후 다시 확인
   // ingressNginx = this.provide(Release, 'ingressNginx', id => ({
   //   name: _.kebabCase(id),
+  //   upgradeInstall: true,
   //   repository: 'https://kubernetes.github.io/ingress-nginx',
   //   chart: 'ingress-nginx',
   // }));

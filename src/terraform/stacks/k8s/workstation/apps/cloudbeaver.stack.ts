@@ -123,6 +123,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
   //   },
   //   spec: {
   //     type: 'ClusterIP',
+  //     // type: 'NodePort',
   //     selector: this.meta.labels,
   //     port: Object.values(this.meta.port).map(port => ({
   //       port: port.servicePort,

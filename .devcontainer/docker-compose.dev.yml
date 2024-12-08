@@ -24,8 +24,5 @@ services:
       ## Node Modules
       - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
 
-    extra_hosts:
-      - 'kubernetes.docker.internal:host-gateway'
-
 volumes:
   ApexCaptain.IaC.Workspace.node_modules:

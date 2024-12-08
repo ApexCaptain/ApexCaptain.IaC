@@ -167,6 +167,8 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
   //               },
   //             ],
   //             securityContext: {
+  //               runAsUser: '1001',
+  //               runAsGroup: '100',
   //               capabilities: {
   //                 add: ['SYS_ADMIN'],
   //               },
