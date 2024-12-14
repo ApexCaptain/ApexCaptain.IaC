@@ -16,6 +16,9 @@ import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
+import _ from 'lodash';
+import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
@@ -118,9 +121,9 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
     ];
   });
 
-  configMap = this.provide(ConfigMap, 'configMap', () => ({
+  configMap = this.provide(ConfigMap, 'configMap', id => ({
     metadata: {
-      name: this.meta.name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
     },
     data: {
@@ -128,9 +131,9 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
     },
   }));
 
-  deployment = this.provide(Deployment, 'deployment', () => ({
+  deployment = this.provide(Deployment, 'deployment', id => ({
     metadata: {
-      name: this.meta.name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -193,9 +196,9 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
     },
   }));
 
-  service = this.provide(Service, 'service', () => ({
+  service = this.provide(Service, 'service', id => ({
     metadata: {
-      name: this.meta.name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -216,6 +219,9 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
+
+    // Stacks
+    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

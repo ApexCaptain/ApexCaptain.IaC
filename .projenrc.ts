@@ -191,7 +191,7 @@ void (async () => {
   project.addScripts({
     postprojen: 'cdktf get',
     'tf@build': 'cdktf synth',
-    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 4`,
+    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
     'kubectl@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
