@@ -1,2 +1,3 @@
+export * from './7dtd.stack';
 export * from './cloudbeaver.stack';
 export * from './sftp.stack';

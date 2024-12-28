@@ -10,7 +10,6 @@ import { Service } from '@lib/terraform/providers/kubernetes/service';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import path from 'path';
-import { K8S_Workstation_Helm_Stack } from '../helm.stack';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import _ from 'lodash';
 

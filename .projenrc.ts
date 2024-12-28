@@ -5,6 +5,7 @@ import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
 import dns from 'dns/promises';
+import { VsCodeSettings } from 'projen/lib/vscode';
 
 const constants = (() => {
   const project = {
@@ -255,8 +256,17 @@ void (async () => {
     committed: false,
   });
 
-  // ENV
+  // // VscodeSettings
+  // if (project.vscode) {
+  //   const vscodeSettings = new VsCodeSettings(project.vscode);
+  //   vscodeSettings.addSettings({
+  //     'files.associations': {
+  //       '*.xml.j2': 'xml',
+  //     },
+  //   });
+  // }
 
+  // ENV
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
