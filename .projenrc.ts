@@ -277,7 +277,6 @@ void (async () => {
           },
           kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
         },
-
         k8s: {
           oke: {
             bastion: {
@@ -300,6 +299,11 @@ void (async () => {
             },
             sftp: {
               userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
+            },
+            palworld: {
+              adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
+              serverPassword:
+                process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
             },
           },
         },

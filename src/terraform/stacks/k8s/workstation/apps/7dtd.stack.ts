@@ -75,27 +75,27 @@ export class K8S_Workstation_Apps_7dtd_Stack extends AbstractStack {
       saves: {
         containerDirPath: '/home/sdtdserver/.local/share/7DaysToDie/',
         hostDirPath: path.join(this.ssdVolumeDirPath, 'saves'),
-        volumeName: '7dtd-saves',
+        volumeName: 'saves',
       },
       lgsmConfig: {
         containerDirPath: '/home/sdtdserver/lgsm/config-lgsm/sdtdserver',
         hostDirPath: path.join(this.ssdVolumeDirPath, 'lgsm-config'),
-        volumeName: '7dtd-lgsm-config',
+        volumeName: 'lgsm-config',
       },
       serverFiles: {
         containerDirPath: '/home/sdtdserver/serverfiles/',
         hostDirPath: path.join(this.ssdVolumeDirPath, 'serverfiles'),
-        volumeName: '7dtd-server-files',
+        volumeName: 'serverfiles',
       },
       logs: {
         containerDirPath: '/home/sdtdserver/log/',
         hostDirPath: path.join(this.ssdVolumeDirPath, 'logs'),
-        volumeName: '7dtd-logs',
+        volumeName: 'logs',
       },
       backups: {
         containerDirPath: '/home/sdtdserver/lgsm/backup/',
         hostDirPath: path.join(this.ssdVolumeDirPath, 'backups'),
-        volumeName: '7dtd-backups',
+        volumeName: 'backups',
       },
     },
   };
