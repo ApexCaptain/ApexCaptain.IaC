@@ -171,6 +171,7 @@ const project = new typescript.TypeScriptAppProject({
     'joi-extract-type',
     'flat@5.0.2',
     'lodash',
+    'cron-time-generator',
   ],
   devDeps: [
     '@nestjs/cli',

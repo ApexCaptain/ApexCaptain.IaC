@@ -110,6 +110,10 @@
       "type": "runtime"
     },
     {
+      "name": "cron-time-generator",
+      "type": "runtime"
+    },
+    {
       "name": "flat",
       "version": "5.0.2",
       "type": "runtime"

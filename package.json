@@ -55,6 +55,7 @@
     "cdktf-cli": "^0.20.10",
     "cdktf-injector": "^1.0.139",
     "constructs": "^10.4.2",
+    "cron-time-generator": "^2.0.3",
     "flat": "5.0.2",
     "joi-extract-type": "^15.0.8",
     "lodash": "^4.17.21",
