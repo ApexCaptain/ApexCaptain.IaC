@@ -5,7 +5,6 @@ import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
 import dns from 'dns/promises';
-import { VsCodeSettings } from 'projen/lib/vscode';
 
 const constants = (() => {
   const project = {
@@ -278,6 +277,14 @@ void (async () => {
           },
           kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
         },
+        cloudflare: {
+          zone: {
+            ayteneve93com: {
+              zoneId:
+                process.env.APEX_CAPTAIN_CLOUDFLARE_AYTENEVE93_COM_ZONE_ID!!,
+            },
+          },
+        },
         k8s: {
           oke: {
             bastion: {
@@ -297,6 +304,11 @@ void (async () => {
                 hddVolume:
                   process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_HDD_VOLUME!!,
               },
+            },
+            honeygain: {
+              email: process.env.WORKSTATION_HONEYGAIN_EMAIL!!,
+              password: process.env.WORKSTATION_HONEYGAIN_PASSWORD!!,
+              deviceName: process.env.WORKSTATION_HONEYGAIN_DEVICE_NAME!!,
             },
             sftp: {
               userName: process.env.WORKSTATION_SFTP_USER_NAME!!,

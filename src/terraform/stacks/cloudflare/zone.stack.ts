@@ -5,9 +5,13 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DataCloudflareZone } from '@lib/terraform/providers/cloudflare/data-cloudflare-zone';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
 export class Cloudflare_Zone_Stack extends AbstractStack {
+  private readonly config =
+    this.globalConfigService.config.terraform.stacks.cloudflare.zone;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -25,11 +29,14 @@ export class Cloudflare_Zone_Stack extends AbstractStack {
     DataCloudflareZone,
     'dataAyteneve93Zone',
     () => ({
-      name: 'ayteneve93.com',
+      zoneId: this.config.ayteneve93com.zoneId,
     }),
   );
 
   constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,

@@ -10,7 +10,10 @@ import { Service } from '@lib/terraform/providers/kubernetes/service';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import path from 'path';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
+import {
+  Cloudflare_Record_Stack,
+  Cloudflare_Zone_Stack,
+} from '@/terraform/stacks/cloudflare';
 import _ from 'lodash';
 
 @Injectable()
@@ -144,7 +147,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: this.cloudflareRecordStack.cloudbeaverRecord.element.hostname,
+          host: `${this.cloudflareRecordStack.cloudbeaverDnsRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
           http: {
             path: [
               {
@@ -175,6 +178,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(

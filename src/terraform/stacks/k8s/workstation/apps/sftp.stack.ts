@@ -17,7 +17,6 @@ import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
 import _ from 'lodash';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 
 @Injectable()
