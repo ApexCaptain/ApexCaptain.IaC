@@ -305,11 +305,6 @@ void (async () => {
                   process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_HDD_VOLUME!!,
               },
             },
-            honeygain: {
-              email: process.env.WORKSTATION_HONEYGAIN_EMAIL!!,
-              password: process.env.WORKSTATION_HONEYGAIN_PASSWORD!!,
-              deviceName: process.env.WORKSTATION_HONEYGAIN_DEVICE_NAME!!,
-            },
             sftp: {
               userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
             },

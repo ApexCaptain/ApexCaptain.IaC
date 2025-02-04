@@ -2,7 +2,6 @@ import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';

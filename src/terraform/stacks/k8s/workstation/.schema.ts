@@ -10,11 +10,6 @@ export const WorkstationSchema = Joi.object({
       hddVolume: Joi.string().required(),
     }).required(),
   }).required(),
-  honeygain: Joi.object({
-    email: Joi.string().required(),
-    password: Joi.string().required(),
-    deviceName: Joi.string().required(),
-  }).required(),
   sftp: Joi.object({
     userName: Joi.string().required(),
   }).required(),
