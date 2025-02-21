@@ -13,6 +13,10 @@
       "type": "build"
     },
     {
+      "name": "@types/bcrypt",
+      "type": "build"
+    },
+    {
       "name": "@types/flat",
       "version": "5.0.2",
       "type": "build"
@@ -91,6 +95,10 @@
     },
     {
       "name": "@nestjs/core",
+      "type": "runtime"
+    },
+    {
+      "name": "bcrypt",
       "type": "runtime"
     },
     {

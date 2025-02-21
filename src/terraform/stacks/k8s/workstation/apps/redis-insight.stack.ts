@@ -11,11 +11,17 @@ import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.st
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
+import bcrypt from 'bcrypt';
 import path from 'path';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
+import { Secret } from '@lib/terraform/providers/kubernetes/secret';
 
 @Injectable()
 export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
+  private readonly config =
+    this.globalConfigService.config.terraform.stacks.k8s.workstation
+      .redisInsight;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -130,6 +136,24 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
     },
   }));
 
+  ingressBasicAuthSecret = this.provide(
+    Secret,
+    'ingressBasicAuthSecret',
+    id => ({
+      metadata: {
+        name: _.kebabCase(`${this.meta.name}-${id}`),
+        namespace: this.namespace.element.metadata.name,
+      },
+      data: {
+        auth: `${this.config.basicAuthUsername}:${bcrypt.hashSync(
+          this.config.basicAuthPassword,
+          10,
+        )}`,
+      },
+      type: 'Opaque',
+    }),
+  );
+
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -137,6 +161,10 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
+        'nginx.ingress.kubernetes.io/auth-type': 'basic',
+        'nginx.ingress.kubernetes.io/auth-secret':
+          this.ingressBasicAuthSecret.element.metadata.name,
+        'nginx.ingress.kubernetes.io/auth-realm': 'Authentication Required',
       },
     },
     spec: {

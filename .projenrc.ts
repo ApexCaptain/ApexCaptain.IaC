@@ -171,6 +171,7 @@ const project = new typescript.TypeScriptAppProject({
     'flat@5.0.2',
     'lodash',
     'cron-time-generator',
+    'bcrypt',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -179,6 +180,7 @@ const project = new typescript.TypeScriptAppProject({
     '@types/flat@5.0.2',
     'constructs@^10.4.2',
     '@types/lodash',
+    '@types/bcrypt',
   ],
 });
 
@@ -312,6 +314,12 @@ void (async () => {
               adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
               serverPassword:
                 process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
+            },
+            redisInsight: {
+              basicAuthUsername:
+                process.env.WORKSTATION_REDIS_INSIGHT_BASIC_AUTH_USERNAME!!,
+              basicAuthPassword:
+                process.env.WORKSTATION_REDIS_INSIGHT_BASIC_AUTH_PASSWORD!!,
             },
           },
         },

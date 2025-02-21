@@ -17,4 +17,8 @@ export const WorkstationSchema = Joi.object({
     adminPassword: Joi.string().required(),
     serverPassword: Joi.string().required(),
   }).required(),
+  redisInsight: Joi.object({
+    basicAuthUsername: Joi.string().required(),
+    basicAuthPassword: Joi.string().required(),
+  }).required(),
 }).required();
