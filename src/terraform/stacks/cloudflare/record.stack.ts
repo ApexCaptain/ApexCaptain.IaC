@@ -38,6 +38,23 @@ export class Cloudflare_Record_Stack extends AbstractStack {
       comment: 'Cloudflare DNS record for CloudBeaver service',
     }),
   );
+
+  redisInsightDnsRecord = this.provide(
+    DnsRecord,
+    'redisInsightDnsRecord',
+    () => ({
+      name: 'redis-insight',
+      ttl: 1,
+      type: 'CNAME',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+          .domain.iptime,
+      proxied: true,
+      comment: 'Cloudflare DNS record for RedisInsight service',
+    }),
+  );
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
