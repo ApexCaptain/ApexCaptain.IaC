@@ -13,10 +13,6 @@
       "type": "build"
     },
     {
-      "name": "@types/bcrypt",
-      "type": "build"
-    },
-    {
       "name": "@types/flat",
       "version": "5.0.2",
       "type": "build"
@@ -98,10 +94,6 @@
       "type": "runtime"
     },
     {
-      "name": "bcrypt",
-      "type": "runtime"
-    },
-    {
       "name": "cdktf",
       "type": "runtime"
     },
@@ -111,6 +103,14 @@
     },
     {
       "name": "cdktf-injector",
+      "type": "runtime"
+    },
+    {
+      "name": "class-transformer",
+      "type": "runtime"
+    },
+    {
+      "name": "class-validator",
       "type": "runtime"
     },
     {

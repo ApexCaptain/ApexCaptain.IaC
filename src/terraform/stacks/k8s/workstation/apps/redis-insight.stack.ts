@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractStack } from '@/common';
+import { AbstractStack, createExpirationDateTrigger } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -11,17 +11,14 @@ import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.st
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import bcrypt from 'bcrypt';
 import path from 'path';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
 import { Secret } from '@lib/terraform/providers/kubernetes/secret';
-
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { Password } from '@lib/terraform/providers/random/password';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
 @Injectable()
 export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
-  private readonly config =
-    this.globalConfigService.config.terraform.stacks.k8s.workstation
-      .redisInsight;
-
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -32,6 +29,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
+      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
     },
   };
 
@@ -136,6 +134,44 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
     },
   }));
 
+  ingressBasicAuthUsername = this.provide(
+    StringResource,
+    'ingressBasicAuthUsername',
+    () => ({
+      length: 16,
+      special: false,
+      keepers: {
+        expirationDateTrigger: createExpirationDateTrigger({
+          days: 30,
+        }),
+      },
+    }),
+  ).addOutput(
+    id => `${id}-value`,
+    ele => ({
+      value: ele.result,
+    }),
+  );
+
+  ingressBasicAuthPassword = this.provide(
+    Password,
+    'ingressBasicAuthPassword',
+    () => ({
+      length: 16,
+      keepers: {
+        expirationDateTrigger: createExpirationDateTrigger({
+          days: 30,
+        }),
+      },
+    }),
+  ).addOutput(
+    id => `${id}-value`,
+    ele => ({
+      value: ele.result,
+      sensitive: true,
+    }),
+  );
+
   ingressBasicAuthSecret = this.provide(
     Secret,
     'ingressBasicAuthSecret',
@@ -145,10 +181,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
         namespace: this.namespace.element.metadata.name,
       },
       data: {
-        auth: `${this.config.basicAuthUsername}:${bcrypt.hashSync(
-          this.config.basicAuthPassword,
-          10,
-        )}`,
+        auth: `${this.ingressBasicAuthUsername.element.result}:${this.ingressBasicAuthPassword.element.bcryptHash}`,
       },
       type: 'Opaque',
     }),
