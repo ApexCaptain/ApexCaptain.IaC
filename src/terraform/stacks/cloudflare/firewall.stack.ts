@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import { Cloudflare_Zone_Stack } from './zone.stack';
 import { AbstractStack } from '@/common';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { DataCloudflareZone } from '@lib/terraform/providers/cloudflare/data-cloudflare-zone';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
+import { Ruleset } from '@lib/terraform/providers/cloudflare/ruleset';
 
 @Injectable()
-export class Cloudflare_Zone_Stack extends AbstractStack {
-  private readonly config =
-    this.globalConfigService.config.terraform.stacks.cloudflare.zone;
-
+export class Cloudflare_Firewall_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -25,26 +22,33 @@ export class Cloudflare_Zone_Stack extends AbstractStack {
     },
   };
 
-  dataAyteneve93Zone = this.provide(
-    DataCloudflareZone,
-    'dataAyteneve93Zone',
-    () => ({
-      zoneId: this.config.ayteneve93com.zoneId,
-    }),
-  );
+  countryBasedRuleset = this.provide(Ruleset, 'countryBasedRuleset', id => ({
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    name: id,
+    description: 'Block countries except Korea and Japan',
+    kind: 'zone',
+    phase: 'http_request_firewall_custom',
+    rules: [
+      {
+        action: 'block',
+        expression: '(ip.geoip.country ne "KR" and ip.geoip.country ne "JP")',
+        enabled: true,
+      },
+    ],
+  }));
 
   constructor(
-    // Global
-    private readonly globalConfigService: GlobalConfigService,
-
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
+
+    // Stacks
+    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      Cloudflare_Zone_Stack.name,
-      'Cloudflare zone stack',
+      Cloudflare_Firewall_Stack.name,
+      'Cloudflare firewall stack',
     );
   }
 }

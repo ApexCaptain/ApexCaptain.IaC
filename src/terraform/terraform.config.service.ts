@@ -13,7 +13,7 @@ export class TerraformConfigService {
 
   readonly backends = (() => {
     // LocalBackend
-    const localBakcned = {
+    const localBackend = {
       secrets: (option: { stackName: string }): LocalBackendConfig => {
         const paths = option.stackName.split('_');
         if (paths.pop() != 'Stack') {
@@ -30,7 +30,7 @@ export class TerraformConfigService {
     };
 
     return {
-      localBakcned,
+      localBackend,
     };
   })();
   readonly providers = (() => {

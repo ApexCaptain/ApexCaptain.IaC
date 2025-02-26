@@ -12,7 +12,7 @@ import { GithubProvider } from '@lib/terraform/providers/github/provider';
 export class Project_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # System Arguments (depend on workstation settings)
-SECRETS_DIR_PATH=/mnt/c/secrets 
+SECRETS_DIR_PATH=$HOME/google-drive/secrets 
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
 MERGED_ENV_FILE_PATH=.devcontainer/.env
 
@@ -24,10 +24,12 @@ CONTAINER_NODE_MODULES_DIR_PATH = ${containerWorkspaceFolder}/node_modules
 
 # Unonymous Volume Arguments
 HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH = $HOME/.kube/config
+CONTAINER_KUBE_CONFIG_DIR_PATH = ${containerWorkspaceFolder}/.kube
 CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH = ${containerWorkspaceFolder}/.kube/workstation.config
 
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH
 CONTAINER_SECRETS_DIR_PATH=$containerWorkspaceFolder/.secrets
+OCI_CLI_CONFIG_FILE_NAME=oci.config
 
 # Merged env
 EOL

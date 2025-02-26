@@ -7,6 +7,9 @@ echo Updating apt package manager
 sudo apt update -y
 sudo apt upgrade -y
 
+echo Installing OCI CLI
+bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
+
 echo Installing apt packages
 sudo apt install -y \
     sshpass
@@ -17,3 +20,4 @@ npm install -g \
 
 echo Initialize Projen
 yarn && yarn projen
+

@@ -37,7 +37,7 @@
     },
     {
       "name": "constructs",
-      "version": "^10.3.0",
+      "version": "^10.4.2",
       "type": "build"
     },
     {
@@ -106,7 +106,23 @@
       "type": "runtime"
     },
     {
+      "name": "class-transformer",
+      "type": "runtime"
+    },
+    {
+      "name": "class-validator",
+      "type": "runtime"
+    },
+    {
       "name": "constructs",
+      "type": "runtime"
+    },
+    {
+      "name": "cron-time-generator",
+      "type": "runtime"
+    },
+    {
+      "name": "deepmerge",
       "type": "runtime"
     },
     {

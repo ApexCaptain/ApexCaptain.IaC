@@ -2,32 +2,36 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { K8S_Workstation_Namespace_Stack } from './namespace.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
 import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
+import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
 import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 
 @Injectable()
-export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
+export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
   private readonly config =
     this.globalConfigService.config.terraform.stacks.k8s.workstation.sftp;
 
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
@@ -36,78 +40,84 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    labels: {
-      app: 'sftp',
-    },
-    port: {
-      sftp: {
-        containerPort: 22,
-        servicePort: 22,
-        nodePort: 30001,
+  meta = (() => {
+    const dataDirName = 'data';
+    return {
+      name: 'sftp',
+      labels: {
+        app: 'sftp',
       },
-    },
-    volume: {
-      sftp: {
-        containerDirPath: `/home/${this.config.userName}/data`,
-        hostDirPath: path.join(
-          this.globalConfigService.config.terraform.stacks.k8s.workstation
-            .common.volumeDirPath.hddVolume,
-          'sftp-data',
-        ),
-        volumeName: 'sftp-data',
+      port: {
+        sftp: {
+          containerPort: 22,
+          servicePort: 22,
+          nodePort: 30001,
+        },
       },
-      sftpSsd: {
-        containerDirPath: `/home/${this.config.userName}/data-ssd`,
-        hostDirPath: path.join(
-          this.globalConfigService.config.terraform.stacks.k8s.workstation
-            .common.volumeDirPath.ssdVolume,
-          'sftp-data-ssd',
-        ),
-        volumeName: 'sftp-data-ssd',
+      volume: {
+        sftp: {
+          dataDirName,
+          containerDirPath: `/home/${this.config.userName}/${dataDirName}`,
+          hostDirPath: path.join(
+            this.globalConfigService.config.terraform.stacks.k8s.workstation
+              .common.volumeDirPath.hddVolume,
+            'sftp-data',
+          ),
+          volumeName: 'sftp-data',
+        },
       },
-    },
-  };
+    };
+  })();
 
-  sftpPrivateKey = this.provide(PrivateKey, 'sftpPrivateKey', () => ({
-    algorithm: 'RSA',
-    rsaBits: 4096,
+  namespace = this.provide(Namespace, 'namespace', () => ({
+    metadata: {
+      name: this.meta.name,
+    },
   }));
 
-  sftpPrivateKeyOpenSshFile = this.provide(
-    File,
-    'sftpPrivateKeyOpenSshFile',
-    id => ({
-      filename: path.join(
-        process.cwd(),
-        this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirRelativePath,
-        K8S_Workstation_SftpApp_Stack.name,
-        `${id}.key`,
-      ),
-      content: this.sftpPrivateKey.element.privateKeyOpenssh,
-      filePermission: '0600',
-    }),
-  );
+  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
+    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
 
-  sftpConfigMap = this.provide(ConfigMap, 'sftpConfigMap', id => ({
+    const privateSshKeyFileInSecrets = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInSecrets`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.secrets,
+          `${K8S_Workstation_Apps_Sftp_Stack.name}-${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+      }),
+    );
+
+    return [
+      {},
+      {
+        key,
+        privateSshKeyFileInSecrets,
+      },
+    ];
+  });
+
+  configMap = this.provide(ConfigMap, 'configMap', id => ({
     metadata: {
-      name: _.kebabCase(id),
-      namespace:
-        this.k8sWorkstationNamespaceStack.personalNamespace.element.metadata
-          .name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      namespace: this.namespace.element.metadata.name,
     },
     data: {
-      'ssh-public-key': this.sftpPrivateKey.element.publicKeyOpenssh,
+      'ssh-public-key': this.privateKey.shared.key.element.publicKeyOpenssh,
     },
   }));
 
-  sftpDeployment = this.provide(Deployment, 'sftpDeployment', id => ({
+  deployment = this.provide(Deployment, 'deployment', id => ({
     metadata: {
-      name: _.kebabCase(id),
-      namespace:
-        this.k8sWorkstationNamespaceStack.personalNamespace.element.metadata
-          .name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      namespace: this.namespace.element.metadata.name,
     },
     spec: {
       replicas: '1',
@@ -123,8 +133,9 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
             {
               name: 'sftp',
               image: 'atmoz/sftp',
-              imagePullPolicy: 'Always',
-              args: [`${this.config.userName}::1001:100:data`],
+              args: [
+                `${this.config.userName}::1001:100:${this.meta.volume.sftp.dataDirName}`,
+              ],
               port: [
                 {
                   containerPort: this.meta.port.sftp.containerPort,
@@ -133,16 +144,12 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
               volumeMount: [
                 {
                   mountPath: `/home/${this.config.userName}/.ssh/keys`,
-                  name: this.sftpConfigMap.element.metadata.name,
+                  name: this.configMap.element.metadata.name,
                   readOnly: true,
                 },
                 {
-                  name: this.meta.volume.sftp.volumeName,
                   mountPath: this.meta.volume.sftp.containerDirPath,
-                },
-                {
-                  name: this.meta.volume.sftpSsd.volumeName,
-                  mountPath: this.meta.volume.sftpSsd.containerDirPath,
+                  name: this.meta.volume.sftp.volumeName,
                 },
               ],
               securityContext: {
@@ -154,9 +161,9 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
           ],
           volume: [
             {
-              name: this.sftpConfigMap.element.metadata.name,
+              name: this.configMap.element.metadata.name,
               configMap: {
-                name: this.sftpConfigMap.element.metadata.name,
+                name: this.configMap.element.metadata.name,
               },
             },
             {
@@ -166,25 +173,16 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
                 path: this.meta.volume.sftp.hostDirPath,
               },
             },
-            {
-              name: this.meta.volume.sftpSsd.volumeName,
-              hostPath: {
-                type: 'DirectoryOrCreate',
-                path: this.meta.volume.sftpSsd.hostDirPath,
-              },
-            },
           ],
         },
       },
     },
   }));
 
-  sftpService = this.provide(Service, 'sftpService', id => ({
+  service = this.provide(Service, 'service', id => ({
     metadata: {
-      name: _.kebabCase(id),
-      namespace:
-        this.k8sWorkstationNamespaceStack.personalNamespace.element.metadata
-          .name,
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      namespace: this.namespace.element.metadata.name,
     },
     spec: {
       type: 'NodePort',
@@ -198,17 +196,20 @@ export class K8S_Workstation_SftpApp_Stack extends AbstractStack {
   }));
 
   constructor(
-    private readonly terraformAppService: TerraformAppService,
-    private readonly terraformConfigService: TerraformConfigService,
     // Global
     private readonly globalConfigService: GlobalConfigService,
-    // Stack
-    private readonly k8sWorkstationNamespaceStack: K8S_Workstation_Namespace_Stack,
+
+    // Terraform
+    private readonly terraformAppService: TerraformAppService,
+    private readonly terraformConfigService: TerraformConfigService,
+
+    // Stacks
+    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Workstation_SftpApp_Stack.name,
-      'SFTP application stack in workstation k8s',
+      K8S_Workstation_Apps_Sftp_Stack.name,
+      'SFTP stack for workstation k8s',
     );
   }
 }

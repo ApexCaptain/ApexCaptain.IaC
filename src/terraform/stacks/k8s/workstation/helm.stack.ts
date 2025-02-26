@@ -11,7 +11,7 @@ import { Release } from '@lib/terraform/providers/helm/release';
 export class K8S_Workstation_Helm_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
-      this.terraformConfigService.backends.localBakcned.secrets({
+      this.terraformConfigService.backends.localBackend.secrets({
         stackName: this.id,
       }),
     ),
@@ -22,11 +22,8 @@ export class K8S_Workstation_Helm_Stack extends AbstractStack {
     },
   };
 
-  ingressNginx = this.provide(Release, 'ingressNginx', id => ({
-    name: _.kebabCase(id),
-    repository: 'https://kubernetes.github.io/ingress-nginx',
-    chart: 'ingress-nginx',
-  }));
+  // ingress-nginx를 microk8s add-on으로 설치하는 것으로 변경, 별도 helm release를 설치할 필요 없음
+  // 추후 다른 chart가 필요할지도 모르기때문에 비어있는 stack으로 남겨둠
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

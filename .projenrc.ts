@@ -1,6 +1,15 @@
+import { execSync } from 'child_process';
+import dns from 'dns/promises';
 import path from 'path';
 import { flatten } from 'flat';
-import { IniFile, javascript, JsonFile, TaskStep, typescript } from 'projen';
+import {
+  IniFile,
+  javascript,
+  JsonFile,
+  TaskStep,
+  TextFile,
+  typescript,
+} from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
@@ -22,18 +31,35 @@ const constants = (() => {
 
   const srcDir = 'src';
   const scriptDir = 'scripts';
+  const kubeConfigDirPath = '.kube';
+  const keysDir = 'keys';
   const libDir = 'lib';
   const envDir = 'env';
+  const dynamicEnvironments = {
+    k8s: {
+      oke: {
+        apexCaptain: {
+          kubeConfigFilePath:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH',
+          httpsProxyUrl:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_HTTPS_PROXY_URL',
+        },
+      },
+    },
+  };
 
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
+  const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE_NAME!!;
 
   const paths = {
     dirs: {
       srcDir,
       scriptDir,
+      kubeConfigDirPath,
+      keysDir,
       libDir,
       envDir,
       cdktfOutDir,
@@ -41,6 +67,7 @@ const constants = (() => {
     files: {
       cdktfConfigFilePath,
       cdktfOutFilePath,
+      ociCliConfigFilePath,
     },
   };
 
@@ -56,6 +83,7 @@ const constants = (() => {
     author,
     branches,
     paths,
+    dynamicEnvironments,
     projenCredentials,
   };
 })();
@@ -143,12 +171,14 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
-    '.kube',
     '.secrets',
+    `/${constants.paths.dirs.kubeConfigDirPath}`,
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
+    `/${constants.paths.files.ociCliConfigFilePath}`,
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
+    `/${constants.paths.dirs.keysDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
   deps: [
@@ -156,6 +186,8 @@ const project = new typescript.TypeScriptAppProject({
     'cdktf-cli',
     'cdktf-injector',
     'constructs',
+    'class-transformer',
+    'class-validator',
     'reflect-metadata',
     '@nestjs/common',
     '@nestjs/config',
@@ -164,13 +196,15 @@ const project = new typescript.TypeScriptAppProject({
     'joi-extract-type',
     'flat@5.0.2',
     'lodash',
+    'deepmerge',
+    'cron-time-generator',
   ],
   devDeps: [
     '@nestjs/cli',
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.3.0',
+    'constructs@^10.4.2',
     '@types/lodash',
   ],
 });
@@ -185,11 +219,39 @@ void (async () => {
   project.addScripts({
     postprojen: 'cdktf get',
     'tf@build': 'cdktf synth',
-    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 4`,
+    'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
-    'kubectl@workstation':
+
+    'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
+    'k8s@oke': `HTTPS_PROXY=$${constants.dynamicEnvironments.k8s.oke.apexCaptain.httpsProxyUrl} kubectl --kubeconfig $${constants.dynamicEnvironments.k8s.oke.apexCaptain.kubeConfigFilePath}`,
   });
+
+  const apexCaptainCoiPrivateKeyFile = new TextFile(
+    project,
+    'keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
+    {
+      lines: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY?.split('\\n'),
+      editGitignore: false,
+    },
+  );
+
+  // Generate Oci Cli Config File
+  const ociCliConfigFile = new TextFile(
+    project,
+    constants.paths.files.ociCliConfigFilePath,
+    {
+      lines: [
+        `[DEFAULT]`,
+        `user=${process.env.APEX_CAPTAIN_OCI_USER_OCID}`,
+        `fingerprint=${process.env.APEX_CAPTAIN_OCI_FINGERPRINT}`,
+        `key_file=${apexCaptainCoiPrivateKeyFile.absolutePath}`,
+        `tenancy=${process.env.APEX_CAPTAIN_OCI_TENANCY_OCID}`,
+        `region=${process.env.APEX_CAPTAIN_OCI_REGION}`,
+      ],
+      editGitignore: false,
+    },
+  );
 
   // TMP
   // CDKTF
@@ -203,6 +265,11 @@ void (async () => {
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         // Official
+        {
+          // https://registry.terraform.io/providers/hashicorp/random/latest
+          name: 'random',
+          source: 'hashicorp/random',
+        },
         {
           // https://registry.terraform.io/providers/hashicorp/tls/latest
           name: 'tls',
@@ -244,6 +311,12 @@ void (async () => {
           name: 'oci',
           source: 'oracle/oci',
         },
+        // Community
+        {
+          // https://registry.terraform.io/providers/kreuzwerker/docker/latest
+          name: 'docker',
+          source: 'kreuzwerker/docker',
+        },
       ],
     },
     committed: false,
@@ -254,11 +327,36 @@ void (async () => {
     terraform: {
       stacks: {
         common: {
-          generatedKeyFilesDirRelativePath: path.join(
-            './.secrets/keys/generated',
-          ),
+          generatedKeyFilesDirRelativePaths: {
+            secrets: './.secrets/keys/generated',
+            keys: constants.paths.dirs.keysDir,
+          },
+          kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
+        },
+        cloudflare: {
+          zone: {
+            ayteneve93com: {
+              zoneId:
+                process.env.APEX_CAPTAIN_CLOUDFLARE_AYTENEVE93_COM_ZONE_ID!!,
+            },
+          },
         },
         k8s: {
+          oke: {
+            bastion: {
+              clientCidrBlockAllowList: [
+                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
+              ],
+              dynamicEnvironmentKeys: {
+                kubeConfigFilePath:
+                  constants.dynamicEnvironments.k8s.oke.apexCaptain
+                    .kubeConfigFilePath,
+                httpsProxyUrl:
+                  constants.dynamicEnvironments.k8s.oke.apexCaptain
+                    .httpsProxyUrl,
+              },
+            },
+          },
           workstation: {
             common: {
               domain: {
@@ -274,6 +372,11 @@ void (async () => {
             sftp: {
               userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
             },
+            palworld: {
+              adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
+              serverPassword:
+                process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
+            },
           },
         },
       },
@@ -282,7 +385,8 @@ void (async () => {
           localBackend: {
             secrets: {
               dirPath: path.join(
-                process.env.CONTAINER_SECRETS_DIR_PATH!!,
+                process.env.CONTAINER_SECRETS_DIR_PATH ??
+                  path.join(project.outdir, '.secrets'),
                 'terraform',
               ),
             },
@@ -329,6 +433,11 @@ void (async () => {
     }),
     committed: false,
   });
+
+  project.postSynthesize = () => {
+    execSync(`chmod 400 ${apexCaptainCoiPrivateKeyFile.absolutePath}`);
+    execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
+  };
 
   project.synth();
 })();
