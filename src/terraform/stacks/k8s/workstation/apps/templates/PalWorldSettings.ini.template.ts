@@ -1,5 +1,5 @@
-import { AbstractTemplate } from '@/common';
 import path from 'path';
+import { AbstractTemplate } from '@/common';
 
 interface PalWorldSettingsIniTemplateVars {
   /**

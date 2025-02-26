@@ -2,9 +2,9 @@ import { BadRequestException } from '@nestjs/common';
 import { Expose, plainToInstance, Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty, Min, validateSync } from 'class-validator';
 
-export class CreateExpirationDateTriggerOptions {
+export class CreateExpirationDateOptions {
   /**
-   * @description expiration date trigger seconds
+   * @description expiration date seconds
    */
   @Expose()
   @IsInt()
@@ -14,7 +14,7 @@ export class CreateExpirationDateTriggerOptions {
   seconds?: number;
 
   /**
-   * @description expiration date trigger minutes
+   * @description expiration date minutes
    */
   @Expose()
   @IsInt()
@@ -24,7 +24,7 @@ export class CreateExpirationDateTriggerOptions {
   minutes?: number;
 
   /**
-   * @description expiration date trigger hours
+   * @description expiration date hours
    */
   @Expose()
   @IsInt()
@@ -34,7 +34,7 @@ export class CreateExpirationDateTriggerOptions {
   hours?: number;
 
   /**
-   * @description expiration date trigger days
+   * @description expiration date days
    */
   @Expose()
   @IsInt()
@@ -45,17 +45,17 @@ export class CreateExpirationDateTriggerOptions {
 }
 
 /**
- * @description create expiration date trigger for terraform
+ * @description create expiration date for terraform
  * @param options
- * @returns expiration date trigger
+ * @returns expiration date
  */
-export function createExpirationDateTrigger(
-  options: CreateExpirationDateTriggerOptions = {},
+export function createExpirationDate(
+  options: CreateExpirationDateOptions = {},
 ) {
   const instanciatedOptions = plainToInstance(
-    CreateExpirationDateTriggerOptions,
+    CreateExpirationDateOptions,
     options,
-  ) as Required<CreateExpirationDateTriggerOptions>;
+  ) as Required<CreateExpirationDateOptions>;
 
   const errors = validateSync(instanciatedOptions);
   if (errors.length > 0) throw new BadRequestException(errors);
@@ -67,5 +67,9 @@ export function createExpirationDateTrigger(
       instanciatedOptions.days * 24 * 60 * 60) *
     1000;
 
-  return Math.floor(Date.now() / (denominator ? denominator : 1)).toString();
+  const expriationDate = new Date(
+    Math.floor(Date.now() / (denominator ? denominator : 1)) * denominator +
+      denominator,
+  );
+  return expriationDate;
 }

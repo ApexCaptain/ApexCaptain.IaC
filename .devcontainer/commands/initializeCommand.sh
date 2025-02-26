@@ -29,6 +29,7 @@ CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH = ${containerWorkspaceFolder}/.kube/
 
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH
 CONTAINER_SECRETS_DIR_PATH=$containerWorkspaceFolder/.secrets
+OCI_CLI_CONFIG_FILE_NAME=oci.config
 
 # Merged env
 EOL

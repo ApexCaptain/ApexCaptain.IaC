@@ -1,11 +1,11 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Injectable } from '@nestjs/common';
-import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { IdentityCompartment } from '@lib/terraform/providers/oci/identity-compartment';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { LocalBackend } from 'cdktf';
 
 @Injectable()
 export class K8S_Oke_Compartment_Stack extends AbstractStack {

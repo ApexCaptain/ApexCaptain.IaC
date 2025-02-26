@@ -19,7 +19,8 @@
     "tf@build": "cdktf synth",
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
     "tf@plan": "cdktf diff",
-    "kubectl@workstation": "kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}"
+    "k8s@workstation": "kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}",
+    "k8s@oke": "HTTPS_PROXY=$DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_HTTPS_PROXY_URL kubectl --kubeconfig $DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH"
   },
   "author": {
     "name": "ApexCaptain",
@@ -58,6 +59,7 @@
     "class-validator": "^0.14.1",
     "constructs": "^10.4.2",
     "cron-time-generator": "^2.0.3",
+    "deepmerge": "^4.3.1",
     "flat": "5.0.2",
     "joi-extract-type": "^15.0.8",
     "lodash": "^4.17.21",

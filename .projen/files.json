@@ -13,7 +13,9 @@
     ".projen/tasks.json",
     "cdktf.json",
     "env/prod.env",
+    "keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
     "LICENSE",
+    "oci.config",
     "tsconfig.dev.json",
     "tsconfig.json"
   ],

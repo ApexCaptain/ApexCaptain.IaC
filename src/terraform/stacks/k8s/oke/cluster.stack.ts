@@ -1,23 +1,23 @@
+import path from 'path';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { K8S_Oke_Compartment_Stack } from './compartment.stack';
+import { K8S_Oke_Network_Stack } from './network.stack';
+import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Injectable } from '@nestjs/common';
-import { K8S_Oke_Compartment_Stack } from './compartment.stack';
-import { K8S_Oke_Network_Stack } from './network.stack';
-import { K8S_Oke_Oci_Stack } from './oci.stack';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { ContainerengineCluster } from '@lib/terraform/providers/oci/containerengine-cluster';
-import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
-import { LocalBackend } from 'cdktf';
 import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { ContainerengineCluster } from '@lib/terraform/providers/oci/containerengine-cluster';
+import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
+import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import path from 'path';
 
 @Injectable()
 export class K8S_Oke_Cluster_Stack extends AbstractStack {
@@ -43,41 +43,10 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       rsaBits: 4096,
     }));
 
-    const privateSshKeyFileInSecrets = this.provide(
-      File,
-      `${idPrefix}-privateSshKeyFileInSecrets`,
-      id => ({
-        filename: path.join(
-          process.cwd(),
-          this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.secrets,
-          `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
-        ),
-        content: key.element.privateKeyOpenssh,
-      }),
-    );
-
-    const privateSshKeyFileInKeys = this.provide(
-      File,
-      `${idPrefix}-privateSshKeyFileInKeys`,
-      id => ({
-        filename: path.join(
-          process.cwd(),
-          this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.keys,
-          `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
-        ),
-        content: key.element.privateKeyOpenssh,
-        filePermission: '0600',
-      }),
-    );
-
     return [
       {},
       {
         key,
-        privateSshKeyFileInSecrets,
-        privateSshKeyFileInKeys,
       },
     ];
   });

@@ -150,13 +150,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/lodash,@types/node,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,prettier,projen,ts-node,typescript,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,class-transformer,class-validator,constructs,cron-time-generator,joi-extract-type,lodash,reflect-metadata"
+          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/lodash,@types/node,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,prettier,projen,ts-node,typescript,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,class-transformer,class-validator,constructs,cron-time-generator,deepmerge,joi-extract-type,lodash,reflect-metadata"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @nestjs/cli @nestjs/schematics @nestjs/testing @types/flat @types/lodash @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser constructs eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint prettier projen ts-node typescript @hapi/joi @nestjs/common @nestjs/config @nestjs/core cdktf cdktf-cli cdktf-injector class-transformer class-validator cron-time-generator flat joi-extract-type lodash reflect-metadata"
+          "exec": "yarn upgrade @nestjs/cli @nestjs/schematics @nestjs/testing @types/flat @types/lodash @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser constructs eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint prettier projen ts-node typescript @hapi/joi @nestjs/common @nestjs/config @nestjs/core cdktf cdktf-cli cdktf-injector class-transformer class-validator cron-time-generator deepmerge flat joi-extract-type lodash reflect-metadata"
         },
         {
           "exec": "npx projen"

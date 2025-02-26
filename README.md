@@ -9,3 +9,5 @@ CDK for Terraform project of ApexCaptain
 - Need to replace sftp to nas server
 - 7 Days to Die Game Server
 - Palworld Game Server
+
+echo "export SOME_ENV=A" >> ~/.bashrc && source ~/.bashrc

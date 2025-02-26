@@ -1,23 +1,23 @@
+import path from 'path';
 import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
+import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
+import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { LocalBackend } from 'cdktf';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import path from 'path';
+import { Service } from '@lib/terraform/providers/kubernetes/service';
 import { File } from '@lib/terraform/providers/local/file';
-import { Resource } from '@lib/terraform/providers/null/resource';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
-import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
-import { Service } from '@lib/terraform/providers/kubernetes/service';
-import _ from 'lodash';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
@@ -95,27 +95,11 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
       }),
     );
 
-    const privateSshKeyFileInKeys = this.provide(
-      File,
-      `${idPrefix}-privateSshKeyFileInKeys`,
-      id => ({
-        filename: path.join(
-          process.cwd(),
-          this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.keys,
-          `${K8S_Workstation_Apps_Sftp_Stack.name}-${id}.key`,
-        ),
-        content: key.element.privateKeyOpenssh,
-        filePermission: '0600',
-      }),
-    );
-
     return [
       {},
       {
         key,
         privateSshKeyFileInSecrets,
-        privateSshKeyFileInKeys,
       },
     ];
   });

@@ -5,8 +5,8 @@ import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { DnsRecord } from '@lib/terraform/providers/cloudflare/dns-record';
+import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 
 @Injectable()
 export class Cloudflare_Record_Stack extends AbstractStack {

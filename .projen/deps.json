@@ -122,6 +122,10 @@
       "type": "runtime"
     },
     {
+      "name": "deepmerge",
+      "type": "runtime"
+    },
+    {
       "name": "flat",
       "version": "5.0.2",
       "type": "runtime"

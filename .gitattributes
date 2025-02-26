@@ -13,7 +13,9 @@
 /.projen/deps.json linguist-generated
 /.projen/files.json linguist-generated
 /.projen/tasks.json linguist-generated
+/keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem linguist-generated
 /LICENSE linguist-generated
+/oci.config linguist-generated
 /package.json linguist-generated
 /tsconfig.dev.json linguist-generated
 /tsconfig.json linguist-generated

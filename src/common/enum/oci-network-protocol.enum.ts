@@ -4,6 +4,5 @@ export enum OciNetworkProtocol {
   ICMP = '1',
   TCP = '6',
   UDP = '17',
-  // eslint-disable-next-line spellcheck/spell-checker
   ICMPv6 = '58',
 }

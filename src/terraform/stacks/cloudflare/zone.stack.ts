@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DataCloudflareZone } from '@lib/terraform/providers/cloudflare/data-cloudflare-zone';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
 export class Cloudflare_Zone_Stack extends AbstractStack {

@@ -1,3 +1,7 @@
+import path from 'path';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -5,10 +9,6 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import _ from 'lodash';
-import path from 'path';
 
 @Injectable()
 export class K8S_Workstation_Apps_7dtd_Stack extends AbstractStack {

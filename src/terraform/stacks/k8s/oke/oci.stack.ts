@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { AbstractStack } from '@/common';
-import { LocalBackend } from 'cdktf';
-import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
-import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
+import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
+import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
+import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
 export class K8S_Oke_Oci_Stack extends AbstractStack {
@@ -31,6 +32,20 @@ export class K8S_Oke_Oci_Stack extends AbstractStack {
       tenancyId:
         this.globalConfigService.config.terraform.config.providers.oci
           .ApexCaptain.tenancyOcid,
+    }),
+  );
+
+  dataHomeRegion = this.provide(
+    DataOciIdentityRegionSubscriptions,
+    'dataHomeRegion',
+    () => ({
+      filter: [
+        {
+          name: 'is_home_region',
+          values: ['true'],
+        },
+      ],
+      tenancyId: this.dataRootTenancy.element.id,
     }),
   );
 

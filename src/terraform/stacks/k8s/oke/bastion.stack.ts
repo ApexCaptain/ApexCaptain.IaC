@@ -1,21 +1,30 @@
-import { Injectable } from '@nestjs/common';
-import { AbstractStack } from '@/common';
-import { TerraformAppService } from '@/terraform/terraform.app.service';
-import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
 import path from 'path';
-import { File } from '@lib/terraform/providers/local/file';
-import { BastionBastion } from '@lib/terraform/providers/oci/bastion-bastion';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
-import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
+import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import _ from 'lodash';
+import { K8S_Oke_Cluster_Stack } from './cluster.stack';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
+import { K8S_Oke_Oci_Stack } from './oci.stack';
+import { AbstractStack, createExpirationDate } from '@/common';
+import { createSetEnvExecutionProvisioner } from '@/common/functions';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { TerraformAppService } from '@/terraform/terraform.app.service';
+import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { Container as DockerContainer } from '@lib/terraform/providers/docker/container';
+import { Image as DockerImage } from '@lib/terraform/providers/docker/image';
+import { DockerProvider } from '@lib/terraform/providers/docker/provider';
+import { File } from '@lib/terraform/providers/local/file';
+import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { BastionBastion } from '@lib/terraform/providers/oci/bastion-bastion';
+import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
+import { Integer as RandomInteger } from '@lib/terraform/providers/random/integer';
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {
@@ -35,6 +44,8 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       oci: this.provide(OciProvider, 'ociProvider', () =>
         this.terraformConfigService.providers.oci.ApexCaptain(),
       ),
+      docker: this.provide(DockerProvider, 'dockerProvider', () => ({})),
+      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
     },
   };
 
@@ -43,20 +54,6 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       algorithm: 'RSA',
       rsaBits: 4096,
     }));
-
-    const privateSshKeyFileInSecrets = this.provide(
-      File,
-      `${idPrefix}-privateSshKeyFileInSecrets`,
-      id => ({
-        filename: path.join(
-          process.cwd(),
-          this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.secrets,
-          `${K8S_Oke_Bastion_Stack.name}-${id}.key`,
-        ),
-        content: key.element.privateKeyOpenssh,
-      }),
-    );
 
     const privateSshKeyFileInKeys = this.provide(
       File,
@@ -77,7 +74,6 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       {},
       {
         key,
-        privateSshKeyFileInSecrets,
         privateSshKeyFileInKeys,
       },
     ];
@@ -93,18 +89,102 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     dnsProxyStatus: 'ENABLED',
   }));
 
-  okeBastionSession = this.provide(BastionSession, 'okeBastionSession', id => ({
-    bastionId: this.okeBastion.element.id,
-    keyDetails: {
-      publicKeyContent: this.privateKey.shared.key.element.publicKeyOpenssh,
+  okeBastionSession = this.provide(BastionSession, 'okeBastionSession', id => {
+    return {
+      bastionId: this.okeBastion.element.id,
+      keyDetails: {
+        publicKeyContent: this.privateKey.shared.key.element.publicKeyOpenssh,
+      },
+      targetResourceDetails: {
+        sessionType: 'DYNAMIC_PORT_FORWARDING',
+      },
+      displayName: id,
+      keyType: 'PUB',
+      sessionTtlInSeconds: this.okeBastion.element.maxSessionTtlInSeconds,
+    };
+  });
+
+  okeBastionSessionTunnelPort = this.provide(
+    RandomInteger,
+    'okeBastionSessionTunnelPort',
+    () => ({
+      min: 10000,
+      max: 65535,
+      keepers: {
+        expirationDate: createExpirationDate({
+          days: 10,
+        }).toString(),
+      },
+    }),
+  );
+
+  okeBastionSessionContainerImage = this.provide(
+    DockerImage,
+    'okeBastionSessionContainerImage',
+    () => ({
+      name: 'rastasheep/ubuntu-sshd',
+    }),
+  );
+
+  okeBastionSessionContainer = this.provide(
+    DockerContainer,
+    'okeBastionSessionContainer',
+    id => ({
+      image: this.okeBastionSessionContainerImage.element.imageId,
+      name: id,
+      rm: false,
+      volumes: [
+        {
+          containerPath: '/root/.ssh/id_rsa',
+          hostPath:
+            this.privateKey.shared.privateSshKeyFileInKeys.element.filename,
+          readOnly: true,
+        },
+      ],
+      restart: 'unless-stopped',
+      networkMode: 'bridge',
+      command: [
+        'sh',
+        '-c',
+        [
+          'ssh',
+          '-o StrictHostKeyChecking=no',
+          '-N -D',
+          `0.0.0.0:${this.okeBastionSessionTunnelPort.element.result}`,
+          `${this.okeBastionSession.element.id}@host.bastion.${this.k8sOkeOciStack.dataHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com`,
+        ].join(' '),
+      ],
+    }),
+  );
+
+  okeBastionSessionTunnel = this.provide(
+    Resource,
+    'okeBastionSessionTunnel',
+    () => {
+      const proxyUrl = `socks5://${this.okeBastionSessionContainer.element.networkData.get(0).ipAddress}:${this.okeBastionSessionTunnelPort.element.result}`;
+      return [
+        {
+          provisioners: [
+            createSetEnvExecutionProvisioner({
+              name: this.config.dynamicEnvironmentKeys.httpsProxyUrl,
+              value: proxyUrl,
+            }),
+            createSetEnvExecutionProvisioner({
+              name: this.config.dynamicEnvironmentKeys.kubeConfigFilePath,
+              value:
+                this.k8sOkeClusterStack.okeKubeConfig.shared.kubeConfigFile
+                  .element.filename,
+            }),
+          ],
+          triggers: {
+            containerResourceId: this.okeBastionSessionContainer.element.id,
+          },
+        },
+
+        { proxyUrl },
+      ];
     },
-    targetResourceDetails: {
-      sessionType: 'DYNAMIC_PORT_FORWARDING',
-    },
-    displayName: id,
-    keyType: 'PUB',
-    sessionTtlInSeconds: this.okeBastion.element.maxSessionTtlInSeconds,
-  }));
+  );
 
   constructor(
     // Global
@@ -117,6 +197,8 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
+    private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
+    private readonly k8sOkeClusterStack: K8S_Oke_Cluster_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

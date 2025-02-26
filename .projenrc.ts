@@ -1,10 +1,18 @@
+import { execSync } from 'child_process';
+import dns from 'dns/promises';
 import path from 'path';
 import { flatten } from 'flat';
-import { IniFile, javascript, JsonFile, TaskStep, typescript } from 'projen';
+import {
+  IniFile,
+  javascript,
+  JsonFile,
+  TaskStep,
+  TextFile,
+  typescript,
+} from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
-import dns from 'dns/promises';
 
 const constants = (() => {
   const project = {
@@ -27,11 +35,24 @@ const constants = (() => {
   const keysDir = 'keys';
   const libDir = 'lib';
   const envDir = 'env';
+  const dynamicEnvironments = {
+    k8s: {
+      oke: {
+        apexCaptain: {
+          kubeConfigFilePath:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH',
+          httpsProxyUrl:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_HTTPS_PROXY_URL',
+        },
+      },
+    },
+  };
 
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
+  const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE_NAME!!;
 
   const paths = {
     dirs: {
@@ -46,6 +67,7 @@ const constants = (() => {
     files: {
       cdktfConfigFilePath,
       cdktfOutFilePath,
+      ociCliConfigFilePath,
     },
   };
 
@@ -61,6 +83,7 @@ const constants = (() => {
     author,
     branches,
     paths,
+    dynamicEnvironments,
     projenCredentials,
   };
 })();
@@ -152,6 +175,7 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.kubeConfigDirPath}`,
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
+    `/${constants.paths.files.ociCliConfigFilePath}`,
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.keysDir}`,
@@ -172,6 +196,7 @@ const project = new typescript.TypeScriptAppProject({
     'joi-extract-type',
     'flat@5.0.2',
     'lodash',
+    'deepmerge',
     'cron-time-generator',
   ],
   devDeps: [
@@ -196,9 +221,37 @@ void (async () => {
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
-    'kubectl@workstation':
+
+    'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
+    'k8s@oke': `HTTPS_PROXY=$${constants.dynamicEnvironments.k8s.oke.apexCaptain.httpsProxyUrl} kubectl --kubeconfig $${constants.dynamicEnvironments.k8s.oke.apexCaptain.kubeConfigFilePath}`,
   });
+
+  const apexCaptainCoiPrivateKeyFile = new TextFile(
+    project,
+    'keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
+    {
+      lines: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY?.split('\\n'),
+      editGitignore: false,
+    },
+  );
+
+  // Generate Oci Cli Config File
+  const ociCliConfigFile = new TextFile(
+    project,
+    constants.paths.files.ociCliConfigFilePath,
+    {
+      lines: [
+        `[DEFAULT]`,
+        `user=${process.env.APEX_CAPTAIN_OCI_USER_OCID}`,
+        `fingerprint=${process.env.APEX_CAPTAIN_OCI_FINGERPRINT}`,
+        `key_file=${apexCaptainCoiPrivateKeyFile.absolutePath}`,
+        `tenancy=${process.env.APEX_CAPTAIN_OCI_TENANCY_OCID}`,
+        `region=${process.env.APEX_CAPTAIN_OCI_REGION}`,
+      ],
+      editGitignore: false,
+    },
+  );
 
   // TMP
   // CDKTF
@@ -258,20 +311,16 @@ void (async () => {
           name: 'oci',
           source: 'oracle/oci',
         },
+        // Community
+        {
+          // https://registry.terraform.io/providers/kreuzwerker/docker/latest
+          name: 'docker',
+          source: 'kreuzwerker/docker',
+        },
       ],
     },
     committed: false,
   });
-
-  // // VscodeSettings
-  // if (project.vscode) {
-  //   const vscodeSettings = new VsCodeSettings(project.vscode);
-  //   vscodeSettings.addSettings({
-  //     'files.associations': {
-  //       '*.xml.j2': 'xml',
-  //     },
-  //   });
-  // }
 
   // ENV
   const environment: GlobalConfigType = {
@@ -298,6 +347,14 @@ void (async () => {
               clientCidrBlockAllowList: [
                 `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
               ],
+              dynamicEnvironmentKeys: {
+                kubeConfigFilePath:
+                  constants.dynamicEnvironments.k8s.oke.apexCaptain
+                    .kubeConfigFilePath,
+                httpsProxyUrl:
+                  constants.dynamicEnvironments.k8s.oke.apexCaptain
+                    .httpsProxyUrl,
+              },
             },
           },
           workstation: {
@@ -376,6 +433,11 @@ void (async () => {
     }),
     committed: false,
   });
+
+  project.postSynthesize = () => {
+    execSync(`chmod 400 ${apexCaptainCoiPrivateKeyFile.absolutePath}`);
+    execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
+  };
 
   project.synth();
 })();
