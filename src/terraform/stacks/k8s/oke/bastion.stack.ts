@@ -1,6 +1,6 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Cluster_Stack } from './cluster.stack';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
@@ -161,13 +161,18 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     Resource,
     'okeBastionSessionTunnel',
     () => {
-      const proxyUrl = `socks5://${this.okeBastionSessionContainer.element.networkData.get(0).ipAddress}:${this.okeBastionSessionTunnelPort.element.result}`;
+      const simpleProxyUrl = `${this.okeBastionSessionContainer.element.networkData.get(0).ipAddress}:${this.okeBastionSessionTunnelPort.element.result}`;
+      const socks5ProxyUrl = `socks5://${simpleProxyUrl}`;
       return [
         {
           provisioners: [
             createSetEnvExecutionProvisioner({
-              name: this.config.dynamicEnvironmentKeys.httpsProxyUrl,
-              value: proxyUrl,
+              name: this.config.dynamicEnvironmentKeys.socks5ProxyUrl,
+              value: socks5ProxyUrl,
+            }),
+            createSetEnvExecutionProvisioner({
+              name: this.config.dynamicEnvironmentKeys.simpleProxyUrl,
+              value: simpleProxyUrl,
             }),
             createSetEnvExecutionProvisioner({
               name: this.config.dynamicEnvironmentKeys.kubeConfigFilePath,
@@ -177,11 +182,12 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
             }),
           ],
           triggers: {
-            containerResourceId: this.okeBastionSessionContainer.element.id,
+            // Run Always
+            timstamp: Fn.timestamp(),
           },
         },
 
-        { proxyUrl },
+        { socks5ProxyUrl },
       ];
     },
   );

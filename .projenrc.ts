@@ -41,8 +41,10 @@ const constants = (() => {
         apexCaptain: {
           kubeConfigFilePath:
             'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH',
-          httpsProxyUrl:
-            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_HTTPS_PROXY_URL',
+          socks5ProxyUrl:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_SOCKS5_PROXY_URL',
+          simpleProxyUrl:
+            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_SIMPLE_PROXY_URL',
         },
       },
     },
@@ -224,10 +226,10 @@ void (async () => {
 
     'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
-    'k8s@oke': `HTTPS_PROXY=$${constants.dynamicEnvironments.k8s.oke.apexCaptain.httpsProxyUrl} kubectl --kubeconfig $${constants.dynamicEnvironments.k8s.oke.apexCaptain.kubeConfigFilePath}`,
+    'k8s@oke': `HTTPS_PROXY=$${constants.dynamicEnvironments.k8s.oke.apexCaptain.socks5ProxyUrl} kubectl --kubeconfig $${constants.dynamicEnvironments.k8s.oke.apexCaptain.kubeConfigFilePath}`,
   });
 
-  const apexCaptainCoiPrivateKeyFile = new TextFile(
+  const apexCaptainOciPrivateKeyFile = new TextFile(
     project,
     'keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
     {
@@ -245,7 +247,7 @@ void (async () => {
         `[DEFAULT]`,
         `user=${process.env.APEX_CAPTAIN_OCI_USER_OCID}`,
         `fingerprint=${process.env.APEX_CAPTAIN_OCI_FINGERPRINT}`,
-        `key_file=${apexCaptainCoiPrivateKeyFile.absolutePath}`,
+        `key_file=${apexCaptainOciPrivateKeyFile.absolutePath}`,
         `tenancy=${process.env.APEX_CAPTAIN_OCI_TENANCY_OCID}`,
         `region=${process.env.APEX_CAPTAIN_OCI_REGION}`,
       ],
@@ -351,9 +353,12 @@ void (async () => {
                 kubeConfigFilePath:
                   constants.dynamicEnvironments.k8s.oke.apexCaptain
                     .kubeConfigFilePath,
-                httpsProxyUrl:
+                socks5ProxyUrl:
                   constants.dynamicEnvironments.k8s.oke.apexCaptain
-                    .httpsProxyUrl,
+                    .socks5ProxyUrl,
+                simpleProxyUrl:
+                  constants.dynamicEnvironments.k8s.oke.apexCaptain
+                    .simpleProxyUrl,
               },
             },
           },
@@ -435,7 +440,7 @@ void (async () => {
   });
 
   project.postSynthesize = () => {
-    execSync(`chmod 400 ${apexCaptainCoiPrivateKeyFile.absolutePath}`);
+    execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);
     execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
   };
 

@@ -12,11 +12,14 @@ bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scrip
 
 echo Installing apt packages
 sudo apt install -y \
-    sshpass
+    netcat-openbsd
 
 echo Installing global npm packages
 npm install -g \
     npm@latest
+
+echo Pulling latest changes from remote repository
+git pull
 
 echo Initialize Projen
 yarn && yarn projen

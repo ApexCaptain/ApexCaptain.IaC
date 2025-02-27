@@ -43,10 +43,26 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       rsaBits: 4096,
     }));
 
+    const privateSshKeyFileInKeys = this.provide(
+      File,
+      `${idPrefix}-privateSshKeyFileInKeys`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirRelativePaths.keys,
+          `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+        filePermission: '0600',
+      }),
+    );
+
     return [
       {},
       {
         key,
+        privateSshKeyFileInKeys,
       },
     ];
   });

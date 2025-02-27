@@ -5,7 +5,8 @@ export const OkeSchema = Joi.object({
     clientCidrBlockAllowList: Joi.array().items(Joi.string()).required(),
     dynamicEnvironmentKeys: Joi.object({
       kubeConfigFilePath: Joi.string().required(),
-      httpsProxyUrl: Joi.string().required(),
+      socks5ProxyUrl: Joi.string().required(),
+      simpleProxyUrl: Joi.string().required(),
     }).required(),
   }).required(),
 }).required();
