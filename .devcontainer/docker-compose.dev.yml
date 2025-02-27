@@ -6,9 +6,7 @@ services:
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      OCI_CLI_CONFIG_FILE: '${containerWorkspaceFolder}/${OCI_CLI_CONFIG_FILE_NAME}'
-      OCI_CLI_CONFIG_FILE_NAME: ${OCI_CLI_CONFIG_FILE_NAME}
-      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH}
+      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH} ${ROOT_TMP_ABS_DIR_PATH}
 
     env_file:
       - .env

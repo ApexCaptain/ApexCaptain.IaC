@@ -12,8 +12,8 @@ import {
 } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
+import { TargetK8sEndpoint } from './scripts/enum';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
-
 const constants = (() => {
   const project = {
     name: 'apex-captain.iac',
@@ -32,37 +32,27 @@ const constants = (() => {
   const srcDir = 'src';
   const scriptDir = 'scripts';
   const kubeConfigDirPath = '.kube';
-  const keysDir = 'keys';
   const libDir = 'lib';
+  const generatedScriptLibDir = path.join(scriptDir, 'generated');
   const envDir = 'env';
-  const dynamicEnvironments = {
-    k8s: {
-      oke: {
-        apexCaptain: {
-          kubeConfigFilePath:
-            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH',
-          httpsProxyUrl:
-            'DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_HTTPS_PROXY_URL',
-        },
-      },
-    },
-  };
 
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
-  const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE_NAME!!;
+  const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE!!;
+  const rootTmpKeysDir = path.join(process.env.ROOT_TMP_ABS_DIR_PATH!!, 'keys');
 
   const paths = {
     dirs: {
       srcDir,
       scriptDir,
       kubeConfigDirPath,
-      keysDir,
       libDir,
+      generatedScriptLibDir,
       envDir,
       cdktfOutDir,
+      rootTmpKeysDir,
     },
     files: {
       cdktfConfigFilePath,
@@ -83,7 +73,6 @@ const constants = (() => {
     author,
     branches,
     paths,
-    dynamicEnvironments,
     projenCredentials,
   };
 })();
@@ -175,10 +164,9 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.kubeConfigDirPath}`,
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
-    `/${constants.paths.files.ociCliConfigFilePath}`,
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
-    `/${constants.paths.dirs.keysDir}`,
+    `/${constants.paths.dirs.generatedScriptLibDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
   deps: [
@@ -206,6 +194,7 @@ const project = new typescript.TypeScriptAppProject({
     '@types/flat@5.0.2',
     'constructs@^10.4.2',
     '@types/lodash',
+    'commander',
   ],
 });
 
@@ -217,19 +206,33 @@ void (async () => {
 
   // Set Package Scripts
   project.addScripts({
+    // Projen
     postprojen: 'cdktf get',
+
+    // Terraform
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
+    // 'posttf@deploy': 'yarn eslint',
     'tf@plan': 'cdktf diff',
 
+    // Kubectl
     'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
-    'k8s@oke': `HTTPS_PROXY=$${constants.dynamicEnvironments.k8s.oke.apexCaptain.httpsProxyUrl} kubectl --kubeconfig $${constants.dynamicEnvironments.k8s.oke.apexCaptain.kubeConfigFilePath}`,
+    'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
+
+    // SSH
+    'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
   });
 
-  const apexCaptainCoiPrivateKeyFile = new TextFile(
+  const apexCaptainOciPrivateKeyFile = new TextFile(
     project,
-    'keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
+    path.relative(
+      project.outdir,
+      path.join(
+        constants.paths.dirs.rootTmpKeysDir,
+        'APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
+      ),
+    ),
     {
       lines: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY?.split('\\n'),
       editGitignore: false,
@@ -239,13 +242,13 @@ void (async () => {
   // Generate Oci Cli Config File
   const ociCliConfigFile = new TextFile(
     project,
-    constants.paths.files.ociCliConfigFilePath,
+    path.relative(project.outdir, constants.paths.files.ociCliConfigFilePath),
     {
       lines: [
         `[DEFAULT]`,
         `user=${process.env.APEX_CAPTAIN_OCI_USER_OCID}`,
         `fingerprint=${process.env.APEX_CAPTAIN_OCI_FINGERPRINT}`,
-        `key_file=${apexCaptainCoiPrivateKeyFile.absolutePath}`,
+        `key_file=${apexCaptainOciPrivateKeyFile.absolutePath}`,
         `tenancy=${process.env.APEX_CAPTAIN_OCI_TENANCY_OCID}`,
         `region=${process.env.APEX_CAPTAIN_OCI_REGION}`,
       ],
@@ -327,9 +330,9 @@ void (async () => {
     terraform: {
       stacks: {
         common: {
-          generatedKeyFilesDirRelativePaths: {
-            secrets: './.secrets/keys/generated',
-            keys: constants.paths.dirs.keysDir,
+          generatedKeyFilesDirPaths: {
+            relativeSecretsDirPath: './.secrets/keys/generated',
+            absoluteKeysDirPath: constants.paths.dirs.rootTmpKeysDir,
           },
           kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
         },
@@ -347,14 +350,6 @@ void (async () => {
               clientCidrBlockAllowList: [
                 `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
               ],
-              dynamicEnvironmentKeys: {
-                kubeConfigFilePath:
-                  constants.dynamicEnvironments.k8s.oke.apexCaptain
-                    .kubeConfigFilePath,
-                httpsProxyUrl:
-                  constants.dynamicEnvironments.k8s.oke.apexCaptain
-                    .httpsProxyUrl,
-              },
             },
           },
           workstation: {
@@ -424,6 +419,8 @@ void (async () => {
             },
           },
         },
+        generatedScriptLibDirRelativePath:
+          constants.paths.dirs.generatedScriptLibDir,
       },
     },
   };
@@ -435,7 +432,7 @@ void (async () => {
   });
 
   project.postSynthesize = () => {
-    execSync(`chmod 400 ${apexCaptainCoiPrivateKeyFile.absolutePath}`);
+    execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);
     execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
   };
 

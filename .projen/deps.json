@@ -36,6 +36,10 @@
       "type": "build"
     },
     {
+      "name": "commander",
+      "type": "build"
+    },
+    {
       "name": "constructs",
       "version": "^10.4.2",
       "type": "build"

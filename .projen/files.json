@@ -1,5 +1,7 @@
 {
   "files": [
+    "../../../../tmp/ApexCaptain.IaC/keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
+    "../../../../tmp/ApexCaptain.IaC/oci.config",
     ".eslintrc.json",
     ".gitattributes",
     ".github/pull_request_template.md",
@@ -13,9 +15,7 @@
     ".projen/tasks.json",
     "cdktf.json",
     "env/prod.env",
-    "keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
     "LICENSE",
-    "oci.config",
     "tsconfig.dev.json",
     "tsconfig.json"
   ],

@@ -4,9 +4,9 @@ import { CloudflareSchema } from './cloudflare/.schema';
 
 export const StacksSchema = Joi.object({
   common: Joi.object({
-    generatedKeyFilesDirRelativePaths: Joi.object({
-      secrets: Joi.string().required(),
-      keys: Joi.string().required(),
+    generatedKeyFilesDirPaths: Joi.object({
+      relativeSecretsDirPath: Joi.string().required(),
+      absoluteKeysDirPath: Joi.string().required(),
     }).required(),
     kubeConfigDirRelativePath: Joi.string().required(),
   }).required(),

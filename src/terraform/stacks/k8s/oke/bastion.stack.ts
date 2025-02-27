@@ -7,15 +7,14 @@ import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
 import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { AbstractStack, createExpirationDate } from '@/common';
-import { createSetEnvExecutionProvisioner } from '@/common/functions';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Container as DockerContainer } from '@lib/terraform/providers/docker/container';
 import { Image as DockerImage } from '@lib/terraform/providers/docker/image';
 import { DockerProvider } from '@lib/terraform/providers/docker/provider';
-import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { BastionBastion } from '@lib/terraform/providers/oci/bastion-bastion';
@@ -56,13 +55,12 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     }));
 
     const privateSshKeyFileInKeys = this.provide(
-      File,
+      SensitiveFile,
       `${idPrefix}-privateSshKeyFileInKeys`,
       id => ({
         filename: path.join(
-          process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.keys,
+            .generatedKeyFilesDirPaths.absoluteKeysDirPath,
           `${K8S_Oke_Bastion_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
@@ -155,35 +153,6 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
         ].join(' '),
       ],
     }),
-  );
-
-  okeBastionSessionTunnel = this.provide(
-    Resource,
-    'okeBastionSessionTunnel',
-    () => {
-      const proxyUrl = `socks5://${this.okeBastionSessionContainer.element.networkData.get(0).ipAddress}:${this.okeBastionSessionTunnelPort.element.result}`;
-      return [
-        {
-          provisioners: [
-            createSetEnvExecutionProvisioner({
-              name: this.config.dynamicEnvironmentKeys.httpsProxyUrl,
-              value: proxyUrl,
-            }),
-            createSetEnvExecutionProvisioner({
-              name: this.config.dynamicEnvironmentKeys.kubeConfigFilePath,
-              value:
-                this.k8sOkeClusterStack.okeKubeConfig.shared.kubeConfigFile
-                  .element.filename,
-            }),
-          ],
-          triggers: {
-            containerResourceId: this.okeBastionSessionContainer.element.id,
-          },
-        },
-
-        { proxyUrl },
-      ];
-    },
   );
 
   constructor(
