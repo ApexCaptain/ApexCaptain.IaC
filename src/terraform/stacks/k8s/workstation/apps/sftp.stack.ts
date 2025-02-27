@@ -12,8 +12,8 @@ import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
-import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
@@ -82,13 +82,13 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
     }));
 
     const privateSshKeyFileInSecrets = this.provide(
-      File,
+      SensitiveFile,
       `${idPrefix}-privateSshKeyFileInSecrets`,
       id => ({
         filename: path.join(
           process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirRelativePaths.secrets,
+            .generatedKeyFilesDirPaths.relativeSecretsDirPath,
           `${K8S_Workstation_Apps_Sftp_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,

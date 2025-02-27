@@ -3,7 +3,7 @@
   "name": "ApexCaptain.IaC Dev Container",
   "dockerComposeFile": "docker-compose.dev.yml",
   "service": "workspace",
-  "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/home/vscode/workspace/${localWorkspaceFolderBasename}",
   // Featuring
   "features": {
     "ghcr.io/devcontainers-contrib/features/projen:1": {},

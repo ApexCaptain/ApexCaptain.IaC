@@ -33,10 +33,9 @@ jspm_packages/
 .secrets
 /.kube
 /cdktf.out.json
-/oci.config
 /env
 /cdktf.out
-/keys
+/scripts/generated
 !/.github/workflows/upgrade-develop.yml
 !/.github/pull_request_template.md
 !/.prettierignore

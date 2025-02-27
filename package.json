@@ -20,7 +20,8 @@
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
     "tf@plan": "cdktf diff",
     "k8s@workstation": "kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}",
-    "k8s@oke": "HTTPS_PROXY=$DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_SOCKS5_PROXY_URL kubectl --kubeconfig $DYNAMIC_ENVIRONMENT_K8S_OKE_APEX_CAPTAIN_KUBE_CONFIG_FILE_PATH"
+    "k8s@oke": "ts-node ./scripts/kubectl.script.ts -t OKE_APEX_CAPTAIN",
+    "ssh@oke": "ts-node ./scripts/ssh.script.ts -t OKE_APEX_CAPTAIN"
   },
   "author": {
     "name": "ApexCaptain",
@@ -36,6 +37,7 @@
     "@types/node": "^22.13.5",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
+    "commander": "^13.1.0",
     "constructs": "^10.4.2",
     "eslint": "^9",
     "eslint-config-prettier": "^9.1.0",
