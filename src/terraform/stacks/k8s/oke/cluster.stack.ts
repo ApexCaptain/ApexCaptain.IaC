@@ -14,10 +14,10 @@ import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { ContainerengineCluster } from '@lib/terraform/providers/oci/containerengine-cluster';
-import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
 
 @Injectable()
 export class K8S_Oke_Cluster_Stack extends AbstractStack {
@@ -54,6 +54,9 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
+        lifecycle: {
+          createBeforeDestroy: true,
+        },
       }),
     );
 

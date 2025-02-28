@@ -55,6 +55,22 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     }),
   );
 
+  workstationDashboardRecord = this.provide(
+    DnsRecord,
+    'workstationDashboardRecord',
+    () => ({
+      name: 'dashboard-workstation',
+      ttl: 1,
+      type: 'CNAME',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+          .domain.iptime,
+      proxied: true,
+      comment: 'Cloudflare DNS record for Workstation Dashboard service',
+    }),
+  );
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

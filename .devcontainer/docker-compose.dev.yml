@@ -1,12 +1,13 @@
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
-    image: mcr.microsoft.com/devcontainers/base:noble
+    # Base On Ubuntu Noble
+    image: mcr.microsoft.com/devcontainers/base:dev-noble
 
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH} ${ROOT_TMP_ABS_DIR_PATH}
+      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH} ${TMP_ABS_DIR_PATH}
 
     env_file:
       - .env
