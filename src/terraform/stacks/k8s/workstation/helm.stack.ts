@@ -5,7 +5,6 @@ import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { Release } from '@lib/terraform/providers/helm/release';
 
 @Injectable()
 export class K8S_Workstation_Helm_Stack extends AbstractStack {

@@ -1,7 +1,7 @@
 {
   "files": [
-    "../../../../tmp/ApexCaptain.IaC/keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
-    "../../../../tmp/ApexCaptain.IaC/oci.config",
+    "../../generatedSecrets/keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
+    "../../generatedSecrets/oci.config",
     ".eslintrc.json",
     ".gitattributes",
     ".github/pull_request_template.md",

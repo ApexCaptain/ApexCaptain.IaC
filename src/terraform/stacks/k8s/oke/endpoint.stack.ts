@@ -53,6 +53,9 @@ export class K8S_Oke_Endpoint_Stack extends AbstractStack {
           `${id}.config`,
         ),
         content: dataKubeConfig.element.content,
+        lifecycle: {
+          createBeforeDestroy: true,
+        },
       }),
     );
 
@@ -103,6 +106,9 @@ export class K8S_Oke_Endpoint_Stack extends AbstractStack {
           `${K8S_Oke_Endpoint_Stack.name}-${id}.ts`,
         ),
         content: `export const ${id} = ${JSON.stringify(data, null, 2)}`,
+        lifecycle: {
+          createBeforeDestroy: true,
+        },
       },
       data,
     ];

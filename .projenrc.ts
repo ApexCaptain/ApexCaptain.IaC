@@ -41,7 +41,7 @@ const constants = (() => {
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
   const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE!!;
-  const rootTmpKeysDir = path.join(process.env.ROOT_TMP_ABS_DIR_PATH!!, 'keys');
+  const rootTmpKeysDir = path.join(process.env.TMP_ABS_DIR_PATH!!, 'keys');
 
   const paths = {
     dirs: {
@@ -297,6 +297,11 @@ void (async () => {
         {
           name: 'null',
           source: 'hashicorp/null',
+        },
+        {
+          // https://registry.terraform.io/providers/hashicorp/time/latest
+          name: 'time',
+          source: 'hashicorp/time',
         },
         // Partners
         {

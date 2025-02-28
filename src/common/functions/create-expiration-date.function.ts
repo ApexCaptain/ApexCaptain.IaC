@@ -60,16 +60,15 @@ export function createExpirationDate(
   const errors = validateSync(instanciatedOptions);
   if (errors.length > 0) throw new BadRequestException(errors);
 
-  const denominator =
-    (instanciatedOptions.seconds +
-      instanciatedOptions.minutes * 60 +
-      instanciatedOptions.hours * 60 * 60 +
-      instanciatedOptions.days * 24 * 60 * 60) *
-    1000;
+  const denominatorSeconds =
+    instanciatedOptions.seconds +
+    instanciatedOptions.minutes * 60 +
+    instanciatedOptions.hours * 60 * 60 +
+    instanciatedOptions.days * 24 * 60 * 60;
+  const denominator = (denominatorSeconds ? denominatorSeconds : 1) * 1000;
 
   const expriationDate = new Date(
-    Math.floor(Date.now() / (denominator ? denominator : 1)) * denominator +
-      denominator,
+    Math.floor(Date.now() / denominator) * denominator + denominator,
   );
   return expriationDate;
 }

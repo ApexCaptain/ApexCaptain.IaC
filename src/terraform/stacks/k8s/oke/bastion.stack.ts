@@ -24,6 +24,8 @@ import { Integer as RandomInteger } from '@lib/terraform/providers/random/intege
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { TimeProvider } from '@lib/terraform/providers/time/provider';
+import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {
@@ -45,13 +47,32 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       ),
       docker: this.provide(DockerProvider, 'dockerProvider', () => ({})),
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
+      time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
   };
 
+  privateKeyExpriationDate = this.provide(
+    StaticResource,
+    `privateKeyExpriationDate`,
+    () => ({
+      triggers: {
+        expirationDate: createExpirationDate({
+          days: 10,
+        }).toString(),
+      },
+    }),
+  );
+
   privateKey = this.provide(Resource, 'privateKey', idPrefix => {
+    const expriationDateElement = this.privateKeyExpriationDate.element;
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
+      lifecycle: {
+        replaceTriggeredBy: [
+          `${expriationDateElement.terraformResourceType}.${expriationDateElement.friendlyUniqueId}`,
+        ],
+      },
     }));
 
     const privateSshKeyFileInKeys = this.provide(
@@ -65,6 +86,9 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
+        lifecycle: {
+          createBeforeDestroy: true,
+        },
       }),
     );
 

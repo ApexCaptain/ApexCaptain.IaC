@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo Create directories if does not exist
+mkdir -p $volumePathsToChangeOwner
+
 echo Changing owner of paths that mounted by named volumes
 sudo chown -R $USER:$USER $volumePathsToChangeOwner
 
