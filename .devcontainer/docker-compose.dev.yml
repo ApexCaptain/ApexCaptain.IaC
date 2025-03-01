@@ -7,7 +7,7 @@ services:
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      volumePathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH} ${TMP_ABS_DIR_PATH}
+      dirPathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH} ${TMP_ABS_DIR_PATH}
 
     env_file:
       - .env

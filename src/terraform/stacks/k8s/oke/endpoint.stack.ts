@@ -131,5 +131,7 @@ export class K8S_Oke_Endpoint_Stack extends AbstractStack {
       K8S_Oke_Endpoint_Stack.name,
       'K8S OKE Endpoint Stack',
     );
+    this.addDependency(this.k8sOkeBastionStack);
+    this.addDependency(this.k8sOkeClusterStack);
   }
 }

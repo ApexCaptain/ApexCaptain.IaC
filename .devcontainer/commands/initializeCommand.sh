@@ -10,7 +10,7 @@ containerWorkspaceFolderBasename=$4
 SECRETS_DIR_PATH=$HOME/google-drive/secrets 
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
 MERGED_ENV_FILE_PATH=.devcontainer/.env
-TMP_ABS_DIR_PATH=$containerWorkspaceFolder/../../generatedSecrets
+TMP_ABS_DIR_PATH=/tmp/$containerWorkspaceFolderBasename
 
 
 # Create docker-compose.deb.yml arg

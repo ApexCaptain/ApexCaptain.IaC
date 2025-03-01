@@ -11,6 +11,7 @@ const command = program
   )
   .addOption(new Option('-i --index <number>', 'Index of the node').default(0))
   .allowExcessArguments()
+  .allowUnknownOption()
   .parse(process.argv);
 
 const options = command.opts<{ target: TargetK8sEndpoint; index: number }>();

@@ -10,6 +10,7 @@ import {
   TextFile,
   typescript,
 } from 'projen';
+import fs from 'fs';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { TargetK8sEndpoint } from './scripts/enum';
@@ -83,7 +84,11 @@ const project = new typescript.TypeScriptAppProject({
     tsconfigPath: './tsconfig.dev.json',
     dirs: [constants.paths.dirs.srcDir],
     devdirs: [constants.paths.dirs.scriptDir],
-    ignorePatterns: ['/**/node_modules/*', `${constants.paths.dirs.libDir}/`],
+    ignorePatterns: [
+      '/**/node_modules/*',
+      `${constants.paths.dirs.libDir}/`,
+      `${constants.paths.dirs.generatedScriptLibDir}/`,
+    ],
     prettier: true,
   },
   projenrcTs: true,
@@ -212,16 +217,24 @@ void (async () => {
     // Terraform
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
-    // 'posttf@deploy': 'yarn eslint',
     'tf@plan': 'cdktf diff',
 
-    // Kubectl
+    // Kubernetes
     'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
     'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
 
     // SSH
     'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
+  });
+
+  // Clear keys dir in root tmp that is not a file
+  fs.readdirSync(constants.paths.dirs.rootTmpKeysDir).forEach(eachFile => {
+    const eachFilePath = path.join(
+      constants.paths.dirs.rootTmpKeysDir,
+      eachFile,
+    );
+    if (fs.statSync(eachFilePath).isDirectory()) fs.rmdirSync(eachFilePath);
   });
 
   const apexCaptainOciPrivateKeyFile = new TextFile(
