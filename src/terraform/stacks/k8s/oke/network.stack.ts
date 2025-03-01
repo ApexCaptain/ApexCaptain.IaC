@@ -18,6 +18,7 @@ import { CoreServiceGateway } from '@lib/terraform/providers/oci/core-service-ga
 import { CoreSubnet } from '@lib/terraform/providers/oci/core-subnet';
 import { CoreVcn } from '@lib/terraform/providers/oci/core-vcn';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
+import { CorePublicIp } from '@lib/terraform/providers/oci/core-public-ip';
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {
@@ -34,6 +35,20 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       ),
     },
   };
+
+  ingressControllerFlexibleLoadbalancerReservedPublicIp = this.provide(
+    CorePublicIp,
+    'ingressControllerFlexibleLoadbalancerReservedPublicIp',
+    id => ({
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+      displayName: id,
+      lifetime: 'RESERVED',
+
+      lifecycle: {
+        ignoreChanges: ['private_ip_id'],
+      },
+    }),
+  );
 
   // @See https://docs.oracle.com/en-us/iaas/application-integration/doc/availability.html
   allYnyServiceMeta = {

@@ -191,7 +191,6 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
     private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
-    private readonly k8sOkeClusterStack: K8S_Oke_Cluster_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

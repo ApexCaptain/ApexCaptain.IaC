@@ -82,6 +82,10 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       subnetId: this.k8sOkeNetworkStack.okeK8sEndpointPrivateSubnet.element.id,
     },
     options: {
+      addOns: {
+        isKubernetesDashboardEnabled: true,
+        isTillerEnabled: true,
+      },
       serviceLbSubnetIds: [
         this.k8sOkeNetworkStack.okeServiceLoadBalancerPublicSubnet.element.id,
       ],

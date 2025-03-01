@@ -8,6 +8,7 @@ const command = program
     new Option('-t --target <type>').choices(Object.values(TargetK8sEndpoint)),
   )
   .allowExcessArguments()
+  .allowUnknownOption()
   .parse(process.argv);
 
 const options = command.opts<{ target: TargetK8sEndpoint }>();
@@ -28,6 +29,7 @@ const kubectlRenderParams: {
 
 const kubectl = async () => {
   const selectedParams = kubectlRenderParams[options.target];
+
   spawnSync(
     'kubectl',
     ['--kubeconfig', selectedParams.kubeConfigFilePath, ...command.args],

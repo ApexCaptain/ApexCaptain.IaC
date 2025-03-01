@@ -7,6 +7,7 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DnsRecord } from '@lib/terraform/providers/cloudflare/dns-record';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
+import { K8S_Oke_Network_Stack } from '../k8s/oke/network.stack';
 
 @Injectable()
 export class Cloudflare_Record_Stack extends AbstractStack {
@@ -71,6 +72,19 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     }),
   );
 
+  okeDashboardRecord = this.provide(DnsRecord, 'okeDashboardRecore', () => ({
+    name: 'dashboard-oke',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare DNS record for OKE Dashboard service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
@@ -81,6 +95,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
 
     // Stacks
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
