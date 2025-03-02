@@ -59,13 +59,13 @@ export function createExpirationInterval(
 
   const errors = validateSync(instanciatedOptions);
   if (errors.length > 0) throw new BadRequestException(errors);
+  const { seconds, minutes, hours, days } = instanciatedOptions;
 
-  const denominatorSeconds =
-    instanciatedOptions.seconds +
-    instanciatedOptions.minutes * 60 +
-    instanciatedOptions.hours * 60 * 60 +
-    instanciatedOptions.days * 24 * 60 * 60;
-  const denominator = (denominatorSeconds ? denominatorSeconds : 1) * 1000;
+  const denominator = (() => {
+    const result =
+      seconds + minutes * 60 + hours * 60 * 60 + days * 24 * 60 * 60;
+    return (result ? result : 1) * 1000;
+  })();
 
   return new Date(
     Math.floor(Date.now() / denominator) * denominator + denominator,

@@ -70,6 +70,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
             .ipAddress,
       },
+      // @See https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingloadbalancers-subtopic.htm#flexible
       {
         name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape',
         value: 'flexible',
@@ -80,7 +81,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       },
       {
         name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max',
-        value: '10',
+        value: '100',
       },
     ],
   }));
