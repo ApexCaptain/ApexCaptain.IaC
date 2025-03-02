@@ -6,7 +6,7 @@ import { K8S_Oke_Cluster_Stack } from './cluster.stack';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
 import { K8S_Oke_Oci_Stack } from './oci.stack';
-import { AbstractStack, createExpirationDate } from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -56,7 +56,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     `privateKeyExpriationDate`,
     () => ({
       triggers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 10,
         }).toString(),
       },
@@ -133,7 +133,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       min: 10000,
       max: 65535,
       keepers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 10,
         }).toString(),
       },

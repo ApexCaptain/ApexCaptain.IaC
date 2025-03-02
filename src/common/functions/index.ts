@@ -1,1 +1,1 @@
-export * from './create-expiration-date.function';
+export * from './create-expiration-interval.function';
