@@ -15,7 +15,7 @@ export namespace NodeEnv {
     );
     if (!nodeEnvEntry)
       throw new InternalServerErrorException([
-        `부적절한 KeyString : "${keyString}". 다음의 값 중 하나여야 합니다.  [${nodeEnvEntries.map(each => each[0]).join(', ')}]`,
+        `Invalid KeyString : "${keyString}". It should be one of the following values.  [${nodeEnvEntries.map(each => each[0]).join(', ')}]`,
       ]);
     return nodeEnvEntry[1];
   }
@@ -24,15 +24,13 @@ export namespace NodeEnv {
     envString: string = process.env.NODE_ENV!!,
   ): NodeEnv {
     if (!envString)
-      throw new InternalServerErrorException([
-        `NODE_ENV가 정의되지 않았습니다.`,
-      ]);
+      throw new InternalServerErrorException([`NODE_ENV is not defined.`]);
     const nodeEnvEntry = nodeEnvEntries.find(
       ([_, value]) => value == envString.toUpperCase(),
     );
     if (!nodeEnvEntry)
       throw new InternalServerErrorException([
-        `부적절한 EnvString : "${envString}". 다음의 값 중 하나여야 합니다.  [${nodeEnvEntries.map(each => each[1]).join(', ')}]`,
+        `Invalid EnvString : "${envString}". It should be one of the following values.  [${nodeEnvEntries.map(each => each[1]).join(', ')}]`,
       ]);
 
     return nodeEnvEntry[1];
