@@ -11,7 +11,7 @@ import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 
 @Injectable()
-export class K8S_Oke_Apps_Ingress_Controller_Stack extends AbstractStack {
+export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -95,7 +95,7 @@ export class K8S_Oke_Apps_Ingress_Controller_Stack extends AbstractStack {
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Oke_Apps_Ingress_Controller_Stack.name,
+      K8S_Oke_Apps_IngressController_Stack.name,
       'Ingress Controller for OKE k8s',
     );
   }

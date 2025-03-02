@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractStack, createExpirationDate } from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
@@ -24,6 +24,7 @@ import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import path from 'path';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
@@ -129,7 +130,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       length: 16,
       special: false,
       keepers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 30,
         }).toString(),
       },
@@ -142,7 +143,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     () => ({
       length: 16,
       keepers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 30,
         }).toString(),
       },
@@ -246,11 +247,13 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_Dashboard_Stack.name,
       'Dashboard for OKE k8s',
     );
+    this.addDependency(this.k8sIngressControllerStack);
   }
 }

@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Expose, plainToInstance, Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty, Min, validateSync } from 'class-validator';
 
-export class CreateExpirationDateOptions {
+export class CreateExpirationIntervalOptions {
   /**
    * @description expiration date seconds
    */
@@ -49,13 +49,13 @@ export class CreateExpirationDateOptions {
  * @param options
  * @returns expiration date
  */
-export function createExpirationDate(
-  options: CreateExpirationDateOptions = {},
+export function createExpirationInterval(
+  options: CreateExpirationIntervalOptions = {},
 ) {
   const instanciatedOptions = plainToInstance(
-    CreateExpirationDateOptions,
+    CreateExpirationIntervalOptions,
     options,
-  ) as Required<CreateExpirationDateOptions>;
+  ) as Required<CreateExpirationIntervalOptions>;
 
   const errors = validateSync(instanciatedOptions);
   if (errors.length > 0) throw new BadRequestException(errors);
@@ -67,8 +67,7 @@ export function createExpirationDate(
     instanciatedOptions.days * 24 * 60 * 60;
   const denominator = (denominatorSeconds ? denominatorSeconds : 1) * 1000;
 
-  const expriationDate = new Date(
+  return new Date(
     Math.floor(Date.now() / denominator) * denominator + denominator,
   );
-  return expriationDate;
 }

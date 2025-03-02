@@ -2,7 +2,7 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { AbstractStack, createExpirationDate } from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
@@ -145,7 +145,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
       length: 16,
       special: false,
       keepers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 30,
         }).toString(),
       },
@@ -158,7 +158,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
     () => ({
       length: 16,
       keepers: {
-        expirationDate: createExpirationDate({
+        expirationDate: createExpirationInterval({
           days: 30,
         }).toString(),
       },
