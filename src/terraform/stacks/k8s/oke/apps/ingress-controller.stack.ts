@@ -81,7 +81,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       },
       {
         name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max',
-        value: '100',
+        value: '10',
       },
     ],
   }));
