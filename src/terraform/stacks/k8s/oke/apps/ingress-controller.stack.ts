@@ -57,6 +57,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     chart: 'ingress-nginx',
     repository: 'https://kubernetes.github.io/ingress-nginx',
     namespace: this.namespace.element.metadata.name,
+    createNamespace: false,
     version: '4.12.0',
     set: [
       {

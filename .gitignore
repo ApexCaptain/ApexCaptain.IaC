@@ -37,6 +37,7 @@ jspm_packages/
 /keys
 /cdktf.out
 /scripts/generated
+/tmp
 !/.github/workflows/upgrade-develop.yml
 !/.github/pull_request_template.md
 !/.prettierignore

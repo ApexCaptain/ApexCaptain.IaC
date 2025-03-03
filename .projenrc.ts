@@ -37,6 +37,7 @@ const constants = (() => {
   const envDir = 'env';
   const keysDir = 'keys';
   const secretsDir = '.secrets';
+  const tmpDir = 'tmp';
 
   const cdktfOutDir = 'cdktf.out';
 
@@ -58,6 +59,7 @@ const constants = (() => {
       cdktfOutDir,
       keysDir,
       secretsDir,
+      tmpDir,
     },
     files: {
       cdktfConfigFilePath,
@@ -176,6 +178,7 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.keysDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.generatedScriptLibDir}`,
+    `/${constants.paths.dirs.tmpDir}`,
   ],
   // @ToDo 이 부분 나중에 수정
   deps: [

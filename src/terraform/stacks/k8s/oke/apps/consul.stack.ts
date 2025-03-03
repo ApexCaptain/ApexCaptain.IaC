@@ -2,32 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import _ from 'lodash';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { Fn, LocalBackend } from 'cdktf';
-import { Service } from '@lib/terraform/providers/kubernetes/service';
+import { LocalBackend } from 'cdktf';
+import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import {
-  Cloudflare_Record_Stack,
-  Cloudflare_Zone_Stack,
-} from '@/terraform/stacks/cloudflare';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
-import { K8S_Oke_System_Stack } from '../system.stack';
-import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
-import { ClusterRoleBinding } from '@lib/terraform/providers/kubernetes/cluster-role-binding';
-import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
-import { Password } from '@lib/terraform/providers/random/password';
+import _ from 'lodash';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import path from 'path';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
+import { Password } from '@lib/terraform/providers/random/password';
+import path from 'path';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
-export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
+export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -46,82 +42,125 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
               .kubeConfigFilePath,
         }),
       ),
+      helm: this.provide(HelmProvider, 'helmProvider', () => ({
+        kubernetes: {
+          proxyUrl:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
+          configPath:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared
+              .kubeConfigFilePath,
+        },
+      })),
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
     },
   };
 
   meta = {
-    name: 'dashboard',
+    name: 'consul',
   };
-
   namespace = this.provide(Namespace, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
   }));
 
-  service = this.provide(Service, 'service', id => [
-    {
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
+  consulRelease = this.provide(Release, 'consulRelease', () => {
+    const consulUiServicePort = 443;
+
+    return [
+      {
+        name: this.meta.name,
+        chart: 'consul',
+        repository: 'https://helm.releases.hashicorp.com',
         namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        type: 'ExternalName',
-        externalName: `${
-          this.k8sOkeSystemStack.dataKubernetesDashboardService.element.metadata
-            .name
-        }.${this.k8sOkeSystemStack.dataNamespace.element.metadata.name}.svc.cluster.local`,
-      },
-    },
-    {
-      servicePort:
-        this.k8sOkeSystemStack.dataKubernetesDashboardService.shared
-          .servicePort,
-    },
-  ]);
+        // @See https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
+        set: [
+          {
+            name: 'global.peering.enabled',
+            value: 'false',
+          },
+          {
+            name: 'global.tls.enabled',
+            value: 'true',
+          },
+          // Server
+          {
+            name: 'server.enabled',
+            value: 'true',
+          },
+          {
+            name: 'server.replicas',
+            value: '3',
+          },
+          {
+            name: 'server.extraConfig',
+            value: `
+          {
+            "log_level": "TRACE"
+          }
+          `,
+          },
+          // Connect Inject
+          {
+            name: 'connectInject.enabled',
+            value: 'true',
+          },
+          {
+            name: 'connectInject.default',
+            value: 'false',
+          },
+          // Mesh Gateway
+          // @ToDo Mesh Gateway 임시 비활성화, 추후 다시 확인
+          // global.peering.enabled도 켜야함
+          {
+            name: 'meshGateway.enabled',
+            value: 'false',
+          },
+          {
+            name: 'meshGateway.replicas',
+            value: '3',
+          },
+          {
+            name: 'meshGateway.service.type',
+            value: 'LoadBalancer',
+          },
+          {
+            name: 'meshGateway.service.annotations',
+            value: `
+          {
+            "oci.oraclecloud.com/load-balancer-type": "nlb"
+          }
+          `,
+          },
 
-  serviceAccount = this.provide(ServiceAccountV1, 'serviceAccount', id => ({
-    metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
-      namespace: this.namespace.element.metadata.name,
-    },
-  }));
-
-  serviceAccountToken = this.provide(SecretV1, 'serviceAccountToken', id => ({
-    metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
-      namespace: this.namespace.element.metadata.name,
-      annotations: {
-        'kubernetes.io/service-account.name':
-          this.serviceAccount.element.metadata.name,
+          // Consul UI
+          {
+            name: 'ui.enabled',
+            value: 'true',
+          },
+          {
+            name: 'ui.service.enabled',
+            value: 'true',
+          },
+          {
+            name: 'ui.service.type',
+            value: 'ClusterIP',
+          },
+          {
+            name: 'ui.service.port.https',
+            value: consulUiServicePort.toString(),
+          },
+        ],
       },
-    },
-    type: 'kubernetes.io/service-account-token',
-  }));
-
-  clusterRoleBinding = this.provide(
-    ClusterRoleBinding,
-    'clusterRoleBinding',
-    id => ({
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
-      },
-      roleRef: {
-        apiGroup: 'rbac.authorization.k8s.io',
-        kind: 'ClusterRole',
-        name: 'cluster-admin',
-      },
-      subject: [
-        {
-          kind: 'ServiceAccount',
-          name: this.serviceAccount.element.metadata.name,
-          namespace: this.namespace.element.metadata.name,
+      {
+        ui: {
+          serviceName: `${this.meta.name}-${this.namespace.element.metadata.name}-ui`,
+          port: consulUiServicePort,
         },
-      ],
-    }),
-  );
+      },
+    ];
+  });
 
   ingressBasicAuthUsername = this.provide(
     StringResource,
@@ -173,14 +212,10 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
         process.cwd(),
         this.globalConfigService.config.terraform.stacks.common
           .generatedKeyFilesDirPaths.relativeSecretsDirPath,
-        `${K8S_Oke_Apps_Dashboard_Stack.name}-${id}.json`,
+        `${K8S_Oke_Apps_Consul_Stack.name}-${id}.json`,
       ),
       content: JSON.stringify(
         {
-          dashboardAuthenticationToken: Fn.lookup(
-            this.serviceAccountToken.element.data,
-            'token',
-          ),
           basicAuth: {
             username: this.ingressBasicAuthUsername.element.result,
             password: this.ingressBasicAuthPassword.element.result,
@@ -192,7 +227,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     }),
   );
 
-  ingress = this.provide(IngressV1, 'ingress', id => ({
+  consulUiIngress = this.provide(IngressV1, 'consulUiIngress', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
@@ -210,7 +245,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.okeDashboardRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.okeConsulRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
           http: {
             path: [
               {
@@ -218,9 +253,9 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
                 pathType: 'Prefix',
                 backend: {
                   service: {
-                    name: this.service.element.metadata.name,
+                    name: this.consulRelease.shared.ui.serviceName,
                     port: {
-                      number: this.service.shared.servicePort,
+                      number: this.consulRelease.shared.ui.port,
                     },
                   },
                 },
@@ -230,26 +265,27 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
         },
       ],
     },
+    dependsOn: [this.consulRelease.element],
   }));
 
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
 
+    // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
-    private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Oke_Apps_Dashboard_Stack.name,
-      'Dashboard for OKE k8s',
+      K8S_Oke_Apps_Consul_Stack.name,
+      'Consul stack for OKE k8s',
     );
     this.addDependency(this.k8sOkeAppsIngressControllerStack);
   }
