@@ -44,3 +44,6 @@ do
         echo "" >> "$MERGED_ENV_FILE_PATH"
     fi
 done
+
+# Make all derived sh files executable
+chmod +x ./.devcontainer/commands/common/*.sh

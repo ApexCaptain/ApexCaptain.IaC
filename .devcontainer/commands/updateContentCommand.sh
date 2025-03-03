@@ -11,7 +11,7 @@ echo Installing OCI CLI
 bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
 
 echo Installing Helm CLI
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+bash -c "$(curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3)"
 
 echo Installing apt packages
 sudo apt install -y \
@@ -21,4 +21,5 @@ echo Installing global npm packages
 npm install -g \
     npm@latest
 
-./common/synchronizeProject.sh
+echo Synchronizing project
+./.devcontainer/commands/common/synchronizeProject.sh

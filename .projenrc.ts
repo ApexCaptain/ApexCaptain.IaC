@@ -10,7 +10,6 @@ import {
   TextFile,
   typescript,
 } from 'projen';
-import fs from 'fs';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { TargetK8sEndpoint } from './scripts/enum';

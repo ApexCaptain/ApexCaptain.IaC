@@ -3,5 +3,8 @@
 echo Pulling latest changes from remote repository
 git pull
 
-echo Initialize Projen
-yarn && yarn projen
+echo Installing dependencies
+yarn
+
+echo Installing Projen
+yarn projen

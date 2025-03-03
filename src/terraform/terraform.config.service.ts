@@ -1,5 +1,5 @@
 import path from 'path';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { LocalBackendConfig } from 'cdktf';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { CloudflareProviderConfig } from '@lib/terraform/providers/cloudflare/provider';
@@ -7,6 +7,14 @@ import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
 import { HelmProviderConfig } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
 import { OciProviderConfig } from '@lib/terraform/providers/oci/provider';
+import { IsNotEmpty, IsString } from 'class-validator';
+
+export class TerraformConfigServiceConfig {
+  @IsString()
+  @IsNotEmpty()
+  generatedScriptLibDirRelativePath!: string;
+}
+
 @Injectable()
 export class TerraformConfigService {
   private readonly config = this.globalConfigService.config.terraform.config;
@@ -117,6 +125,12 @@ export class TerraformConfigService {
 
   constructor(
     // Global
+    @Inject(forwardRef(() => GlobalConfigService))
     private readonly globalConfigService: GlobalConfigService,
-  ) {}
+  ) {
+    console.log(
+      this.globalConfigService.config2.terraform
+        .generatedScriptLibDirRelativePath,
+    );
+  }
 }

@@ -9,7 +9,8 @@ import {
 } from './config/global.config.schema';
 import { GlobalConfigService } from './config/global.config.schema.service';
 import { NodeEnv } from '@/common';
-
+import { GlobalConfigSchema2 } from './config/global.config.schema2';
+import { GlobalConfigSchema2Name } from './config/global.config.schema2';
 const globalServices = [GlobalConfigService];
 
 @Global()
@@ -32,6 +33,15 @@ const globalServices = [GlobalConfigService];
             );
           if (validationResult.error) throw validationResult.error;
           return validationResult.value;
+        }),
+        registerAs(GlobalConfigSchema2Name, () => {
+          const tmp = unflatten<NodeJS.ProcessEnv, GlobalConfigSchema2>(
+            process.env,
+            {
+              delimiter: '_',
+            },
+          );
+          return tmp as any;
         }),
       ],
     }),
