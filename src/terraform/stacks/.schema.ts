@@ -6,7 +6,7 @@ export const StacksSchema = Joi.object({
   common: Joi.object({
     generatedKeyFilesDirPaths: Joi.object({
       relativeSecretsDirPath: Joi.string().required(),
-      absoluteKeysDirPath: Joi.string().required(),
+      relativeKeysDirPath: Joi.string().required(),
     }).required(),
     kubeConfigDirRelativePath: Joi.string().required(),
   }).required(),

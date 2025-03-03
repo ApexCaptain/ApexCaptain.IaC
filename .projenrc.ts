@@ -36,13 +36,17 @@ const constants = (() => {
   const libDir = 'lib';
   const generatedScriptLibDir = path.join(scriptDir, 'generated');
   const envDir = 'env';
+  const keysDir = 'keys';
+  const secretsDir = '.secrets';
 
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
   const cdktfOutFilePath = 'cdktf.out.json';
-  const ociCliConfigFilePath = process.env.OCI_CLI_CONFIG_FILE!!;
-  const rootTmpKeysDir = path.join(process.env.TMP_ABS_DIR_PATH!!, 'keys');
+  const ociCliConfigFilePath = path.relative(
+    process.cwd(),
+    process.env.OCI_CLI_CONFIG_FILE ?? 'keys/oci.config',
+  );
 
   const paths = {
     dirs: {
@@ -53,7 +57,8 @@ const constants = (() => {
       generatedScriptLibDir,
       envDir,
       cdktfOutDir,
-      rootTmpKeysDir,
+      keysDir,
+      secretsDir,
     },
     files: {
       cdktfConfigFilePath,
@@ -62,7 +67,6 @@ const constants = (() => {
     },
   };
 
-  // @ToDo 추후 재설정
   const projenCredentials = {
     githubTokenCredential: GithubCredentials.fromPersonalAccessToken({
       secret: 'WORKFLOW_TOKEN',
@@ -165,11 +169,12 @@ const project = new typescript.TypeScriptAppProject({
   name: constants.project.name,
   gitignore: [
     '.DS_STORE',
-    '.secrets',
+    `/${constants.paths.dirs.secretsDir}`,
     `/${constants.paths.dirs.kubeConfigDirPath}`,
     `/${constants.paths.files.cdktfConfigFilePath}`,
     `/${constants.paths.files.cdktfOutFilePath}`,
     `/${constants.paths.dirs.envDir}`,
+    `/${constants.paths.dirs.keysDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.generatedScriptLibDir}`,
   ],
@@ -228,24 +233,9 @@ void (async () => {
     'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
   });
 
-  // Clear keys dir in root tmp that is not a file
-  fs.readdirSync(constants.paths.dirs.rootTmpKeysDir).forEach(eachFile => {
-    const eachFilePath = path.join(
-      constants.paths.dirs.rootTmpKeysDir,
-      eachFile,
-    );
-    if (fs.statSync(eachFilePath).isDirectory()) fs.rmdirSync(eachFilePath);
-  });
-
   const apexCaptainOciPrivateKeyFile = new TextFile(
     project,
-    path.relative(
-      project.outdir,
-      path.join(
-        constants.paths.dirs.rootTmpKeysDir,
-        'APEX_CAPTAIN_OCI_PRIVATE_KEY.pem',
-      ),
-    ),
+    path.join(constants.paths.dirs.keysDir, 'APEX_CAPTAIN_OCI_PRIVATE_KEY.pem'),
     {
       lines: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY?.split('\\n'),
       editGitignore: false,
@@ -255,7 +245,7 @@ void (async () => {
   // Generate Oci Cli Config File
   const ociCliConfigFile = new TextFile(
     project,
-    path.relative(project.outdir, constants.paths.files.ociCliConfigFilePath),
+    constants.paths.files.ociCliConfigFilePath,
     {
       lines: [
         `[DEFAULT]`,
@@ -349,8 +339,12 @@ void (async () => {
       stacks: {
         common: {
           generatedKeyFilesDirPaths: {
-            relativeSecretsDirPath: './.secrets/keys/generated',
-            absoluteKeysDirPath: constants.paths.dirs.rootTmpKeysDir,
+            relativeSecretsDirPath: path.join(
+              constants.paths.dirs.secretsDir,
+              'keys',
+              'generated',
+            ),
+            relativeKeysDirPath: constants.paths.dirs.keysDir,
           },
           kubeConfigDirRelativePath: constants.paths.dirs.kubeConfigDirPath,
         },

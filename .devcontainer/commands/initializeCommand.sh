@@ -9,8 +9,8 @@ containerWorkspaceFolderBasename=$4
 # System Arguments (depend on workstation settings)
 SECRETS_DIR_PATH=$HOME/google-drive/secrets 
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
+KEYS_DIR_PATH=$containerWorkspaceFolder/keys
 MERGED_ENV_FILE_PATH=.devcontainer/.env
-TMP_ABS_DIR_PATH=/tmp/$containerWorkspaceFolderBasename
 
 
 # Create docker-compose.deb.yml arg
@@ -29,10 +29,9 @@ HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH = $HOME/.kube/config
 CONTAINER_KUBE_CONFIG_DIR_PATH = ${containerWorkspaceFolder}/.kube
 CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH = ${containerWorkspaceFolder}/.kube/workstation.config
 
-TMP_ABS_DIR_PATH=$TMP_ABS_DIR_PATH
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH
 CONTAINER_SECRETS_DIR_PATH=$containerWorkspaceFolder/.secrets
-OCI_CLI_CONFIG_FILE=$TMP_ABS_DIR_PATH/oci.config
+OCI_CLI_CONFIG_FILE=$KEYS_DIR_PATH/oci.config
 
 # Merged env
 EOL

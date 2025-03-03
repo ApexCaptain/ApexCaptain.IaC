@@ -200,9 +200,6 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
         null,
         2,
       ),
-      lifecycle: {
-        createBeforeDestroy: true,
-      },
     }),
   );
 

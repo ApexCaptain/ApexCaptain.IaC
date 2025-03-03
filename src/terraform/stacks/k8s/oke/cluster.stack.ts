@@ -48,15 +48,13 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       `${idPrefix}-privateSshKeyFileInKeys`,
       id => ({
         filename: path.join(
+          process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirPaths.absoluteKeysDirPath,
+            .generatedKeyFilesDirPaths.relativeKeysDirPath,
           `${K8S_Oke_Cluster_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
-        lifecycle: {
-          createBeforeDestroy: true,
-        },
       }),
     );
 

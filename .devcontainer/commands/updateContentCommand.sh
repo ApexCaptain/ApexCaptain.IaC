@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo Changing owner of directories $dirPathsToChangeOwner to $USER
+sudo chown -R $USER:$USER $dirPathsToChangeOwner
+
 echo Updating apt package manager
 sudo apt update -y
 sudo apt upgrade -y
@@ -18,5 +21,4 @@ echo Installing global npm packages
 npm install -g \
     npm@latest
 
-
-
+./common/synchronizeProject.sh

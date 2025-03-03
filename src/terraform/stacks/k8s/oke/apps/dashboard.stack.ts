@@ -189,9 +189,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
         null,
         2,
       ),
-      lifecycle: {
-        createBeforeDestroy: true,
-      },
     }),
   );
 
