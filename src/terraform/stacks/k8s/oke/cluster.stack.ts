@@ -109,7 +109,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
               this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
           },
         ],
-        size: 4,
+        size: 2,
         nodePoolPodNetworkOptionDetails: {
           cniType: 'FLANNEL_OVERLAY',
         },
@@ -124,8 +124,8 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       },
       nodeShape: 'VM.Standard.A1.Flex',
       nodeShapeConfig: {
-        memoryInGbs: 6,
-        ocpus: 1,
+        memoryInGbs: 12,
+        ocpus: 2,
       },
       sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
     }),

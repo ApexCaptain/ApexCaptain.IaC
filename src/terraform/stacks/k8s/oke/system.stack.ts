@@ -5,8 +5,8 @@ import { LocalBackend } from 'cdktf';
 import { Injectable } from '@nestjs/common';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { K8S_Oke_Endpoint_Stack } from './endpoint.stack';
-import { DataKubernetesNamespace } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace';
-import { DataKubernetesService } from '@lib/terraform/providers/kubernetes/data-kubernetes-service';
+import { DataKubernetesNamespaceV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace-v1';
+import { DataKubernetesServiceV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-service-v1';
 
 @Injectable()
 export class K8S_Oke_System_Stack extends AbstractStack {
@@ -31,14 +31,14 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     },
   };
 
-  dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
+  dataNamespace = this.provide(DataKubernetesNamespaceV1, 'namespace', () => ({
     metadata: {
       name: 'kube-system',
     },
   }));
 
   dataKubernetesDashboardService = this.provide(
-    DataKubernetesService,
+    DataKubernetesServiceV1,
     'dataKubernetesDashboardService',
     () => [
       {

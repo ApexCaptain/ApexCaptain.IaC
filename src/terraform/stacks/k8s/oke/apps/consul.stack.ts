@@ -6,7 +6,7 @@ import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
@@ -59,7 +59,8 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
   meta = {
     name: 'consul',
   };
-  namespace = this.provide(Namespace, 'namespace', () => ({
+
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
@@ -91,7 +92,7 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
           },
           {
             name: 'server.replicas',
-            value: '3',
+            value: '1',
           },
           {
             name: 'server.extraConfig',
@@ -119,7 +120,7 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
           },
           {
             name: 'meshGateway.replicas',
-            value: '3',
+            value: '2',
           },
           {
             name: 'meshGateway.service.type',

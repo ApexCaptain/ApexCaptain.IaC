@@ -6,8 +6,8 @@ import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import _ from 'lodash';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { Fn, LocalBackend } from 'cdktf';
-import { Service } from '@lib/terraform/providers/kubernetes/service';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import {
   Cloudflare_Record_Stack,
@@ -16,7 +16,7 @@ import {
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
-import { ClusterRoleBinding } from '@lib/terraform/providers/kubernetes/cluster-role-binding';
+import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { Password } from '@lib/terraform/providers/random/password';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
@@ -25,6 +25,8 @@ import path from 'path';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
+import { StaticResource } from '@lib/terraform/providers/time/static-resource';
+import { TimeProvider } from '@lib/terraform/providers/time/provider';
 
 @Injectable()
 export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
@@ -48,6 +50,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       ),
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
+      time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
   };
 
@@ -55,13 +58,13 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     name: 'dashboard',
   };
 
-  namespace = this.provide(Namespace, 'namespace', () => ({
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
   }));
 
-  service = this.provide(Service, 'service', id => [
+  service = this.provide(ServiceV1, 'service', id => [
     {
       metadata: {
         name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -89,6 +92,18 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     },
   }));
 
+  serviceAccountTokenExpiration = this.provide(
+    StaticResource,
+    'serviceAccountTokenExpiration',
+    () => ({
+      triggers: {
+        expirationDate: createExpirationInterval({
+          days: 30,
+        }).toString(),
+      },
+    }),
+  );
+
   serviceAccountToken = this.provide(SecretV1, 'serviceAccountToken', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -99,10 +114,15 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       },
     },
     type: 'kubernetes.io/service-account-token',
+    lifecycle: {
+      replaceTriggeredBy: [
+        `${this.serviceAccountTokenExpiration.element.terraformResourceType}.${this.serviceAccountTokenExpiration.element.friendlyUniqueId}`,
+      ],
+    },
   }));
 
   clusterRoleBinding = this.provide(
-    ClusterRoleBinding,
+    ClusterRoleBindingV1,
     'clusterRoleBinding',
     id => ({
       metadata: {

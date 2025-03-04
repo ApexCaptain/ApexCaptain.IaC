@@ -7,7 +7,7 @@ import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 
 @Injectable()
@@ -46,7 +46,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     name: 'ingress-controller',
   };
 
-  namespace = this.provide(Namespace, 'namespace', () => ({
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
@@ -70,6 +70,16 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
           this.k8sOkeNetworkStack
             .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
             .ipAddress,
+      },
+      {
+        name: 'controller.service.nodePorts.http',
+        value:
+          this.k8sOkeNetworkStack.ingressControllerFlexibleLoadbalancerReservedPublicIp.shared.httpNodePort.toString(),
+      },
+      {
+        name: 'controller.service.nodePorts.https',
+        value:
+          this.k8sOkeNetworkStack.ingressControllerFlexibleLoadbalancerReservedPublicIp.shared.httpsNodePort.toString(),
       },
       // @See https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingloadbalancers-subtopic.htm#flexible
       {

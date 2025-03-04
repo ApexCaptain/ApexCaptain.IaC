@@ -39,7 +39,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
         },
       },
       {
-        tokenSecretName: 'microk8s-dashboard-token',
         servicePort: 443,
       },
     ],

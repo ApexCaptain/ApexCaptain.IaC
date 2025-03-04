@@ -1,6 +1,6 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
@@ -9,17 +9,20 @@ import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.st
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { DataKubernetesSecret } from '@lib/terraform/providers/kubernetes/data-kubernetes-secret';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
+import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import { Secret } from '@lib/terraform/providers/kubernetes/secret';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { Password } from '@lib/terraform/providers/random/password';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
-import { Service } from '@lib/terraform/providers/kubernetes/service';
+import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
+import { StaticResource } from '@lib/terraform/providers/time/static-resource';
+import { TimeProvider } from '@lib/terraform/providers/time/provider';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -35,6 +38,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       ),
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
+      time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
   };
 
@@ -42,13 +46,13 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     name: 'dashboard',
   };
 
-  namespace = this.provide(Namespace, 'namespace', () => ({
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
   }));
 
-  service = this.provide(Service, 'service', id => [
+  service = this.provide(ServiceV1, 'service', id => [
     {
       metadata: {
         name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -69,16 +73,61 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     },
   ]);
 
-  dataDashboardTokenSecret = this.provide(
-    DataKubernetesSecret,
-    'dataDashboardTokenSecret',
+  serviceAccount = this.provide(ServiceAccountV1, 'serviceAccount', id => ({
+    metadata: {
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      namespace: this.namespace.element.metadata.name,
+    },
+  }));
+
+  serviceAccountTokenExpiration = this.provide(
+    StaticResource,
+    'serviceAccountTokenExpiration',
     () => ({
-      metadata: {
-        name: this.k8sWorkstationSystemStack.dataKubernetesDashboardService
-          .shared.tokenSecretName,
-        namespace:
-          this.k8sWorkstationSystemStack.dataNamespace.element.metadata.name,
+      triggers: {
+        expirationDate: createExpirationInterval({
+          days: 30,
+        }).toString(),
       },
+    }),
+  );
+
+  serviceAccountToken = this.provide(SecretV1, 'serviceAccountToken', id => ({
+    metadata: {
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      namespace: this.namespace.element.metadata.name,
+      annotations: {
+        'kubernetes.io/service-account.name':
+          this.serviceAccount.element.metadata.name,
+      },
+    },
+    type: 'kubernetes.io/service-account-token',
+    lifecycle: {
+      replaceTriggeredBy: [
+        `${this.serviceAccountTokenExpiration.element.terraformResourceType}.${this.serviceAccountTokenExpiration.element.friendlyUniqueId}`,
+      ],
+    },
+  }));
+
+  clusterRoleBinding = this.provide(
+    ClusterRoleBindingV1,
+    'clusterRoleBinding',
+    id => ({
+      metadata: {
+        name: _.kebabCase(`${this.meta.name}-${id}`),
+      },
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: 'cluster-admin',
+      },
+      subject: [
+        {
+          kind: 'ServiceAccount',
+          name: this.serviceAccount.element.metadata.name,
+          namespace: this.namespace.element.metadata.name,
+        },
+      ],
     }),
   );
 
@@ -110,7 +159,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
   );
 
   ingressBasicAuthSecret = this.provide(
-    Secret,
+    SecretV1,
     'ingressBasicAuthSecret',
     id => ({
       metadata: {
@@ -136,8 +185,10 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       ),
       content: JSON.stringify(
         {
-          dashboardAuthenticationToken:
-            this.dataDashboardTokenSecret.element.data.lookup('token'),
+          dashboardAuthenticationToken: Fn.lookup(
+            this.serviceAccountToken.element.data,
+            'token',
+          ),
           basicAuth: {
             username: this.ingressBasicAuthUsername.element.result,
             password: this.ingressBasicAuthPassword.element.result,

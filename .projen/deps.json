@@ -82,6 +82,10 @@
       "type": "build"
     },
     {
+      "name": "yaml",
+      "type": "build"
+    },
+    {
       "name": "@hapi/joi",
       "type": "runtime"
     },

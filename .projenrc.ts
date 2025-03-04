@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import path from 'path';
 import { flatten } from 'flat';
+import yaml from 'yaml';
 import {
   IniFile,
   javascript,
@@ -207,6 +208,7 @@ const project = new typescript.TypeScriptAppProject({
     'constructs@^10.4.2',
     '@types/lodash',
     'commander',
+    'yaml',
   ],
 });
 
@@ -230,6 +232,9 @@ void (async () => {
     'k8s@workstation':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
     'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
+
+    // Helm
+    'helm@oke': `ts-node ./scripts/helm.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
 
     // SSH
     'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
@@ -261,7 +266,6 @@ void (async () => {
     },
   );
 
-  // TMP
   // CDKTF
   new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {

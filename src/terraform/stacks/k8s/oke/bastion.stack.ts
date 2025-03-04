@@ -50,9 +50,9 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     },
   };
 
-  privateKeyExpriationDate = this.provide(
+  privateKeyExpiration = this.provide(
     StaticResource,
-    `privateKeyExpriationDate`,
+    `privateKeyExpiration`,
     () => ({
       triggers: {
         expirationDate: createExpirationInterval({
@@ -63,13 +63,13 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
   );
 
   privateKey = this.provide(Resource, 'privateKey', idPrefix => {
-    const expriationDateElement = this.privateKeyExpriationDate.element;
+    const expirationElement = this.privateKeyExpiration.element;
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
       lifecycle: {
         replaceTriggeredBy: [
-          `${expriationDateElement.terraformResourceType}.${expriationDateElement.friendlyUniqueId}`,
+          `${expirationElement.terraformResourceType}.${expirationElement.friendlyUniqueId}`,
         ],
       },
     }));
