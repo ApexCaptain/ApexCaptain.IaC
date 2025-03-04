@@ -34,8 +34,8 @@
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.15",
     "@types/flat": "5.0.2",
-    "@types/lodash": "^4.17.15",
-    "@types/node": "^22.13.5",
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^22.13.8",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "commander": "^13.1.0",
@@ -45,11 +45,10 @@
     "eslint-import-resolver-typescript": "^3.8.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.3",
-    "prettier": "^3.5.2",
+    "prettier": "^3.5.3",
     "projen": "^0.91.13",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3",
-    "yaml": "^2.7.0"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
