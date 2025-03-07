@@ -19,7 +19,7 @@
     "tf@build": "cdktf synth",
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
     "tf@plan": "cdktf diff",
-    "k8s@workstation": "kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}",
+    "k8s@ws": "kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}",
     "k8s@oke": "ts-node ./scripts/kubectl.script.ts -t OKE_APEX_CAPTAIN",
     "helm@oke": "ts-node ./scripts/helm.script.ts -t OKE_APEX_CAPTAIN",
     "ssh@oke": "ts-node ./scripts/ssh.script.ts -t OKE_APEX_CAPTAIN"
@@ -35,7 +35,7 @@
     "@nestjs/testing": "^10.4.15",
     "@types/flat": "5.0.2",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^22.13.8",
+    "@types/node": "^22.13.9",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "commander": "^13.1.0",
@@ -45,8 +45,9 @@
     "eslint-import-resolver-typescript": "^3.8.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.3",
+    "flatley": "^5.2.0",
     "prettier": "^3.5.3",
-    "projen": "^0.91.13",
+    "projen": "^0.91.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
@@ -68,7 +69,7 @@
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.2.2"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },

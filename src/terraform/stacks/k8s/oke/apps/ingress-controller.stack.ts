@@ -1,4 +1,4 @@
-import { AbstractStack } from '@/common';
+import { AbstractStack, convertJsonToHelmSet } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
@@ -52,50 +52,45 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     },
   }));
 
-  nginxIngressRelease = this.provide(Release, 'nginxIngressRelease', () => ({
-    name: this.meta.name,
-    chart: 'ingress-nginx',
-    repository: 'https://kubernetes.github.io/ingress-nginx',
-    namespace: this.namespace.element.metadata.name,
-    createNamespace: false,
-    version: '4.12.0',
-    set: [
-      {
-        name: 'controller.service.type',
-        value: 'LoadBalancer',
+  nginxIngressRelease = this.provide(Release, 'nginxIngressRelease', () => {
+    const { helmSet, helmSetList } = convertJsonToHelmSet({
+      controller: {
+        service: {
+          type: 'LoadBalancer',
+          loadBalancerIP:
+            this.k8sOkeNetworkStack
+              .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+              .ipAddress,
+          nodePorts: {
+            http: this.k8sOkeNetworkStack
+              .ingressControllerFlexibleLoadbalancerReservedPublicIp.shared
+              .httpNodePort,
+            https:
+              this.k8sOkeNetworkStack
+                .ingressControllerFlexibleLoadbalancerReservedPublicIp.shared
+                .httpsNodePort,
+          },
+          annotations: {
+            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape':
+              'flexible',
+            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-min': 10,
+            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max': 10,
+          },
+        },
       },
-      {
-        name: 'controller.service.loadBalancerIP',
-        value:
-          this.k8sOkeNetworkStack
-            .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-            .ipAddress,
-      },
-      {
-        name: 'controller.service.nodePorts.http',
-        value:
-          this.k8sOkeNetworkStack.ingressControllerFlexibleLoadbalancerReservedPublicIp.shared.httpNodePort.toString(),
-      },
-      {
-        name: 'controller.service.nodePorts.https',
-        value:
-          this.k8sOkeNetworkStack.ingressControllerFlexibleLoadbalancerReservedPublicIp.shared.httpsNodePort.toString(),
-      },
-      // @See https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingloadbalancers-subtopic.htm#flexible
-      {
-        name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape',
-        value: 'flexible',
-      },
-      {
-        name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-min',
-        value: '10',
-      },
-      {
-        name: 'controller.service.annotations.service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max',
-        value: '10',
-      },
-    ],
-  }));
+    });
+
+    return {
+      name: this.meta.name,
+      chart: 'ingress-nginx',
+      repository: 'https://kubernetes.github.io/ingress-nginx',
+      namespace: this.namespace.element.metadata.name,
+      createNamespace: false,
+
+      setSensitive: helmSet,
+      setList: helmSetList,
+    };
+  });
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

@@ -7,6 +7,7 @@ import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
 import { HelmProviderConfig } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
 import { OciProviderConfig } from '@lib/terraform/providers/oci/provider';
+import { GoogleProviderConfig } from '@lib/terraform/providers/google/provider';
 
 @Injectable()
 export class TerraformConfigService {
@@ -103,6 +104,20 @@ export class TerraformConfigService {
         };
       },
     };
+
+    const google = {
+      ApexCaptain: (): GoogleProviderConfig => {
+        return {
+          credentials: path.join(
+            process.cwd(),
+            this.config.providers.google.ApexCaptain.credentials,
+          ),
+          region: this.config.providers.google.ApexCaptain.region,
+          zone: this.config.providers.google.ApexCaptain.zone,
+        };
+      },
+    };
+
     return {
       cloudflare,
 
@@ -113,6 +128,8 @@ export class TerraformConfigService {
       helm,
 
       oci,
+
+      google,
     };
   })();
 

@@ -56,7 +56,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     () => ({
       triggers: {
         expirationDate: createExpirationInterval({
-          days: 10,
+          hours: 2,
         }).toString(),
       },
     }),

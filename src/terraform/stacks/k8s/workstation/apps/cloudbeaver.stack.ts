@@ -10,11 +10,12 @@ import {
 } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
+import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { Service } from '@lib/terraform/providers/kubernetes/service';
+import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
@@ -55,13 +56,13 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
     },
   };
 
-  namespace = this.provide(Namespace, 'namespace', () => ({
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.meta.name,
     },
   }));
 
-  deployment = this.provide(Deployment, 'deployment', id => ({
+  deployment = this.provide(DeploymentV1, 'deployment', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
@@ -78,7 +79,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
         spec: {
           container: [
             {
-              name: 'cloudbeaver',
+              name: this.meta.name,
               // @Note: This is not the latest version of CloudBeaver but
               // it is the latest version that is compatible with current k8s cluster. idk why.
               image: 'dbeaver/cloudbeaver:24.2.0',
@@ -119,7 +120,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
     },
   }));
 
-  service = this.provide(Service, 'service', id => ({
+  service = this.provide(ServiceV1, 'service', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
@@ -141,6 +142,14 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
+
+        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/start?rd=https://$host$request_uri`,
+        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/auth`,
+        // 'nginx.ingress.kubernetes.io/auth-response-headers':
+        //   'x-auth-request-user, x-auth-request-email, x-auth-request-access-token',
+
+        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/auth`,
+        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/start?rd=$escaped_request_uri`,
       },
     },
     spec: {
@@ -180,11 +189,13 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
     // Stacks
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Cloudbeaver_Stack.name,
       'Cloudbeaver stack for workstation k8s',
     );
+    // this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

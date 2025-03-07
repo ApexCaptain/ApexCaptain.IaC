@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractStack, createExpirationInterval } from '@/common';
+import {
+  AbstractStack,
+  convertJsonToHelmSet,
+  createExpirationInterval,
+} from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Release } from '@lib/terraform/providers/helm/release';
@@ -21,6 +25,7 @@ import { Password } from '@lib/terraform/providers/random/password';
 import path from 'path';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
@@ -69,6 +74,52 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
   consulRelease = this.provide(Release, 'consulRelease', () => {
     const consulUiServicePort = 443;
 
+    const { helmSet, helmSetList } = convertJsonToHelmSet({
+      global: {
+        peering: {
+          enabled: false,
+        },
+        tls: {
+          enabled: true,
+        },
+      },
+      server: {
+        enabled: true,
+        replicas: 1,
+        extraConfig: `
+          {
+            "log_level": "TRACE"
+          }
+          `,
+      },
+      connectInject: {
+        enabled: true,
+        default: false,
+      },
+      meshGateway: {
+        enabled: false,
+        replicas: 2,
+        service: {
+          type: 'LoadBalancer',
+          annotations: `
+          {
+            "oci.oraclecloud.com/load-balancer-type": "nlb"
+          }
+          `,
+        },
+      },
+      ui: {
+        enabled: true,
+        service: {
+          enabled: true,
+          type: 'ClusterIP',
+          port: {
+            https: consulUiServicePort.toString(),
+          },
+        },
+      },
+    });
+
     return [
       {
         name: this.meta.name,
@@ -76,83 +127,8 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
         repository: 'https://helm.releases.hashicorp.com',
         namespace: this.namespace.element.metadata.name,
         // @See https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
-        set: [
-          {
-            name: 'global.peering.enabled',
-            value: 'false',
-          },
-          {
-            name: 'global.tls.enabled',
-            value: 'true',
-          },
-          // Server
-          {
-            name: 'server.enabled',
-            value: 'true',
-          },
-          {
-            name: 'server.replicas',
-            value: '1',
-          },
-          {
-            name: 'server.extraConfig',
-            value: `
-          {
-            "log_level": "TRACE"
-          }
-          `,
-          },
-          // Connect Inject
-          {
-            name: 'connectInject.enabled',
-            value: 'true',
-          },
-          {
-            name: 'connectInject.default',
-            value: 'false',
-          },
-          // Mesh Gateway
-          // @ToDo Mesh Gateway 임시 비활성화, 추후 다시 확인
-          // global.peering.enabled도 켜야함
-          {
-            name: 'meshGateway.enabled',
-            value: 'false',
-          },
-          {
-            name: 'meshGateway.replicas',
-            value: '2',
-          },
-          {
-            name: 'meshGateway.service.type',
-            value: 'LoadBalancer',
-          },
-          {
-            name: 'meshGateway.service.annotations',
-            value: `
-          {
-            "oci.oraclecloud.com/load-balancer-type": "nlb"
-          }
-          `,
-          },
-
-          // Consul UI
-          {
-            name: 'ui.enabled',
-            value: 'true',
-          },
-          {
-            name: 'ui.service.enabled',
-            value: 'true',
-          },
-          {
-            name: 'ui.service.type',
-            value: 'ClusterIP',
-          },
-          {
-            name: 'ui.service.port.https',
-            value: consulUiServicePort.toString(),
-          },
-        ],
+        setSensitive: helmSet,
+        setList: helmSetList,
       },
       {
         ui: {
@@ -236,6 +212,12 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
+
+        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/start?rd=https://$host$request_uri`,
+        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/auth`,
+        // 'nginx.ingress.kubernetes.io/auth-response-headers':
+        //   'x-auth-request-user, x-auth-request-email, x-auth-request-access-token',
+
         'nginx.ingress.kubernetes.io/auth-type': 'basic',
         'nginx.ingress.kubernetes.io/auth-secret':
           this.ingressBasicAuthSecret.element.metadata.name,
@@ -282,6 +264,7 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

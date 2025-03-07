@@ -27,6 +27,7 @@ import { GlobalConfigService } from '@/global/config/global.config.schema.servic
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
@@ -220,6 +221,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
+
         'nginx.ingress.kubernetes.io/auth-type': 'basic',
         'nginx.ingress.kubernetes.io/auth-secret':
           this.ingressBasicAuthSecret.element.metadata.name,
@@ -265,6 +267,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -272,5 +275,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       'Dashboard for OKE k8s',
     );
     this.addDependency(this.k8sOkeAppsIngressControllerStack);
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

@@ -41,6 +41,14 @@ export const TerraformSchema = Joi.object({
           privateKey: Joi.string().required(),
         }).required(),
       }).required(),
+
+      google: Joi.object({
+        ApexCaptain: Joi.object({
+          region: Joi.string().required(),
+          zone: Joi.string().required(),
+          credentials: Joi.string().required(),
+        }).required(),
+      }).required(),
     }).required(),
     generatedScriptLibDirRelativePath: Joi.string().required(),
   }).required(),

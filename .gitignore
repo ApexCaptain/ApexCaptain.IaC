@@ -51,4 +51,5 @@ jspm_packages/
 !/.eslintrc.json
 /cdktf.json
 /env/prod.env
+!/.vscode/settings.json
 !/.projenrc.ts

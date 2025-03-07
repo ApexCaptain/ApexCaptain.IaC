@@ -98,6 +98,19 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare DNS record for OKE Consul service',
   }));
 
+  oauth2ProxyRecord = this.provide(DnsRecord, 'oauth2ProxyRecord', () => ({
+    name: 'oauth2-proxy',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare DNS record for OAuth2 Proxy service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

@@ -66,6 +66,10 @@
       "type": "build"
     },
     {
+      "name": "flatley",
+      "type": "build"
+    },
+    {
       "name": "prettier",
       "type": "build"
     },
@@ -79,10 +83,6 @@
     },
     {
       "name": "typescript",
-      "type": "build"
-    },
-    {
-      "name": "yaml",
       "type": "build"
     },
     {

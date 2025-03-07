@@ -2,7 +2,6 @@ import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import path from 'path';
 import { flatten } from 'flat';
-import yaml from 'yaml';
 import {
   IniFile,
   javascript,
@@ -15,6 +14,38 @@ import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
 import { TargetK8sEndpoint } from './scripts/enum';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
+import { VsCode } from 'projen/lib/vscode';
+
+const flatley = <TargetType, ResultType>(
+  target: TargetType,
+  opts?: {
+    coercion?: {
+      test: (key: string, value: any) => boolean;
+      transform: (value: any) => any;
+    }[];
+    filters?: {
+      test: (key: string, value: any) => boolean;
+    }[];
+  } & Parameters<typeof flatten>[1],
+): ResultType => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('flatley')(target, opts);
+};
+
+class VsCodeObject<ObjectType extends Object> {
+  static isVscodeObject(target: any): target is VsCodeObject<any> {
+    return (
+      typeof target == 'object' &&
+      '__projen_aux_object_key' in target &&
+      (target as VsCodeObject<any>).__projen_aux_object_key ==
+        VsCodeObject.__projen_aux_object_key
+    );
+  }
+  private static __projen_aux_object_key = '__PROJEN_AUX_OBJECT_KEY' as const;
+  private __projen_aux_object_key = VsCodeObject.__projen_aux_object_key;
+  constructor(readonly object: ObjectType) {}
+}
+
 const constants = (() => {
   const project = {
     name: 'apex-captain.iac',
@@ -48,6 +79,10 @@ const constants = (() => {
     process.cwd(),
     process.env.OCI_CLI_CONFIG_FILE ?? 'keys/oci.config',
   );
+  const googleCredentialsFilePath = path.join(
+    keysDir,
+    'google-credentials.json',
+  );
 
   const paths = {
     dirs: {
@@ -66,6 +101,7 @@ const constants = (() => {
       cdktfConfigFilePath,
       cdktfOutFilePath,
       ociCliConfigFilePath,
+      googleCredentialsFilePath,
     },
   };
 
@@ -156,6 +192,10 @@ const project = new typescript.TypeScriptAppProject({
       trailingComma: javascript.TrailingComma.ALL,
     },
   },
+
+  // Node Package Options
+  license: 'MIT',
+  licensed: true,
   // GitHub Project Options
   githubOptions: {
     pullRequestLintOptions: {
@@ -208,7 +248,7 @@ const project = new typescript.TypeScriptAppProject({
     'constructs@^10.4.2',
     '@types/lodash',
     'commander',
-    'yaml',
+    'flatley',
   ],
 });
 
@@ -229,7 +269,7 @@ void (async () => {
     'tf@plan': 'cdktf diff',
 
     // Kubernetes
-    'k8s@workstation':
+    'k8s@ws':
       'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
     'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
 
@@ -266,6 +306,23 @@ void (async () => {
     },
   );
 
+  // Generate Google Credentials File
+  const googleCredentialsFile = new JsonFile(
+    project,
+    constants.paths.files.googleCredentialsFilePath,
+    {
+      obj: {
+        account: '',
+        client_id: process.env.APEX_CAPTAIN_GOOGLE_CLIENT_ID,
+        client_secret: process.env.APEX_CAPTAIN_GOOGLE_CLIENT_SECRET,
+        refresh_token: process.env.APEX_CAPTAIN_GOOGLE_REFRESH_TOKEN,
+        type: process.env.APEX_CAPTAIN_GOOGLE_TYPE,
+        universe_domain: process.env.APEX_CAPTAIN_GOOGLE_UNIVERSE_DOMAIN,
+      },
+      editGitignore: false,
+    },
+  );
+
   // CDKTF
   new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {
@@ -277,6 +334,11 @@ void (async () => {
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         // Official
+        {
+          // https://registry.terraform.io/providers/hashicorp/google/latest
+          name: 'google',
+          source: 'hashicorp/google',
+        },
         {
           // https://registry.terraform.io/providers/hashicorp/random/latest
           name: 'random',
@@ -436,12 +498,20 @@ void (async () => {
               privateKey: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY!!,
             },
           },
+          google: {
+            ApexCaptain: {
+              region: 'asia-northeast3',
+              zone: 'asia-northeast3-a',
+              credentials: constants.paths.files.googleCredentialsFilePath,
+            },
+          },
         },
         generatedScriptLibDirRelativePath:
           constants.paths.dirs.generatedScriptLibDir,
       },
     },
   };
+
   new IniFile(project, 'env/prod.env', {
     obj: flatten(environment, {
       delimiter: '_',
@@ -449,9 +519,69 @@ void (async () => {
     committed: false,
   });
 
+  // Vscode Settings
+  const vscodeSettings = {
+    todohighlight: {
+      toggleURI: true,
+      isCaseSensitive: false,
+      keywords: new VsCodeObject([
+        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'pink' },
+      ]),
+      exclude: ['**/node_modules/**', '.vscode'],
+    },
+    workbench: {
+      colorTheme: 'Tomorrow Night Blue',
+      editorAssociations: new VsCodeObject({
+        '*.md': 'vscode.markdown.preview.editor',
+      }),
+    },
+    'material-icon-theme': {
+      files: {
+        associations: new VsCodeObject({
+          '.projenrc.ts': 'cabal',
+          '*.schema.ts': 'scheme',
+          '*.stack.ts': 'terraform',
+          'cdktf.json': 'terraform',
+          'cdktf.out.json': 'terraform',
+          'index.ts': 'contributing',
+          //
+          '*.template.ts': 'templ',
+          '*.enum.ts': 'scheme',
+          '*.function.ts': 'fortran',
+          '*.type.ts': 'toml',
+          '*.script.ts': 'coffee',
+          '*.source.ts': 'cake',
+        }),
+      },
+      folders: {
+        associations: new VsCodeObject({
+          abstract: 'class',
+          '.kube': 'kubernetes',
+          '.projen': 'project',
+          'cdktf.out': 'terraform',
+          google: 'aws',
+        }),
+      },
+    },
+  };
+  new VsCode(project).settings.addSettings(
+    flatley(vscodeSettings, {
+      safe: true,
+      coercion: [
+        {
+          test: (_, value) => {
+            return VsCodeObject.isVscodeObject(value);
+          },
+          transform: (value: VsCodeObject<any>) => value.object,
+        },
+      ],
+    }),
+  );
+
   project.postSynthesize = () => {
     execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);
     execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
+    execSync(`chmod 600 ${googleCredentialsFile.absolutePath}`);
   };
 
   project.synth();

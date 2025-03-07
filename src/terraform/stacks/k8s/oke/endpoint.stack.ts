@@ -100,7 +100,7 @@ export class K8S_Oke_Endpoint_Stack extends AbstractStack {
           process.cwd(),
           this.globalConfigService.config.terraform.config
             .generatedScriptLibDirRelativePath,
-          `${K8S_Oke_Endpoint_Stack.name}-${id}.ts`,
+          `${K8S_Oke_Endpoint_Stack.name}-${id}.source.ts`,
         ),
         content: `export const ${id} = ${JSON.stringify(data, null, 2)}`,
       },

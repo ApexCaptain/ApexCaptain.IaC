@@ -205,9 +205,19 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       name: _.kebabCase(`${this.meta.name}-${id}`),
       namespace: this.namespace.element.metadata.name,
       annotations: {
+        'kubernetes.io/ingress.class': 'nginx',
+
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'kubernetes.io/ingress.class': 'nginx',
+
+        // OAuth
+        // 'nginx.ingress.kubernetes.io/force-ssl-redirect': 'true',
+        // 'nginx.ingress.kubernetes.io/auth-response-headers':
+        //   'x-auth-request-user, x-auth-request-email, authorization',
+        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/auth`,
+        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/start?rd=$scheme://$host$request_uri`,
+
+        // Basic
         'nginx.ingress.kubernetes.io/auth-type': 'basic',
         'nginx.ingress.kubernetes.io/auth-secret':
           this.ingressBasicAuthSecret.element.metadata.name,
