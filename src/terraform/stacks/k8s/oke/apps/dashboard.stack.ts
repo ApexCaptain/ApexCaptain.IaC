@@ -13,14 +13,11 @@ import {
   Cloudflare_Record_Stack,
   Cloudflare_Zone_Stack,
 } from '@/terraform/stacks/cloudflare';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
-import { Password } from '@lib/terraform/providers/random/password';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import path from 'path';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -49,7 +46,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
               .kubeConfigFilePath,
         }),
       ),
-      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
@@ -144,48 +140,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     }),
   );
 
-  ingressBasicAuthUsername = this.provide(
-    StringResource,
-    'ingressBasicAuthUsername',
-    () => ({
-      length: 16,
-      special: false,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthPassword = this.provide(
-    Password,
-    'ingressBasicAuthPassword',
-    () => ({
-      length: 16,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthSecret = this.provide(
-    SecretV1,
-    'ingressBasicAuthSecret',
-    id => ({
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
-        namespace: this.namespace.element.metadata.name,
-      },
-      data: {
-        auth: `${this.ingressBasicAuthUsername.element.result}:${this.ingressBasicAuthPassword.element.bcryptHash}`,
-      },
-      type: 'Opaque',
-    }),
-  );
-
   authenticationInfo = this.provide(
     SensitiveFile,
     'authenticationInfo',
@@ -202,10 +156,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
             this.serviceAccountToken.element.data,
             'token',
           ),
-          basicAuth: {
-            username: this.ingressBasicAuthUsername.element.result,
-            password: this.ingressBasicAuthPassword.element.result,
-          },
         },
         null,
         2,
@@ -222,10 +172,10 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
 
-        'nginx.ingress.kubernetes.io/auth-type': 'basic',
-        'nginx.ingress.kubernetes.io/auth-secret':
-          this.ingressBasicAuthSecret.element.metadata.name,
-        'nginx.ingress.kubernetes.io/auth-realm': 'Authentication Required',
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
       },
     },
     spec: {

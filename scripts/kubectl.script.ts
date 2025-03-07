@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
 import { Option, program } from 'commander';
 import { TargetK8sEndpoint } from './enum';
-import { okeEndpointSource } from './generated/K8S_Oke_Endpoint_Stack-okeEndpointSource';
+import { okeEndpointSource } from './generated/K8S_Oke_Endpoint_Stack-okeEndpointSource.source';
 
 const command = program
   .addOption(

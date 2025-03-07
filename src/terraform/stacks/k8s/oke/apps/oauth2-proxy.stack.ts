@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractStack, convertJsonToHelmSet } from '@/common';
+import {
+  AbstractStack,
+  convertJsonToHelmSet,
+  createExpirationInterval,
+} from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
@@ -11,9 +15,15 @@ import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
+  private readonly config =
+    this.globalConfigService.config.terraform.stacks.k8s.oke.apps.oauth2Proxy;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -41,6 +51,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
               .kubeConfigFilePath,
         },
       })),
+      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
     },
   };
 
@@ -48,54 +59,85 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     name: 'oauth2-proxy',
   };
 
-  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
-  //   metadata: {
-  //     name: this.meta.name,
-  //   },
-  // }));
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
+    metadata: {
+      name: this.meta.name,
+    },
+  }));
 
-  // oauth2ProxyRelease = this.provide(Release, 'oauth2ProxyRelease', () => {
-  //   const host = `${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
-  //   const { helmSet, helmSetList } = convertJsonToHelmSet({
-  //     config: {
-  //       clientID: 'Ov23liZD8vOltXtpmF77',
-  //       clientSecret: 'a7984936df55eca24f93e6bed1b782e4684ebfc4',
-  //       cookieSecret: 'jebAfU2eZgQt/29H+8x3FQ==',
-  //       configFile: `
-  //               email_domains = [ "*" ]
-  //               upstreams = [ "file:///dev/null" ]
-  //               provider = "github"
-  //               github_users = "ApexCaptain"
-  //             `,
-  //     },
-  //     extraArgs: {
-  //       'cookie-secure': false,
-  //       'cookie-domain': '.ayteneve93.com',
-  //       'whitelist-domain': '*.ayteneve93.com',
-  //     },
-  //     ingress: {
-  //       enabled: true,
-  //       path: '/oauth2',
-  //       className: 'nginx',
-  //       hosts: [host],
-  //     },
-  //   });
+  cookieSecret = this.provide(StringResource, 'cookieSecret', () => ({
+    length: 32,
+    keepers: {
+      expirationDate: createExpirationInterval({
+        days: 30,
+      }).toString(),
+    },
+  }));
 
-  //   return [
-  //     {
-  //       name: this.meta.name,
-  //       chart: 'oauth2-proxy',
-  //       repository: 'https://oauth2-proxy.github.io/manifests',
-  //       namespace: this.namespace.element.metadata.name,
-  //       createNamespace: false,
-  //       set: helmSet,
-  //       setList: helmSetList,
-  //     },
-  //     { host },
-  //   ];
-  // });
+  release = this.provide(Release, 'release', () => {
+    const rootDomain = this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
+    const host = `${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${rootDomain}`;
+    const { helmSet, helmSetList } = convertJsonToHelmSet({
+      config: {
+        clientID: this.config.clientId,
+        clientSecret: this.config.clientSecret,
+        cookieSecret: this.cookieSecret.element.result,
+        configFile: `
+                  redirect_url="/oauth2/callback"
+                  login_url="https://github.com/login/oauth/authorize"
+                  redeem_url="https://github.com/login/oauth/access_token"
+                  whitelist_domains="*.${rootDomain}"
+                  cookie_domains=".${rootDomain}"
+                  scope="read:org user:email"
+                  provider="github"
+                  skip_provider_button="true"
+                  session_store_type="cookie"
+                  cookie_samesite="lax"
+                  cookie_secure="true"
+                  cookie_expire="12h"
+                  reverse_proxy="true"
+                  pass_access_token="true"
+                  pass_authorization_header="true"
+                  cookie_csrf_per_request="true"
+                  cookie_csrf_expire="5m"
+                  cookie_refresh="5m"
+                  set_xauthrequest="true"
+                  set_authorization_header="false"
+                  skip_auth_preflight="true"
+                  github_users="${this.config.allowedGithubUsers.join(',')}"
+                  email_domains="*"
+              `,
+      },
+
+      ingress: {
+        enabled: true,
+        pathType: 'ImplementationSpecific',
+        className: 'nginx',
+        hosts: [host],
+      },
+    });
+
+    return [
+      {
+        name: this.meta.name,
+        chart: 'oauth2-proxy',
+        repository: 'https://oauth2-proxy.github.io/manifests',
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        set: helmSet,
+        setList: helmSetList,
+      },
+      {
+        authUrl: `https://${host}/oauth2/auth`,
+        authSignin: `https://${host}/oauth2/start?rd=$scheme://$host$request_uri`,
+      },
+    ];
+  });
 
   constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
 

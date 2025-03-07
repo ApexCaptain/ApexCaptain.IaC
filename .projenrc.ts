@@ -79,10 +79,6 @@ const constants = (() => {
     process.cwd(),
     process.env.OCI_CLI_CONFIG_FILE ?? 'keys/oci.config',
   );
-  const googleCredentialsFilePath = path.join(
-    keysDir,
-    'google-credentials.json',
-  );
 
   const paths = {
     dirs: {
@@ -101,7 +97,6 @@ const constants = (() => {
       cdktfConfigFilePath,
       cdktfOutFilePath,
       ociCliConfigFilePath,
-      googleCredentialsFilePath,
     },
   };
 
@@ -306,23 +301,6 @@ void (async () => {
     },
   );
 
-  // Generate Google Credentials File
-  const googleCredentialsFile = new JsonFile(
-    project,
-    constants.paths.files.googleCredentialsFilePath,
-    {
-      obj: {
-        account: '',
-        client_id: process.env.APEX_CAPTAIN_GOOGLE_CLIENT_ID,
-        client_secret: process.env.APEX_CAPTAIN_GOOGLE_CLIENT_SECRET,
-        refresh_token: process.env.APEX_CAPTAIN_GOOGLE_REFRESH_TOKEN,
-        type: process.env.APEX_CAPTAIN_GOOGLE_TYPE,
-        universe_domain: process.env.APEX_CAPTAIN_GOOGLE_UNIVERSE_DOMAIN,
-      },
-      editGitignore: false,
-    },
-  );
-
   // CDKTF
   new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {
@@ -334,11 +312,6 @@ void (async () => {
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         // Official
-        {
-          // https://registry.terraform.io/providers/hashicorp/google/latest
-          name: 'google',
-          source: 'hashicorp/google',
-        },
         {
           // https://registry.terraform.io/providers/hashicorp/random/latest
           name: 'random',
@@ -426,6 +399,16 @@ void (async () => {
         },
         k8s: {
           oke: {
+            apps: {
+              oauth2Proxy: {
+                clientId:
+                  process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
+                clientSecret:
+                  process.env
+                    .APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_SECRET!!,
+                allowedGithubUsers: ['ApexCaptain'],
+              },
+            },
             bastion: {
               clientCidrBlockAllowList: [
                 `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
@@ -498,13 +481,6 @@ void (async () => {
               privateKey: process.env.APEX_CAPTAIN_OCI_PRIVATE_KEY!!,
             },
           },
-          google: {
-            ApexCaptain: {
-              region: 'asia-northeast3',
-              zone: 'asia-northeast3-a',
-              credentials: constants.paths.files.googleCredentialsFilePath,
-            },
-          },
         },
         generatedScriptLibDirRelativePath:
           constants.paths.dirs.generatedScriptLibDir,
@@ -559,7 +535,6 @@ void (async () => {
           '.kube': 'kubernetes',
           '.projen': 'project',
           'cdktf.out': 'terraform',
-          google: 'aws',
         }),
       },
     },
@@ -581,7 +556,6 @@ void (async () => {
   project.postSynthesize = () => {
     execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);
     execSync(`chmod 600 ${ociCliConfigFile.absolutePath}`);
-    execSync(`chmod 600 ${googleCredentialsFile.absolutePath}`);
   };
 
   project.synth();

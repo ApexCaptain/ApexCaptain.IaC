@@ -2,7 +2,7 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { AbstractStack, createExpirationInterval } from '@/common';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
@@ -12,13 +12,8 @@ import { Deployment } from '@lib/terraform/providers/kubernetes/deployment';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { Namespace } from '@lib/terraform/providers/kubernetes/namespace';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { Secret } from '@lib/terraform/providers/kubernetes/secret';
 import { Service } from '@lib/terraform/providers/kubernetes/service';
-import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
-import { Password } from '@lib/terraform/providers/random/password';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
@@ -32,8 +27,6 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
-      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
-      local: this.provide(LocalProvider, 'localProvider', () => ({})),
     },
   };
 
@@ -138,71 +131,6 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
     },
   }));
 
-  ingressBasicAuthUsername = this.provide(
-    StringResource,
-    'ingressBasicAuthUsername',
-    () => ({
-      length: 16,
-      special: false,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthPassword = this.provide(
-    Password,
-    'ingressBasicAuthPassword',
-    () => ({
-      length: 16,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthSecret = this.provide(
-    Secret,
-    'ingressBasicAuthSecret',
-    id => ({
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
-        namespace: this.namespace.element.metadata.name,
-      },
-      data: {
-        auth: `${this.ingressBasicAuthUsername.element.result}:${this.ingressBasicAuthPassword.element.bcryptHash}`,
-      },
-      type: 'Opaque',
-    }),
-  );
-
-  authenticationInfo = this.provide(
-    SensitiveFile,
-    'authenticationInfo',
-    id => ({
-      filename: path.join(
-        process.cwd(),
-        this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirPaths.relativeSecretsDirPath,
-        `${K8S_Workstation_Apps_RedisInsight_Stack.name}-${id}.json`,
-      ),
-      content: JSON.stringify(
-        {
-          basicAuth: {
-            username: this.ingressBasicAuthUsername.element.result,
-            password: this.ingressBasicAuthPassword.element.result,
-          },
-        },
-        null,
-        2,
-      ),
-    }),
-  );
-
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -210,10 +138,11 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
-        'nginx.ingress.kubernetes.io/auth-type': 'basic',
-        'nginx.ingress.kubernetes.io/auth-secret':
-          this.ingressBasicAuthSecret.element.metadata.name,
-        'nginx.ingress.kubernetes.io/auth-realm': 'Authentication Required',
+
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
       },
     },
     spec: {
@@ -253,11 +182,13 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
     // Stacks
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_RedisInsight_Stack.name,
       'RedisInsight stack for workstation k8s',
     );
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

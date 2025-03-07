@@ -14,15 +14,13 @@ import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
-import { Password } from '@lib/terraform/providers/random/password';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -36,7 +34,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
-      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
@@ -131,48 +128,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     }),
   );
 
-  ingressBasicAuthUsername = this.provide(
-    StringResource,
-    'ingressBasicAuthUsername',
-    () => ({
-      length: 16,
-      special: false,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthPassword = this.provide(
-    Password,
-    'ingressBasicAuthPassword',
-    () => ({
-      length: 16,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthSecret = this.provide(
-    SecretV1,
-    'ingressBasicAuthSecret',
-    id => ({
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
-        namespace: this.namespace.element.metadata.name,
-      },
-      data: {
-        auth: `${this.ingressBasicAuthUsername.element.result}:${this.ingressBasicAuthPassword.element.bcryptHash}`,
-      },
-      type: 'Opaque',
-    }),
-  );
-
   authenticationInfo = this.provide(
     SensitiveFile,
     'authenticationInfo',
@@ -189,10 +144,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
             this.serviceAccountToken.element.data,
             'token',
           ),
-          basicAuth: {
-            username: this.ingressBasicAuthUsername.element.result,
-            password: this.ingressBasicAuthPassword.element.result,
-          },
         },
         null,
         2,
@@ -210,18 +161,10 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
 
-        // OAuth
-        // 'nginx.ingress.kubernetes.io/force-ssl-redirect': 'true',
-        // 'nginx.ingress.kubernetes.io/auth-response-headers':
-        //   'x-auth-request-user, x-auth-request-email, authorization',
-        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/auth`,
-        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/start?rd=$scheme://$host$request_uri`,
-
-        // Basic
-        'nginx.ingress.kubernetes.io/auth-type': 'basic',
-        'nginx.ingress.kubernetes.io/auth-secret':
-          this.ingressBasicAuthSecret.element.metadata.name,
-        'nginx.ingress.kubernetes.io/auth-realm': 'Authentication Required',
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
       },
     },
     spec: {
@@ -262,11 +205,13 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Dashboard_Stack.name,
       'Dashboard stack for workstation k8s',
     );
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

@@ -15,7 +15,6 @@
     "cdktf.json",
     "env/prod.env",
     "keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem",
-    "keys/google-credentials.json",
     "keys/oci.config",
     "LICENSE",
     "tsconfig.dev.json",

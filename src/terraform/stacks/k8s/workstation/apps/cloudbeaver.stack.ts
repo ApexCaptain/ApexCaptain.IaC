@@ -143,13 +143,10 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
 
-        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/start?rd=https://$host$request_uri`,
-        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/auth`,
-        // 'nginx.ingress.kubernetes.io/auth-response-headers':
-        //   'x-auth-request-user, x-auth-request-email, x-auth-request-access-token',
-
-        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/auth`,
-        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}/oauth2/start?rd=$escaped_request_uri`,
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
       },
     },
     spec: {
@@ -196,6 +193,6 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
       K8S_Workstation_Apps_Cloudbeaver_Stack.name,
       'Cloudbeaver stack for workstation k8s',
     );
-    // this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

@@ -15,7 +15,6 @@
 /.projen/tasks.json linguist-generated
 /.vscode/settings.json linguist-generated
 /keys/APEX_CAPTAIN_OCI_PRIVATE_KEY.pem linguist-generated
-/keys/google-credentials.json linguist-generated
 /keys/oci.config linguist-generated
 /LICENSE linguist-generated
 /package.json linguist-generated

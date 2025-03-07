@@ -1,14 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AbstractStack,
-  convertJsonToHelmSet,
-  createExpirationInterval,
-} from '@/common';
+import { AbstractStack, convertJsonToHelmSet } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { Fn, LocalBackend } from 'cdktf';
+import { LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Release } from '@lib/terraform/providers/helm/release';
@@ -17,13 +13,6 @@ import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.st
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import _ from 'lodash';
-import { LocalProvider } from '@lib/terraform/providers/local/provider';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
-import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
-import { Password } from '@lib/terraform/providers/random/password';
-import path from 'path';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 
@@ -56,8 +45,6 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
               .kubeConfigFilePath,
         },
       })),
-      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
-      local: this.provide(LocalProvider, 'localProvider', () => ({})),
     },
   };
 
@@ -139,71 +126,6 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
     ];
   });
 
-  ingressBasicAuthUsername = this.provide(
-    StringResource,
-    'ingressBasicAuthUsername',
-    () => ({
-      length: 16,
-      special: false,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthPassword = this.provide(
-    Password,
-    'ingressBasicAuthPassword',
-    () => ({
-      length: 16,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
-
-  ingressBasicAuthSecret = this.provide(
-    SecretV1,
-    'ingressBasicAuthSecret',
-    id => ({
-      metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
-        namespace: this.namespace.element.metadata.name,
-      },
-      data: {
-        auth: `${this.ingressBasicAuthUsername.element.result}:${this.ingressBasicAuthPassword.element.bcryptHash}`,
-      },
-      type: 'Opaque',
-    }),
-  );
-
-  authenticationInfo = this.provide(
-    SensitiveFile,
-    'authenticationInfo',
-    id => ({
-      filename: path.join(
-        process.cwd(),
-        this.globalConfigService.config.terraform.stacks.common
-          .generatedKeyFilesDirPaths.relativeSecretsDirPath,
-        `${K8S_Oke_Apps_Consul_Stack.name}-${id}.json`,
-      ),
-      content: JSON.stringify(
-        {
-          basicAuth: {
-            username: this.ingressBasicAuthUsername.element.result,
-            password: this.ingressBasicAuthPassword.element.result,
-          },
-        },
-        null,
-        2,
-      ),
-    }),
-  );
-
   consulUiIngress = this.provide(IngressV1, 'consulUiIngress', id => ({
     metadata: {
       name: _.kebabCase(`${this.meta.name}-${id}`),
@@ -213,15 +135,10 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
 
-        // 'nginx.ingress.kubernetes.io/auth-signin': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/start?rd=https://$host$request_uri`,
-        // 'nginx.ingress.kubernetes.io/auth-url': `https://${this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyRelease.shared.host}/oauth2/auth`,
-        // 'nginx.ingress.kubernetes.io/auth-response-headers':
-        //   'x-auth-request-user, x-auth-request-email, x-auth-request-access-token',
-
-        'nginx.ingress.kubernetes.io/auth-type': 'basic',
-        'nginx.ingress.kubernetes.io/auth-secret':
-          this.ingressBasicAuthSecret.element.metadata.name,
-        'nginx.ingress.kubernetes.io/auth-realm': 'Authentication Required',
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
       },
     },
     spec: {
@@ -272,5 +189,6 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
       'Consul stack for OKE k8s',
     );
     this.addDependency(this.k8sOkeAppsIngressControllerStack);
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

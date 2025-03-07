@@ -10,9 +10,7 @@ import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
-import { GoogleProvider } from '@lib/terraform/providers/google/provider';
 import { flatten } from 'flat';
-import { DataGoogleSqlDatabaseInstances } from '@lib/terraform/providers/google/data-google-sql-database-instances';
 
 @Injectable()
 export class Project_Stack extends AbstractStack {
