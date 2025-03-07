@@ -7,6 +7,7 @@ import { GithubProviderConfig } from '@lib/terraform/providers/github/provider';
 import { HelmProviderConfig } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProviderConfig } from '@lib/terraform/providers/kubernetes/provider';
 import { OciProviderConfig } from '@lib/terraform/providers/oci/provider';
+
 @Injectable()
 export class TerraformConfigService {
   private readonly config = this.globalConfigService.config.terraform.config;
@@ -102,6 +103,7 @@ export class TerraformConfigService {
         };
       },
     };
+
     return {
       cloudflare,
 

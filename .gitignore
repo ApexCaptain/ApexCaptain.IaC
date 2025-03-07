@@ -30,12 +30,14 @@ jspm_packages/
 .yarn-integrity
 .cache
 .DS_STORE
-.secrets
+/.secrets
 /.kube
 /cdktf.out.json
 /env
+/keys
 /cdktf.out
 /scripts/generated
+/tmp
 !/.github/workflows/upgrade-develop.yml
 !/.github/pull_request_template.md
 !/.prettierignore
@@ -49,4 +51,5 @@ jspm_packages/
 !/.eslintrc.json
 /cdktf.json
 /env/prod.env
+!/.vscode/settings.json
 !/.projenrc.ts

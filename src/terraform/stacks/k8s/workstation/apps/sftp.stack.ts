@@ -92,9 +92,6 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
           `${K8S_Workstation_Apps_Sftp_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
-        lifecycle: {
-          createBeforeDestroy: true,
-        },
       }),
     );
 

@@ -50,26 +50,26 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     },
   };
 
-  privateKeyExpriationDate = this.provide(
+  privateKeyExpiration = this.provide(
     StaticResource,
-    `privateKeyExpriationDate`,
+    `privateKeyExpiration`,
     () => ({
       triggers: {
         expirationDate: createExpirationInterval({
-          days: 10,
+          hours: 2,
         }).toString(),
       },
     }),
   );
 
   privateKey = this.provide(Resource, 'privateKey', idPrefix => {
-    const expriationDateElement = this.privateKeyExpriationDate.element;
+    const expirationElement = this.privateKeyExpiration.element;
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
       lifecycle: {
         replaceTriggeredBy: [
-          `${expriationDateElement.terraformResourceType}.${expriationDateElement.friendlyUniqueId}`,
+          `${expirationElement.terraformResourceType}.${expirationElement.friendlyUniqueId}`,
         ],
       },
     }));
@@ -79,15 +79,13 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
       `${idPrefix}-privateSshKeyFileInKeys`,
       id => ({
         filename: path.join(
+          process.cwd(),
           this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirPaths.absoluteKeysDirPath,
+            .generatedKeyFilesDirPaths.relativeKeysDirPath,
           `${K8S_Oke_Bastion_Stack.name}-${id}.key`,
         ),
         content: key.element.privateKeyOpenssh,
         filePermission: '0600',
-        lifecycle: {
-          createBeforeDestroy: true,
-        },
       }),
     );
 

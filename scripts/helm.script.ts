@@ -27,11 +27,11 @@ const kubectlRenderParams: {
   },
 };
 
-const kubectl = async () => {
+const helm = async () => {
   const selectedParams = kubectlRenderParams[options.target];
 
   spawnSync(
-    'kubectl',
+    'helm',
     ['--kubeconfig', selectedParams.kubeConfigFilePath, ...command.args],
     {
       stdio: 'inherit',
@@ -44,4 +44,4 @@ const kubectl = async () => {
     },
   );
 };
-void kubectl();
+void helm();

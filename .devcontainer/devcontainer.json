@@ -33,5 +33,6 @@
 
   // LifeCycles
   "initializeCommand": "bash ./.devcontainer/commands/initializeCommand.sh ${localWorkspaceFolder} ${containerWorkspaceFolder} ${localWorkspaceFolderBasename} ${containerWorkspaceFolderBasename}",
-  "updateContentCommand": "bash ./.devcontainer/commands/updateContentCommand.sh"
+  "updateContentCommand": "bash ./.devcontainer/commands/updateContentCommand.sh",
+  "postStartCommand": "bash ./.devcontainer/commands/postStartCommand.sh"
 }

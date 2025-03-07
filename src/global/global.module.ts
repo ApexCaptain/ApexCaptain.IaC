@@ -9,7 +9,6 @@ import {
 } from './config/global.config.schema';
 import { GlobalConfigService } from './config/global.config.schema.service';
 import { NodeEnv } from '@/common';
-
 const globalServices = [GlobalConfigService];
 
 @Global()
