@@ -19,9 +19,13 @@ import { CoreSubnet } from '@lib/terraform/providers/oci/core-subnet';
 import { CoreVcn } from '@lib/terraform/providers/oci/core-vcn';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { CorePublicIp } from '@lib/terraform/providers/oci/core-public-ip';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {
+  private readonly config =
+    this.globalConfigService.config.terraform.stacks.k8s.oke.network;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -398,6 +402,16 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
           protocol: OciNetworkProtocol.TCP,
           description: 'Allow worker nodes to communicate with the internet.',
         },
+        ...this.config.l2tpServerCidrBlocks.map(eachCidrBlock => ({
+          destination: eachCidrBlock,
+          destinationType: OciNetworkSourceType.CIDR_BLOCK,
+          protocol: OciNetworkProtocol.UDP,
+          udpOptions: {
+            min: 1701,
+            max: 1701,
+          },
+          description: `Allow egress traffic for L2TP VPN on UDP port 1701 of ${eachCidrBlock}`,
+        })),
       ],
     }),
   );
@@ -567,6 +581,9 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
   );
 
   constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,

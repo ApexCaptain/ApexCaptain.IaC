@@ -4,7 +4,6 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
-import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -25,6 +24,7 @@ import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
+import { Project_Stack } from '../../project.stack';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {
@@ -170,7 +170,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
           '-o StrictHostKeyChecking=no',
           '-N -D',
           `0.0.0.0:${this.okeBastionSessionTunnelPort.element.result}`,
-          `${this.okeBastionSession.element.id}@host.bastion.${this.k8sOkeOciStack.dataHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com`,
+          `${this.okeBastionSession.element.id}@host.bastion.${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com`,
         ].join(' '),
       ],
     }),
@@ -185,9 +185,9 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly projectStack: Project_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
-    private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

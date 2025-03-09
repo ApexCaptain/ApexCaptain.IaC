@@ -18,6 +18,8 @@ import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.st
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
+import _ from 'lodash';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
@@ -57,6 +59,9 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
 
   meta = {
     name: 'oauth2-proxy',
+    labels: {
+      app: 'oauth2-proxy',
+    },
   };
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
@@ -74,14 +79,26 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     },
   }));
 
+  releaseSecret = this.provide(SecretV1, 'releaseSecret', id => ({
+    metadata: {
+      name: _.kebabCase(`${this.meta.name}-${id}`),
+      labels: this.meta.labels,
+      namespace: this.namespace.element.metadata.name,
+    },
+    data: {
+      'client-id': this.config.clientId,
+      'client-secret': this.config.clientSecret,
+      'cookie-secret': this.cookieSecret.element.result,
+    },
+    type: 'Opaque',
+  }));
+
   release = this.provide(Release, 'release', () => {
     const rootDomain = this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
     const host = `${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${rootDomain}`;
     const { helmSet, helmSetList } = convertJsonToHelmSet({
       config: {
-        clientID: this.config.clientId,
-        clientSecret: this.config.clientSecret,
-        cookieSecret: this.cookieSecret.element.result,
+        existingSecret: this.releaseSecret.element.metadata.name,
         configFile: `
                   redirect_url="/oauth2/callback"
                   login_url="https://github.com/login/oauth/authorize"

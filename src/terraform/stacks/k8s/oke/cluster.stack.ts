@@ -4,7 +4,6 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
-import { K8S_Oke_Oci_Stack } from './oci.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -18,6 +17,7 @@ import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 import { ContainerengineNodePool } from '@lib/terraform/providers/oci/containerengine-node-pool';
+import { Project_Stack } from '../../project.stack';
 
 @Injectable()
 export class K8S_Oke_Cluster_Stack extends AbstractStack {
@@ -104,7 +104,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
         placementConfigs: [
           {
             availabilityDomain:
-              this.k8sOkeOciStack.dataAvailabilityDomain.element.name,
+              this.projectStack.dataOciAvailabilityDomain.element.name,
             subnetId:
               this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
           },
@@ -140,7 +140,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly k8sOkeOciStack: K8S_Oke_Oci_Stack,
+    private readonly projectStack: Project_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {

@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-echo Synchronizing project
+echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh
