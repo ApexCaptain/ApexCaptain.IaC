@@ -33,6 +33,8 @@
   "material-icon-theme.folders.associations": {
     "abstract": "class",
     ".kube": "kubernetes",
+    "oke": "kubernetes",
+    "workstation": "home",
     ".projen": "project",
     "cdktf.out": "terraform"
   },

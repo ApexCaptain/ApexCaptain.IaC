@@ -408,9 +408,26 @@ void (async () => {
                     .APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_SECRET!!,
                 allowedGithubUsers: ['ApexCaptain'],
               },
+              homeL2tpVpnProxy: {
+                vpnServerAddr: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
+                vpnUsername:
+                  process.env
+                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
+                vpnPassword:
+                  process.env
+                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_PASSWORD!!,
+                vpnIpsToRoute:
+                  process.env.WORKSTATION_VPN_L2TP_IPS_TO_ROUTE_CSV!!,
+                vpnGatewayIp: process.env.WORKSTATION_VPN_L2TP_GATEWAY_IP!!,
+              },
             },
             bastion: {
               clientCidrBlockAllowList: [
+                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
+              ],
+            },
+            network: {
+              l2tpServerCidrBlocks: [
                 `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
               ],
             },
@@ -533,6 +550,8 @@ void (async () => {
         associations: new VsCodeObject({
           abstract: 'class',
           '.kube': 'kubernetes',
+          oke: 'kubernetes',
+          workstation: 'home',
           '.projen': 'project',
           'cdktf.out': 'terraform',
         }),

@@ -11,6 +11,11 @@ import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
 import { flatten } from 'flat';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
+import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
+import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
+import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
+import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 
 @Injectable()
 export class Project_Stack extends AbstractStack {
@@ -25,66 +30,115 @@ export class Project_Stack extends AbstractStack {
         this.terraformConfigService.providers.github.ApexCaptain(),
       ),
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
+      oci: this.provide(OciProvider, 'ociProvider', () =>
+        this.terraformConfigService.providers.oci.ApexCaptain(),
+      ),
     },
   };
 
-  dataIacRepository = this.provide(
+  dataIacGithubRepository = this.provide(
     DataGithubRepository,
-    'dataIacRepository',
+    'dataIacGithubRepository',
     () => ({
       name: 'ApexCaptain.IaC',
     }),
   );
 
-  repositorySecretArgs = this.provide(Resource, 'repositorySecretArgs', id => {
-    const secretArgs: GithubRepositorySecretArgs = {
-      workflow: {
-        token:
-          this.globalConfigService.config.terraform.config.providers.github
-            .ApexCaptain.token,
-      },
-    };
+  iacGithubRepositorySecretArgs = this.provide(
+    Resource,
+    'iacGithubRepositorySecretArgs',
+    id => {
+      const secretArgs: GithubRepositorySecretArgs = {
+        workflow: {
+          token:
+            this.globalConfigService.config.terraform.config.providers.github
+              .ApexCaptain.token,
+        },
+      };
 
-    const valueArgs: GithubRepositorySecretArgs = {};
+      const valueArgs: GithubRepositorySecretArgs = {};
 
-    Object.entries(
-      flatten<
-        GithubRepositorySecretArgs,
+      Object.entries(
+        flatten<
+          GithubRepositorySecretArgs,
+          {
+            [key: string]: string | number | boolean;
+          }
+        >(secretArgs, {
+          delimiter: '_',
+          transformKey: key => key.toUpperCase(),
+        }),
+      ).forEach(([key, value]) => {
+        this.provide(ActionsSecret, `${id}-${key}`, () => ({
+          repository: this.dataIacGithubRepository.element.name,
+          secretName: key,
+          plaintextValue: value.toString(),
+        }));
+      });
+
+      Object.entries(
+        flatten<
+          GithubRepositorySecretArgs,
+          {
+            [key: string]: string | number | boolean;
+          }
+        >(valueArgs, {
+          delimiter: '_',
+          transformKey: key => key.toUpperCase(),
+        }),
+      ).forEach(([key, value]) => {
+        this.provide(ActionsVariable, `${id}-${key}`, () => ({
+          repository: this.dataIacGithubRepository.element.name,
+          variableName: key,
+          value: value.toString(),
+        }));
+      });
+
+      return {};
+    },
+  );
+
+  dataRootOciTenancy = this.provide(
+    DataOciIdentityTenancy,
+    'dataRootOciTenancy',
+    () => ({
+      tenancyId:
+        this.globalConfigService.config.terraform.config.providers.oci
+          .ApexCaptain.tenancyOcid,
+    }),
+  );
+
+  dataOciHomeRegion = this.provide(
+    DataOciIdentityRegionSubscriptions,
+    'dataOciHomeRegion',
+    () => ({
+      filter: [
         {
-          [key: string]: string | number | boolean;
-        }
-      >(secretArgs, {
-        delimiter: '_',
-        transformKey: key => key.toUpperCase(),
-      }),
-    ).forEach(([key, value]) => {
-      this.provide(ActionsSecret, `${id}-${key}`, () => ({
-        repository: this.dataIacRepository.element.name,
-        secretName: key,
-        plaintextValue: value.toString(),
-      }));
-    });
+          name: 'is_home_region',
+          values: ['true'],
+        },
+      ],
+      tenancyId: this.dataRootOciTenancy.element.id,
+    }),
+  );
 
-    Object.entries(
-      flatten<
-        GithubRepositorySecretArgs,
-        {
-          [key: string]: string | number | boolean;
-        }
-      >(valueArgs, {
-        delimiter: '_',
-        transformKey: key => key.toUpperCase(),
-      }),
-    ).forEach(([key, value]) => {
-      this.provide(ActionsVariable, `${id}-${key}`, () => ({
-        repository: this.dataIacRepository.element.name,
-        variableName: key,
-        value: value.toString(),
-      }));
-    });
+  dataOciRootCompartment = this.provide(
+    DataOciIdentityCompartment,
+    'dataOciRootCompartment',
+    () => ({
+      id: this.globalConfigService.config.terraform.config.providers.oci
+        .ApexCaptain.tenancyOcid,
+    }),
+  );
 
-    return {};
-  });
+  dataOciAvailabilityDomain = this.provide(
+    DataOciIdentityAvailabilityDomain,
+    'dataOciAvailabilityDomain',
+    () => ({
+      compartmentId: this.dataOciRootCompartment.element.id,
+      adNumber: 1,
+    }),
+  );
 
   constructor(
     // Global

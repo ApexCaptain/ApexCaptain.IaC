@@ -10,16 +10,17 @@ sudo apt upgrade -y
 echo Installing OCI CLI
 bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
 
-echo Installing Helm CLI
+echo "🔄 Installing Helm CLI"
 bash -c "$(curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3)"
 
-echo Installing apt packages
+echo "🔄 Installing apt packages"
 sudo apt install -y \
-    netcat-openbsd
+    netcat-openbsd \
+    iputils-ping
 
-echo Installing global npm packages
+echo "🔄 Installing global npm packages"
 npm install -g \
     npm@latest
 
-echo Synchronizing project
+echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh
