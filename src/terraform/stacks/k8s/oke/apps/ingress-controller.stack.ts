@@ -1,4 +1,8 @@
-import { AbstractStack, convertJsonToHelmSet } from '@/common';
+import {
+  AbstractStack,
+  convertJsonToHelmSet,
+  K8sApplicationMetadata,
+} from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
@@ -9,6 +13,10 @@ import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { K8S_Oke_Network_Stack } from '../network.stack';
+import _ from 'lodash';
+import { K8S_Oke_System_Stack } from '../system.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
@@ -19,6 +27,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       kubernetes: this.provide(
         KubernetesProvider,
         'kubernetesProvider',
@@ -42,17 +51,51 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    name: 'ingress-controller',
-  };
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sOkeSystemStack.applicationMetadata.shared.ingressController,
+  ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
-      name: this.meta.name,
+      name: this.metadata.shared.namespace,
     },
   }));
 
-  nginxIngressRelease = this.provide(Release, 'nginxIngressRelease', () => {
+  release = this.provide(Release, 'release', () => {
+    const tcpEntries: [string, string][] = [];
+    const udpEntries: [string, string][] = [];
+    Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
+      eachMetadata => {
+        const services = eachMetadata[
+          'services'
+        ] as K8sApplicationMetadata['services'];
+        if (!services) return;
+        const namespace = eachMetadata.namespace;
+        Object.values(services).map(eachService => {
+          eachService.ports
+            .filter(eachPort => eachPort.portBasedIngressPort)
+            .map(eachPort => {
+              const target = `${namespace}/${eachService.name}:${eachPort.port}`;
+              if (eachPort.protocol?.toUpperCase() === 'UDP') {
+                udpEntries.push([
+                  eachPort.portBasedIngressPort!!.toString(),
+                  target,
+                ]);
+              } else {
+                tcpEntries.push([
+                  eachPort.portBasedIngressPort!!.toString(),
+                  target,
+                ]);
+              }
+            });
+        });
+      },
+    );
+
+    console.log(Object.fromEntries(tcpEntries));
+    console.log(Object.fromEntries(udpEntries));
+
     const { helmSet, helmSetList } = convertJsonToHelmSet({
       controller: {
         service: {
@@ -61,32 +104,26 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             this.k8sOkeNetworkStack
               .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
               .ipAddress,
-          nodePorts: {
-            http: this.k8sOkeNetworkStack
-              .ingressControllerFlexibleLoadbalancerReservedPublicIp.shared
-              .httpNodePort,
-            https:
-              this.k8sOkeNetworkStack
-                .ingressControllerFlexibleLoadbalancerReservedPublicIp.shared
-                .httpsNodePort,
-          },
           annotations: {
             'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape':
               'flexible',
             'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-min': 10,
             'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max': 10,
+            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-security-list-management-mode':
+              'None',
           },
         },
       },
+      tcp: Object.fromEntries(tcpEntries),
+      udp: Object.fromEntries(udpEntries),
     });
 
     return {
-      name: this.meta.name,
-      chart: 'ingress-nginx',
-      repository: 'https://kubernetes.github.io/ingress-nginx',
+      name: this.metadata.shared.helm.ingressController.name,
+      chart: this.metadata.shared.helm.ingressController.chart,
+      repository: this.metadata.shared.helm.ingressController.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-
       setSensitive: helmSet,
       setList: helmSetList,
     };
@@ -99,6 +136,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
+    private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

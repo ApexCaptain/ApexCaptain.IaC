@@ -106,7 +106,7 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
 
   configMap = this.provide(ConfigMap, 'configMap', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     data: {
@@ -116,7 +116,7 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
 
   deployment = this.provide(Deployment, 'deployment', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -181,7 +181,7 @@ export class K8S_Workstation_Apps_Sftp_Stack extends AbstractStack {
 
   service = this.provide(Service, 'service', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {

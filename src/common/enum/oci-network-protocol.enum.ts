@@ -4,5 +4,6 @@ export enum OciNetworkProtocol {
   ICMP = '1',
   TCP = '6',
   UDP = '17',
+  ESP = '50',
   ICMPv6 = '58',
 }

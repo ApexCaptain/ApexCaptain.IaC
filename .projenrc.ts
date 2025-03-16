@@ -313,6 +313,11 @@ void (async () => {
       terraformProviders: [
         // Official
         {
+          // https://registry.terraform.io/providers/hashicorp/consul/latest
+          name: 'consul',
+          source: 'hashicorp/consul',
+        },
+        {
           // https://registry.terraform.io/providers/hashicorp/random/latest
           name: 'random',
           source: 'hashicorp/random',
@@ -375,6 +380,9 @@ void (async () => {
   });
 
   // ENV
+  const workstationIpAddress = (
+    await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
+  ).address;
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
@@ -409,7 +417,7 @@ void (async () => {
                 allowedGithubUsers: ['ApexCaptain'],
               },
               homeL2tpVpnProxy: {
-                vpnServerAddr: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
+                vpnServerAddr: workstationIpAddress,
                 vpnUsername:
                   process.env
                     .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
@@ -422,14 +430,10 @@ void (async () => {
               },
             },
             bastion: {
-              clientCidrBlockAllowList: [
-                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
-              ],
+              clientCidrBlockAllowList: [`${workstationIpAddress}/32`],
             },
             network: {
-              l2tpServerCidrBlocks: [
-                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
-              ],
+              l2tpServerCidrBlocks: [`${workstationIpAddress}/32`],
             },
           },
           workstation: {
@@ -537,7 +541,6 @@ void (async () => {
           'cdktf.json': 'terraform',
           'cdktf.out.json': 'terraform',
           'index.ts': 'contributing',
-          //
           '*.template.ts': 'templ',
           '*.enum.ts': 'scheme',
           '*.function.ts': 'fortran',

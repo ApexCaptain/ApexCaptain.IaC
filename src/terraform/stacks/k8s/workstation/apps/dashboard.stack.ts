@@ -52,7 +52,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
   service = this.provide(ServiceV1, 'service', id => [
     {
       metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
         namespace: this.namespace.element.metadata.name,
       },
       spec: {
@@ -72,7 +72,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
   serviceAccount = this.provide(ServiceAccountV1, 'serviceAccount', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
   }));
@@ -91,7 +91,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
   serviceAccountToken = this.provide(SecretV1, 'serviceAccountToken', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'kubernetes.io/service-account.name':
@@ -111,7 +111,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     'clusterRoleBinding',
     id => ({
       metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       },
       roleRef: {
         apiGroup: 'rbac.authorization.k8s.io',
@@ -153,7 +153,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'kubernetes.io/ingress.class': 'nginx',
@@ -212,6 +212,5 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       K8S_Workstation_Apps_Dashboard_Stack.name,
       'Dashboard stack for workstation k8s',
     );
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

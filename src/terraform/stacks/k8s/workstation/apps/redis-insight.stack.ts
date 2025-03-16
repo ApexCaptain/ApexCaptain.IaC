@@ -62,7 +62,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
 
   deployment = this.provide(Deployment, 'deployment', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -118,7 +118,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
 
   service = this.provide(Service, 'service', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -133,7 +133,7 @@ export class K8S_Workstation_Apps_RedisInsight_Stack extends AbstractStack {
 
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',

@@ -64,7 +64,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
 
   deployment = this.provide(DeploymentV1, 'deployment', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -122,7 +122,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
 
   service = this.provide(ServiceV1, 'service', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {
@@ -137,7 +137,7 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
 
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
@@ -193,6 +193,5 @@ export class K8S_Workstation_Apps_Cloudbeaver_Stack extends AbstractStack {
       K8S_Workstation_Apps_Cloudbeaver_Stack.name,
       'Cloudbeaver stack for workstation k8s',
     );
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }
