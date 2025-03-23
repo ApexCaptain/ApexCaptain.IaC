@@ -63,38 +63,36 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
   }));
 
   release = this.provide(Release, 'release', () => {
-    const tcpEntries: [string, string][] = [];
-    const udpEntries: [string, string][] = [];
-    Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
-      eachMetadata => {
-        const services = eachMetadata[
-          'services'
-        ] as K8sApplicationMetadata['services'];
-        if (!services) return;
-        const namespace = eachMetadata.namespace;
-        Object.values(services).map(eachService => {
-          eachService.ports
-            .filter(eachPort => eachPort.portBasedIngressPort)
-            .map(eachPort => {
-              const target = `${namespace}/${eachService.name}:${eachPort.port}`;
-              if (eachPort.protocol?.toUpperCase() === 'UDP') {
-                udpEntries.push([
-                  eachPort.portBasedIngressPort!!.toString(),
-                  target,
-                ]);
-              } else {
-                tcpEntries.push([
-                  eachPort.portBasedIngressPort!!.toString(),
-                  target,
-                ]);
-              }
-            });
-        });
-      },
-    );
+    // const tcpEntries: [string, string][] = [];
+    // const udpEntries: [string, string][] = [];
 
-    console.log(Object.fromEntries(tcpEntries));
-    console.log(Object.fromEntries(udpEntries));
+    // Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
+    //   eachMetadata => {
+    //     const services = eachMetadata[
+    //       'services'
+    //     ] as K8sApplicationMetadata['services'];
+    //     if (!services) return;
+    //     const namespace = eachMetadata.namespace;
+    //     Object.values(services).forEach(eachService => {
+    //       Object.values(eachService.ports)
+    //         .filter(eachPort => eachPort.portBasedIngressPort)
+    //         .forEach(eachPort => {
+    //           const target = `${namespace}/${eachService.name}:${eachPort.port}`;
+    //           if (eachPort.protocol?.toUpperCase() === 'UDP') {
+    //             udpEntries.push([
+    //               eachPort.portBasedIngressPort!!.toString(),
+    //               target,
+    //             ]);
+    //           } else {
+    //             tcpEntries.push([
+    //               eachPort.portBasedIngressPort!!.toString(),
+    //               target,
+    //             ]);
+    //           }
+    //         });
+    //     });
+    //   },
+    // );
 
     const { helmSet, helmSetList } = convertJsonToHelmSet({
       controller: {
@@ -113,9 +111,14 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
               'None',
           },
         },
+        // https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+        config: {
+          'allow-snippet-annotations': true,
+          'annotations-risk-level': 'Critical',
+        },
       },
-      tcp: Object.fromEntries(tcpEntries),
-      udp: Object.fromEntries(udpEntries),
+      // tcp: Object.fromEntries(tcpEntries),
+      // udp: Object.fromEntries(udpEntries),
     });
 
     return {

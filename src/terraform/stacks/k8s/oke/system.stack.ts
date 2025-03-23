@@ -100,29 +100,46 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               repository: 'https://helm.releases.hashicorp.com',
             },
           },
+          // services: {
+          //   consulService: {
+          //     name: 'consul-service',
+          //     ports: {
+          //       'consul-service': {
+          //         portBasedIngressPort:
+          //           this.k8sOkeNetworkStack.loadbalancerPortMappings
+          //             .consulServerPort.inbound,
+          //         protocol:
+          //           this.k8sOkeNetworkStack.loadbalancerPortMappings
+          //             .consulServerPort.protocol == OciNetworkProtocol.TCP
+          //             ? 'TCP'
+          //             : 'UDP',
+          //         port: 8501,
+          //       },
+          //     },
+          //   },
+          // },
         }),
 
         homeL2tpVpnProxy: createK8sApplicationMetadata({
           namespace: 'home-l2tp-vpn-proxy',
           services: {
-            homeL2tpVpnProxy: {
+            vpn: {
               name: 'home-l2tp-vpn-proxy',
               labels: {
                 app: 'home-l2tp-vpn-proxy',
               },
-              ports: [
-                {
-                  name: 'home-l2tp-vpn-proxy',
+              ports: {
+                'home-l2tp-vpn-proxy': {
                   port: 11530,
                   targetPort: '11530',
                   protocol: 'TCP',
                 },
-              ],
+              },
             },
           },
         }),
 
-        //////////////////////
+        /** @ToDo Consul Testing... */
         test: createK8sApplicationMetadata({
           namespace: 'test',
           services: {
@@ -131,8 +148,8 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               labels: {
                 app: 'test',
               },
-              ports: [
-                {
+              ports: {
+                nginxWeb: {
                   portBasedIngressPort:
                     this.k8sOkeNetworkStack.loadbalancerPortMappings.testPort
                       .inbound,
@@ -141,10 +158,10 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                       .protocol == OciNetworkProtocol.TCP
                       ? 'TCP'
                       : 'UDP',
-                  port: 1234,
-                  targetPort: '80',
+                  port: 18001,
+                  targetPort: '8001',
                 },
-              ],
+              },
             },
           },
         }),
@@ -156,8 +173,8 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               labels: {
                 app: 'test2',
               },
-              ports: [
-                {
+              ports: {
+                nginxWeb: {
                   portBasedIngressPort:
                     this.k8sOkeNetworkStack.loadbalancerPortMappings.test2Port
                       .inbound,
@@ -166,10 +183,10 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                       .protocol == OciNetworkProtocol.TCP
                       ? 'TCP'
                       : 'UDP',
-                  port: 9876,
-                  targetPort: '80',
+                  port: 18002,
+                  targetPort: '8002',
                 },
-              ],
+              },
             },
           },
         }),

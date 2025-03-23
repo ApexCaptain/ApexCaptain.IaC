@@ -14,18 +14,13 @@ import { CoreDhcpOptions } from '@lib/terraform/providers/oci/core-dhcp-options'
 import { CoreInternetGateway } from '@lib/terraform/providers/oci/core-internet-gateway';
 import { CoreNatGateway } from '@lib/terraform/providers/oci/core-nat-gateway';
 import { CoreRouteTable } from '@lib/terraform/providers/oci/core-route-table';
-import {
-  CoreSecurityList,
-  CoreSecurityListEgressSecurityRules,
-  CoreSecurityListIngressSecurityRules,
-} from '@lib/terraform/providers/oci/core-security-list';
+import { CoreSecurityList } from '@lib/terraform/providers/oci/core-security-list';
 import { CoreServiceGateway } from '@lib/terraform/providers/oci/core-service-gateway';
 import { CoreSubnet } from '@lib/terraform/providers/oci/core-subnet';
 import { CoreVcn } from '@lib/terraform/providers/oci/core-vcn';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { CorePublicIp } from '@lib/terraform/providers/oci/core-public-ip';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { NetworkLoadBalancerNetworkLoadBalancer } from '@lib/terraform/providers/oci/network-load-balancer-network-load-balancer';
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {

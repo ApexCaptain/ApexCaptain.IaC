@@ -15,9 +15,11 @@ export type K8sApplicationMetadata = {
       labels: {
         app: string;
       };
-      ports: (ServiceV1SpecPort & {
-        portBasedIngressPort?: number;
-      })[];
+      ports: {
+        [key: string]: ServiceV1SpecPort & {
+          portBasedIngressPort?: number;
+        };
+      };
     };
   };
 };

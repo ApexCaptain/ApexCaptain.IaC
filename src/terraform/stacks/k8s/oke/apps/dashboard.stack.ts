@@ -226,5 +226,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       K8S_Oke_Apps_Dashboard_Stack.name,
       'Dashboard for OKE k8s',
     );
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

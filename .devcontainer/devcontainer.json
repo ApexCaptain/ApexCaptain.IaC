@@ -6,16 +6,17 @@
   "workspaceFolder": "/home/vscode/workspace/${localWorkspaceFolderBasename}",
   // Featuring
   "features": {
+    "ghcr.io/devcontainers/features/python:1": {},
     "ghcr.io/devcontainers-contrib/features/projen:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/terraform:1": {},
-    "ghcr.io/devcontainers/features/python:1": {},
     "ghcr.io/devcontainers-extra/features/kubectl-asdf:2": {},
+    "ghcr.io/devcontainers-extra/features/consul-asdf:2": {},
+    "ghcr.io/devcontainers-extra/features/vault-asdf:2": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "installDockerBuildx": false
     }
   },
-
   // Custom
   "customizations": {
     "vscode": {
@@ -30,7 +31,6 @@
       ]
     }
   },
-
   // LifeCycles
   "initializeCommand": "bash ./.devcontainer/commands/initializeCommand.sh ${localWorkspaceFolder} ${containerWorkspaceFolder} ${localWorkspaceFolderBasename} ${containerWorkspaceFolderBasename}",
   "updateContentCommand": "bash ./.devcontainer/commands/updateContentCommand.sh",

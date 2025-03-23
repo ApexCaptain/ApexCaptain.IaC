@@ -12,7 +12,6 @@ import {
 } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
-import { TargetK8sEndpoint } from './scripts/enum';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
 import { VsCode } from 'projen/lib/vscode';
 
@@ -234,6 +233,7 @@ const project = new typescript.TypeScriptAppProject({
     'lodash',
     'deepmerge',
     'cron-time-generator',
+    'yaml',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -244,6 +244,9 @@ const project = new typescript.TypeScriptAppProject({
     '@types/lodash',
     'commander',
     'flatley',
+    'fuzzy',
+    '@inquirer/prompts',
+    'inquirer-autocomplete-standalone',
   ],
 });
 
@@ -263,16 +266,8 @@ void (async () => {
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
 
-    // Kubernetes
-    'k8s@ws':
-      'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
-    'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
-
-    // Helm
-    'helm@oke': `ts-node ./scripts/helm.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
-
-    // SSH
-    'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
+    // Terminal
+    terminal: 'ts-node ./scripts/terminal-v2.script.ts',
   });
 
   const apexCaptainOciPrivateKeyFile = new TextFile(
@@ -547,16 +542,20 @@ void (async () => {
           '*.type.ts': 'toml',
           '*.script.ts': 'coffee',
           '*.source.ts': 'cake',
+          '*.terminal.ts': 'console',
         }),
       },
       folders: {
         associations: new VsCodeObject({
           abstract: 'class',
           '.kube': 'kubernetes',
+          kubectl: 'kubernetes',
           oke: 'kubernetes',
           workstation: 'home',
           '.projen': 'project',
           'cdktf.out': 'terraform',
+          terminal: 'command',
+          ssh: 'command',
         }),
       },
     },

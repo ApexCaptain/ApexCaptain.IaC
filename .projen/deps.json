@@ -1,6 +1,10 @@
 {
   "dependencies": [
     {
+      "name": "@inquirer/prompts",
+      "type": "build"
+    },
+    {
       "name": "@nestjs/cli",
       "type": "build"
     },
@@ -67,6 +71,14 @@
     },
     {
       "name": "flatley",
+      "type": "build"
+    },
+    {
+      "name": "fuzzy",
+      "type": "build"
+    },
+    {
+      "name": "inquirer-autocomplete-standalone",
       "type": "build"
     },
     {
@@ -148,6 +160,10 @@
     },
     {
       "name": "reflect-metadata",
+      "type": "runtime"
+    },
+    {
+      "name": "yaml",
       "type": "runtime"
     }
   ],

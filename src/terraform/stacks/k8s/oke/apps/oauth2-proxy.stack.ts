@@ -22,6 +22,7 @@ import _ from 'lodash';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { K8S_Oke_System_Stack } from '../system.stack';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
@@ -163,11 +164,13 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
+    private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_OAuth2Proxy_Stack.name,
       'OAuth2 Proxy stack for oke k8s',
     );
+    this.addDependency(this.k8sOkeAppsIngressControllerStack);
   }
 }
