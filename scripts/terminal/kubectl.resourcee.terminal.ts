@@ -1,10 +1,12 @@
 import { AbstractTerminal, Choice } from './';
 
 export enum KubectlResource {
-  POD = 'pod',
-  SERVICE = 'service',
-  DEPLOYMENT = 'deployment',
+  PODS = 'pods',
+  SERVICES = 'services',
+  DEPLOYMENTS = 'deployments',
   INGRESS = 'ingress',
+  NODES = 'nodes',
+  CONFIGMAPS = 'configmaps',
 }
 
 export class KubectlResourceTerminal extends AbstractTerminal<KubectlResource> {
@@ -12,24 +14,34 @@ export class KubectlResourceTerminal extends AbstractTerminal<KubectlResource> {
     return Promise.resolve(
       [
         {
-          value: KubectlResource.POD,
-          name: 'pod',
+          value: KubectlResource.PODS,
+          name: 'pods',
           description: 'Pod is a single instance of an application.',
         },
         {
-          value: KubectlResource.SERVICE,
-          name: 'service',
+          value: KubectlResource.SERVICES,
+          name: 'services',
           description: 'Service is a service that exposes a pod.',
         },
         {
-          value: KubectlResource.DEPLOYMENT,
-          name: 'deployment',
+          value: KubectlResource.DEPLOYMENTS,
+          name: 'deployments',
           description: 'Deployment is a deployment that exposes a pod.',
         },
         {
           value: KubectlResource.INGRESS,
           name: 'ingress',
           description: 'Ingress is a ingress that exposes a pod.',
+        },
+        {
+          value: KubectlResource.NODES,
+          name: 'nodes',
+          description: 'Node is a node that exposes a pod.',
+        },
+        {
+          value: KubectlResource.CONFIGMAPS,
+          name: 'configmaps',
+          description: 'Configmap is a configmap that exposes a pod.',
         },
       ].filter(each => !this.option.disabled.includes(each.value)),
     );

@@ -2,12 +2,16 @@ import {
   AbstractTerminal,
   KubectlCommandTerminal,
   KubectlEndpointTerminal,
+  ConsulEndpointTerminal,
+  ConsulCommandTerminal,
 } from './';
 
 export enum Binary {
+  CONSUL = 'consul',
   KUBECTL = 'kubectl',
+
   // HELM = 'helm',
-  SSH = 'ssh',
+  // SSH = 'ssh',
 }
 export class BinaryTerminal extends AbstractTerminal<Binary> {
   protected async generateChoices(): Promise<
@@ -19,6 +23,11 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
   > {
     return [
       {
+        value: Binary.CONSUL,
+        name: 'consul',
+        description: 'Consul is a tool for managing Consul clusters.',
+      },
+      {
         value: Binary.KUBECTL,
         name: 'kubectl',
         description:
@@ -29,12 +38,12 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
       //   name: 'helm',
       //   description: 'Helm is a package manager for Kubernetes.',
       // },
-      {
-        value: Binary.SSH,
-        name: 'ssh',
-        description:
-          'SSH is a secure shell protocol for remote login and file transfer.',
-      },
+      // {
+      //   value: Binary.SSH,
+      //   name: 'ssh',
+      //   description:
+      //     'SSH is a secure shell protocol for remote login and file transfer.',
+      // },
     ];
   }
 
@@ -48,9 +57,17 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
   async execute() {
     const binary = await this.choose();
     switch (binary) {
+      case Binary.CONSUL:
+        const consulEndpoint = await this.next(new ConsulEndpointTerminal());
+        await this.next(
+          new ConsulCommandTerminal({ endpoint: consulEndpoint }),
+        );
+        break;
       case Binary.KUBECTL:
-        const endpoint = await this.next(new KubectlEndpointTerminal());
-        await this.next(new KubectlCommandTerminal({ endpoint }));
+        const kubectlEndpoint = await this.next(new KubectlEndpointTerminal());
+        await this.next(
+          new KubectlCommandTerminal({ endpoint: kubectlEndpoint }),
+        );
         break;
     }
     return binary;

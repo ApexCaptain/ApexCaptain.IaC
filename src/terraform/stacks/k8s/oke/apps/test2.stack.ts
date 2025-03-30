@@ -18,6 +18,7 @@ import { K8S_Oke_Apps_Consul_Stack } from './consul.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import path from 'path';
+import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 
 @Injectable()
 export class K8S_Oke_Apps_Test2_Stack extends AbstractStack {
@@ -54,22 +55,6 @@ export class K8S_Oke_Apps_Test2_Stack extends AbstractStack {
   //   },
   // }));
 
-  // configmap = this.provide(ConfigMapV1, 'configmap', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   data: {
-  //     'default.conf': Fn.templatefile(
-  //       path.join(process.cwd(), 'assets/templates/test.nginx.conf.tpl'),
-  //       {
-  //         NGINX_PORT:
-  //           this.metadata.shared.services.test2.ports.nginxWeb.targetPort,
-  //       },
-  //     ),
-  //   },
-  // }));
-
   // service = this.provide(ServiceV1, 'service', () => ({
   //   metadata: {
   //     name: this.metadata.shared.services.test2.name,
@@ -78,6 +63,13 @@ export class K8S_Oke_Apps_Test2_Stack extends AbstractStack {
   //   spec: {
   //     selector: this.metadata.shared.services.test2.labels,
   //     port: Object.values(this.metadata.shared.services.test2.ports),
+  //   },
+  // }));
+
+  // serviceAccount = this.provide(ServiceAccountV1, 'serviceAccount', id => ({
+  //   metadata: {
+  //     name: this.service.element.metadata.name,
+  //     namespace: this.namespace.element.metadata.name,
   //   },
   // }));
 
@@ -96,11 +88,12 @@ export class K8S_Oke_Apps_Test2_Stack extends AbstractStack {
   //         labels: this.metadata.shared.services.test2.labels,
   //         annotations: {
   //           'consul.hashicorp.com/connect-inject': 'true',
-  //           'consul.hashicorp.com/transparent-proxy': 'true',
-  //           // 'consul.hashicorp.com/connect-service-upstreams': 'test.test:18001',
+  //           'consul.hashicorp.com/transparent-proxy': 'false',
+  //           // 'consul.hashicorp.com/connect-service-upstreams': 'test:18001',
   //         },
   //       },
   //       spec: {
+  //         serviceAccountName: this.serviceAccount.element.metadata.name,
   //         container: [
   //           {
   //             name: this.metadata.shared.services.test2.name,
@@ -111,22 +104,6 @@ export class K8S_Oke_Apps_Test2_Stack extends AbstractStack {
   //               containerPort: parseInt(eachPort.targetPort),
   //               protocol: eachPort.protocol,
   //             })),
-  //             volumeMount: [
-  //               {
-  //                 name: this.configmap.element.metadata.name,
-  //                 mountPath: '/etc/nginx/conf.d/default.conf',
-  //                 subPath: 'default.conf',
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //         volume: [
-  //           {
-  //             name: this.configmap.element.metadata.name,
-  //             configMap: {
-  //               items: [{ key: 'default.conf', path: 'default.conf' }],
-  //               name: this.configmap.element.metadata.name,
-  //             },
   //           },
   //         ],
   //       },

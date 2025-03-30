@@ -5,12 +5,14 @@ import {
   KubectlNamespaceTerminal,
   KubectlPodTerminal,
   KubectlContainerTerminal,
+  KubectlResource,
 } from './';
 
 enum KubectlCommand {
   GET = 'get',
   LOGS = 'logs',
   EXEC = 'exec',
+  DESCRIBE = 'describe',
 }
 
 export class KubectlCommandTerminal extends AbstractTerminal<KubectlCommand> {
@@ -41,6 +43,11 @@ export class KubectlCommandTerminal extends AbstractTerminal<KubectlCommand> {
         value: KubectlCommand.EXEC,
         name: 'exec',
         description: 'Execute a command in a container',
+      },
+      {
+        value: KubectlCommand.DESCRIBE,
+        name: 'describe',
+        description: 'Describe a resource',
       },
     ];
   }
@@ -120,6 +127,28 @@ export class KubectlCommandTerminal extends AbstractTerminal<KubectlCommand> {
             HTTPS_PROXY: this.option.endpoint.socks5ProxyUrl,
           },
         );
+
+      case KubectlCommand.DESCRIBE:
+        const describe_resource = await this.next(
+          new KubectlResourceTerminal({ disabled: [] }),
+        );
+
+        if ([KubectlResource.NODES].includes(describe_resource)) {
+          throw new Error('Not yet implemented');
+        }
+        const namespace = await this.next(
+          new KubectlNamespaceTerminal({ endpoint: this.option.endpoint }),
+        );
+        await this.runTerminal(
+          ['kubectl', `describe ${describe_resource}`, `${namespace}`],
+          {
+            ...process.env,
+            KUBECONFIG: this.option.endpoint.kubeConfigFilePath,
+            HTTPS_PROXY: this.option.endpoint.socks5ProxyUrl,
+          },
+        );
+
+        break;
     }
 
     return command;

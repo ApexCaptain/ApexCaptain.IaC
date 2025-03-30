@@ -159,7 +159,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                       ? 'TCP'
                       : 'UDP',
                   port: 18001,
-                  targetPort: '8001',
+                  targetPort: '80',
                 },
               },
             },
@@ -184,7 +184,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                       ? 'TCP'
                       : 'UDP',
                   port: 18002,
-                  targetPort: '8002',
+                  targetPort: '80',
                 },
               },
             },

@@ -24,7 +24,9 @@ import yaml from 'yaml';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
-
+import { LocalProvider } from '@lib/terraform/providers/local/provider';
+import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
+import path from 'path';
 /**
  * @See https://www.youtube.com/watch?v=s3I1kKKfjtQ&t=4057s
  */
@@ -39,6 +41,7 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
+      local: this.provide(LocalProvider, 'localProvider', () => ({})),
       kubernetes: this.provide(
         KubernetesProvider,
         'kubernetesProvider',
@@ -67,147 +70,171 @@ export class K8S_Oke_Apps_Consul_Stack extends AbstractStack {
     this.k8sOkeSystemStack.applicationMetadata.shared.consul,
   ]);
 
-  namespace = this.provide(NamespaceV1, 'namespace', () => ({
-    metadata: {
-      name: this.metadata.shared.namespace,
-    },
-  }));
+  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
+  //   metadata: {
+  //     name: this.metadata.shared.namespace,
+  //   },
+  // }));
 
-  consulAclBootstrapToken = this.provide(
-    StringResource,
-    'consulAclBootstrapToken',
-    () => ({
-      length: 32,
-      special: false,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 30,
-        }).toString(),
-      },
-    }),
-  );
+  // consulAclBootstrapToken = this.provide(
+  //   StringResource,
+  //   'consulAclBootstrapToken',
+  //   () => ({
+  //     length: 32,
+  //     special: false,
+  //     keepers: {
+  //       expirationDate: createExpirationInterval({
+  //         days: 30,
+  //       }).toString(),
+  //     },
+  //   }),
+  // );
 
-  consulAclBootstrapTokenSecret = this.provide(
-    SecretV1,
-    'consulAclBootstrapTokenSecret',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      data: {
-        token: this.consulAclBootstrapToken.element.result,
-      },
-      type: 'Opaque',
-    }),
-  );
+  // consulAclBootstrapTokenSecret = this.provide(
+  //   SecretV1,
+  //   'consulAclBootstrapTokenSecret',
+  //   id => ({
+  //     metadata: {
+  //       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+  //       namespace: this.namespace.element.metadata.name,
+  //     },
+  //     data: {
+  //       token: this.consulAclBootstrapToken.element.result,
+  //     },
+  //     type: 'Opaque',
+  //   }),
+  // );
 
-  release = this.provide(Release, 'release', () => {
-    const ingressHost = `${this.cloudflareRecordStack.okeConsulRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
+  // release = this.provide(Release, 'release', () => {
+  //   const ingressHost = `${this.cloudflareRecordStack.okeConsulRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
 
-    const { helmSet, helmSetList } = convertJsonToHelmSet({
-      global: {
-        peering: {
-          enabled: false,
-        },
-        tls: {
-          enabled: true,
-        },
-        datacenter: 'ayteneve93-oke',
-        acls: {
-          manageSystemACLs: true,
-          bootstrapToken: {
-            secretName:
-              this.consulAclBootstrapTokenSecret.element.metadata.name,
-            secretKey: 'token',
-          },
-        },
-      },
-      server: {
-        enabled: true,
-        replicas: 1,
-        bootstrapExpect: 1,
-        extraConfig: `
-          {
-            "log_level": "TRACE"
-          }
-          `,
-      },
-      connectInject: {
-        enabled: true,
-        default: false,
-      },
-      // @ToDo 나중에 이 부분 enable 하고 workstation의 consul하고 연결해야 함
-      meshGateway: {
-        enabled: false,
-        replicas: 2,
-        service: {
-          type: 'LoadBalancer',
-          annotations: `
-          {
-            "oci.oraclecloud.com/load-balancer-type": "nlb"
-          }
-          `,
-        },
-      },
-      ui: {
-        enabled: true,
-        service: {
-          enabled: true,
-          type: 'ClusterIP',
-        },
-        ingress: {
-          enabled: true,
-          ingressClassName: 'nginx',
-          pathType: 'Prefix',
-          hosts: [
-            {
-              host: ingressHost,
-              paths: ['/'],
-            },
-          ],
-          annotations: yaml.stringify({
-            'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
-            'nginx.ingress.kubernetes.io/rewrite-target': '/',
-            'kubernetes.io/ingress.class': 'nginx',
-            'nginx.ingress.kubernetes.io/auth-url':
-              this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
-            'nginx.ingress.kubernetes.io/auth-signin':
-              this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
-            'nginx.ingress.kubernetes.io/auth-snippet': `
-                if ($request_uri ~* "^/v1/.*") {
-                  return 200;
-                }
-              `
-              .split('\n')
-              .map(line => line.trim())
-              .filter(line => !_.isEmpty(line))
-              .join('\n'),
-          }),
-        },
-      },
-      client: {
-        enabled: true,
-      },
-    });
+  //   const { helmSet, helmSetList } = convertJsonToHelmSet({
+  //     global: {
+  //       peering: {
+  //         enabled: false,
+  //       },
+  //       tls: {
+  //         enabled: true,
+  //       },
+  //       datacenter: 'ayteneve93-oke',
+  //       acls: {
+  //         manageSystemACLs: true,
+  //         bootstrapToken: {
+  //           secretName:
+  //             this.consulAclBootstrapTokenSecret.element.metadata.name,
+  //           secretKey: 'token',
+  //         },
+  //       },
+  //     },
+  //     server: {
+  //       enabled: true,
+  //       replicas: 1,
+  //       bootstrapExpect: 1,
+  //       extraConfig: `
+  //         {
+  //           "log_level": "TRACE"
+  //         }
+  //         `,
+  //     },
+  //     connectInject: {
+  //       enabled: true,
+  //       default: false,
+  //     },
+  //     // @ToDo 나중에 이 부분 enable 하고 workstation의 consul하고 연결해야 함
+  //     meshGateway: {
+  //       enabled: false,
+  //       replicas: 2,
+  //       service: {
+  //         type: 'LoadBalancer',
+  //         annotations: `
+  //         {
+  //           "oci.oraclecloud.com/load-balancer-type": "nlb"
+  //         }
+  //         `,
+  //       },
+  //     },
+  //     ui: {
+  //       enabled: true,
+  //       service: {
+  //         enabled: true,
+  //         type: 'ClusterIP',
+  //       },
+  //       ingress: {
+  //         enabled: true,
+  //         ingressClassName: 'nginx',
+  //         pathType: 'Prefix',
+  //         hosts: [
+  //           {
+  //             host: ingressHost,
+  //             paths: ['/'],
+  //           },
+  //         ],
+  //         annotations: yaml.stringify({
+  //           'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
+  //           'nginx.ingress.kubernetes.io/rewrite-target': '/',
+  //           'kubernetes.io/ingress.class': 'nginx',
+  //           'nginx.ingress.kubernetes.io/auth-url':
+  //             this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+  //           'nginx.ingress.kubernetes.io/auth-signin':
+  //             this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+  //           'nginx.ingress.kubernetes.io/auth-snippet': `
+  //               if ($request_uri ~* "^/v1/.*") {
+  //                 return 200;
+  //               }
+  //             `
+  //             .split('\n')
+  //             .map(line => line.trim())
+  //             .filter(line => !_.isEmpty(line))
+  //             .join('\n'),
+  //         }),
+  //       },
+  //     },
+  //     client: {
+  //       enabled: true,
+  //     },
+  //   });
 
-    return [
-      {
-        name: this.metadata.shared.helm.consul.name,
-        chart: this.metadata.shared.helm.consul.chart,
-        repository: this.metadata.shared.helm.consul.repository,
-        namespace: this.namespace.element.metadata.name,
-        setSensitive: helmSet,
-        setList: helmSetList,
-        lifecycle: {
-          replaceTriggeredBy: [
-            `${this.consulAclBootstrapTokenSecret.element.terraformResourceType}.${this.consulAclBootstrapTokenSecret.element.friendlyUniqueId}`,
-          ],
-        },
-      },
-      { ingressHost },
-    ];
-  });
+  //   return [
+  //     {
+  //       name: this.metadata.shared.helm.consul.name,
+  //       chart: this.metadata.shared.helm.consul.chart,
+  //       repository: this.metadata.shared.helm.consul.repository,
+  //       namespace: this.namespace.element.metadata.name,
+  //       setSensitive: helmSet,
+  //       setList: helmSetList,
+  //       lifecycle: {
+  //         replaceTriggeredBy: [
+  //           `${this.consulAclBootstrapTokenSecret.element.terraformResourceType}.${this.consulAclBootstrapTokenSecret.element.friendlyUniqueId}`,
+  //         ],
+  //       },
+  //     },
+  //     { ingressHost },
+  //   ];
+  // });
+
+  // consulApiEndpointSource = this.provide(
+  //   SensitiveFile,
+  //   'consulApiEndpointSource',
+  //   id => {
+  //     const data = {
+  //       address: this.release.shared.ingressHost,
+  //       token: this.consulAclBootstrapToken.element.result,
+  //     };
+
+  //     return [
+  //       {
+  //         filename: path.join(
+  //           process.cwd(),
+  //           this.globalConfigService.config.terraform.config
+  //             .generatedScriptLibDirRelativePath,
+  //           `${K8S_Oke_Apps_Consul_Stack.name}-${id}.source.ts`,
+  //         ),
+  //         content: `export const ${id} = ${JSON.stringify(data, null, 2)}`,
+  //       },
+  //       data,
+  //     ];
+  //   },
+  // );
 
   constructor(
     // Global
