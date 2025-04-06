@@ -10,7 +10,7 @@ import { LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { Release } from '@lib/terraform/providers/helm/release';
+import { Release, ReleaseSet } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 import _ from 'lodash';
@@ -63,37 +63,6 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
   }));
 
   release = this.provide(Release, 'release', () => {
-    // const tcpEntries: [string, string][] = [];
-    // const udpEntries: [string, string][] = [];
-
-    // Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
-    //   eachMetadata => {
-    //     const services = eachMetadata[
-    //       'services'
-    //     ] as K8sApplicationMetadata['services'];
-    //     if (!services) return;
-    //     const namespace = eachMetadata.namespace;
-    //     Object.values(services).forEach(eachService => {
-    //       Object.values(eachService.ports)
-    //         .filter(eachPort => eachPort.portBasedIngressPort)
-    //         .forEach(eachPort => {
-    //           const target = `${namespace}/${eachService.name}:${eachPort.port}`;
-    //           if (eachPort.protocol?.toUpperCase() === 'UDP') {
-    //             udpEntries.push([
-    //               eachPort.portBasedIngressPort!!.toString(),
-    //               target,
-    //             ]);
-    //           } else {
-    //             tcpEntries.push([
-    //               eachPort.portBasedIngressPort!!.toString(),
-    //               target,
-    //             ]);
-    //           }
-    //         });
-    //     });
-    //   },
-    // );
-
     const { helmSet, helmSetList } = convertJsonToHelmSet({
       controller: {
         service: {
@@ -117,9 +86,40 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
           'annotations-risk-level': 'Critical',
         },
       },
-      // tcp: Object.fromEntries(tcpEntries),
-      // udp: Object.fromEntries(udpEntries),
     });
+
+    const tcpReleaseSet: ReleaseSet[] = [];
+    const udpReleaseSet: ReleaseSet[] = [];
+
+    Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
+      eachMetadata => {
+        const services = eachMetadata[
+          'services'
+        ] as K8sApplicationMetadata['services'];
+        if (!services) return;
+        const namespace = eachMetadata.namespace;
+        Object.values(services).forEach(eachService => {
+          Object.values(eachService.ports)
+            .filter(eachPort => eachPort.portBasedIngressPort)
+            .forEach(eachPort => {
+              const target = `${namespace}/${eachService.name}:${eachPort.port}`;
+              if (eachPort.protocol?.toUpperCase() === 'UDP') {
+                udpReleaseSet.push({
+                  name: `udp.${eachPort.portBasedIngressPort!!.toString()}`,
+                  value: target,
+                });
+              } else {
+                tcpReleaseSet.push({
+                  name: `tcp.${eachPort.portBasedIngressPort!!.toString()}`,
+                  value: target,
+                });
+              }
+            });
+        });
+      },
+    );
+
+    helmSet.push(...tcpReleaseSet, ...udpReleaseSet);
 
     return {
       name: this.metadata.shared.helm.ingressController.name,

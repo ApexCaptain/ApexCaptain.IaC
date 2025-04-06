@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
 import { AbstractStack, GithubRepositorySecretArgs } from '@/common';
@@ -16,6 +16,8 @@ import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/
 import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
 import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
+import { DataOciObjectstorageNamespace } from '@lib/terraform/providers/oci/data-oci-objectstorage-namespace';
+import { IdentityCustomerSecretKey } from '@lib/terraform/providers/oci/identity-customer-secret-key';
 
 @Injectable()
 export class Project_Stack extends AbstractStack {

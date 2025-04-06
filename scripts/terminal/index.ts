@@ -6,5 +6,3 @@ export * from './kubectl.resourcee.terminal';
 export * from './kubectl.namespace.terminal';
 export * from './kubectl.pod.terminal';
 export * from './kubectl.container.terminal';
-export * from './consul.endpoint.terminal';
-export * from './consul.command.terminal';

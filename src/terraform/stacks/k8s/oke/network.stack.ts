@@ -80,11 +80,6 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       inbound: 443,
     });
 
-    const consulServerPort = createLoadBalancerPortInfo({
-      inbound: 18501,
-      description: 'Consul server port',
-    });
-
     const testPort = createLoadBalancerPortInfo({
       inbound: 8080,
       description: 'Test port',
@@ -98,7 +93,6 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
     const combination = {
       httpNodePort,
       httpsNodePort,
-      consulServerPort,
       testPort,
       test2Port,
     };

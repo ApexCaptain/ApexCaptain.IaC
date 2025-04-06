@@ -31,7 +31,6 @@ export function convertJsonToHelmSet(json: Object) {
     });
   };
   flattenJson(json);
-
   return {
     helmSet: helmSet.map(eachHelmSet => ({
       ...eachHelmSet,

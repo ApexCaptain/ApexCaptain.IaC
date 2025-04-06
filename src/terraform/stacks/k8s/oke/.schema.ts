@@ -9,10 +9,16 @@ export const OkeSchema = Joi.object({
     }).required(),
     homeL2tpVpnProxy: Joi.object({
       vpnServerAddr: Joi.string().required(),
-      vpnUsername: Joi.string().required(),
-      vpnPassword: Joi.string().required(),
       vpnIpsToRoute: Joi.string().required(),
       vpnGatewayIp: Joi.string().required(),
+      vpnAccounts: Joi.array()
+        .items(
+          Joi.object({
+            username: Joi.string().required(),
+            password: Joi.string().required(),
+          }),
+        )
+        .required(),
     }).required(),
   }).required(),
   bastion: Joi.object({

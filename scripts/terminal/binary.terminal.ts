@@ -2,12 +2,9 @@ import {
   AbstractTerminal,
   KubectlCommandTerminal,
   KubectlEndpointTerminal,
-  ConsulEndpointTerminal,
-  ConsulCommandTerminal,
 } from './';
 
 export enum Binary {
-  CONSUL = 'consul',
   KUBECTL = 'kubectl',
 
   // HELM = 'helm',
@@ -22,11 +19,6 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
     }[]
   > {
     return [
-      {
-        value: Binary.CONSUL,
-        name: 'consul',
-        description: 'Consul is a tool for managing Consul clusters.',
-      },
       {
         value: Binary.KUBECTL,
         name: 'kubectl',
@@ -57,12 +49,6 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
   async execute() {
     const binary = await this.choose();
     switch (binary) {
-      case Binary.CONSUL:
-        const consulEndpoint = await this.next(new ConsulEndpointTerminal());
-        await this.next(
-          new ConsulCommandTerminal({ endpoint: consulEndpoint }),
-        );
-        break;
       case Binary.KUBECTL:
         const kubectlEndpoint = await this.next(new KubectlEndpointTerminal());
         await this.next(

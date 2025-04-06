@@ -1,11 +1,8 @@
-import {
-  AbstractStack,
-  createK8sApplicationMetadata,
-  OciNetworkProtocol,
-} from '@/common';
+import { AbstractStack, createK8sApplicationMetadata } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { K8S_Oke_Endpoint_Stack } from './endpoint.stack';
@@ -14,6 +11,9 @@ import { DataKubernetesServiceV1 } from '@lib/terraform/providers/kubernetes/dat
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Oke_Network_Stack } from './network.stack';
+import { K8S_Oke_Compartment_Stack } from './compartment.stack';
+import { Project_Stack } from '../../project.stack';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 
 @Injectable()
 export class K8S_Oke_System_Stack extends AbstractStack {
@@ -36,6 +36,15 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               .kubeConfigFilePath,
         }),
       ),
+      helm: this.provide(HelmProvider, 'helmProvider', () => ({
+        kubernetes: {
+          proxyUrl:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
+          configPath:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared
+              .kubeConfigFilePath,
+        },
+      })),
     },
   };
 
@@ -64,7 +73,28 @@ export class K8S_Oke_System_Stack extends AbstractStack {
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
     return [
       {},
+
       {
+        nfs: createK8sApplicationMetadata({
+          namespace: 'nfs',
+        }),
+
+        istio: createK8sApplicationMetadata({
+          namespace: 'istio-system',
+          helm: {
+            istiod: {
+              name: 'istiod',
+              chart: 'istiod',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+            base: {
+              name: 'istio-base',
+              chart: 'base',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+          },
+        }),
+
         ingressController: createK8sApplicationMetadata({
           namespace: 'ingress-controller',
           helm: {
@@ -91,35 +121,6 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           namespace: 'dashboard',
         }),
 
-        consul: createK8sApplicationMetadata({
-          namespace: 'consul',
-          helm: {
-            consul: {
-              name: 'consul',
-              chart: 'consul',
-              repository: 'https://helm.releases.hashicorp.com',
-            },
-          },
-          // services: {
-          //   consulService: {
-          //     name: 'consul-service',
-          //     ports: {
-          //       'consul-service': {
-          //         portBasedIngressPort:
-          //           this.k8sOkeNetworkStack.loadbalancerPortMappings
-          //             .consulServerPort.inbound,
-          //         protocol:
-          //           this.k8sOkeNetworkStack.loadbalancerPortMappings
-          //             .consulServerPort.protocol == OciNetworkProtocol.TCP
-          //             ? 'TCP'
-          //             : 'UDP',
-          //         port: 8501,
-          //       },
-          //     },
-          //   },
-          // },
-        }),
-
         homeL2tpVpnProxy: createK8sApplicationMetadata({
           namespace: 'home-l2tp-vpn-proxy',
           services: {
@@ -139,52 +140,19 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           },
         }),
 
-        /** @ToDo Consul Testing... */
-        test: createK8sApplicationMetadata({
-          namespace: 'test',
+        fileBrowser: createK8sApplicationMetadata({
+          namespace: 'file-browser',
           services: {
-            test: {
-              name: 'test',
+            fileBrowser: {
+              name: 'file-browser',
               labels: {
-                app: 'test',
+                app: 'file-browser',
               },
               ports: {
-                nginxWeb: {
-                  portBasedIngressPort:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings.testPort
-                      .inbound,
-                  protocol:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings.testPort
-                      .protocol == OciNetworkProtocol.TCP
-                      ? 'TCP'
-                      : 'UDP',
-                  port: 18001,
+                'file-browser': {
+                  port: 80,
                   targetPort: '80',
-                },
-              },
-            },
-          },
-        }),
-        test2: createK8sApplicationMetadata({
-          namespace: 'test2',
-          services: {
-            test2: {
-              name: 'test2',
-              labels: {
-                app: 'test2',
-              },
-              ports: {
-                nginxWeb: {
-                  portBasedIngressPort:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings.test2Port
-                      .inbound,
-                  protocol:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings.test2Port
-                      .protocol == OciNetworkProtocol.TCP
-                      ? 'TCP'
-                      : 'UDP',
-                  port: 18002,
-                  targetPort: '80',
+                  protocol: 'TCP',
                 },
               },
             },
@@ -199,7 +167,9 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly projectStack: Project_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(

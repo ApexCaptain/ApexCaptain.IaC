@@ -58,6 +58,13 @@ export class KubectlCommandTerminal extends AbstractTerminal<KubectlCommand> {
         const get_resource = await this.next(
           new KubectlResourceTerminal({ disabled: [] }),
         );
+        if (get_resource === KubectlResource.CRDS) {
+          await this.runTerminal(['kubectl', `get crd`], {
+            ...process.env,
+            KUBECONFIG: this.option.endpoint.kubeConfigFilePath,
+            HTTPS_PROXY: this.option.endpoint.socks5ProxyUrl,
+          });
+        }
         const get_namespace = await this.next(
           new KubectlNamespaceTerminal({ endpoint: this.option.endpoint }),
         );

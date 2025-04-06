@@ -307,11 +307,7 @@ void (async () => {
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         // Official
-        {
-          // https://registry.terraform.io/providers/hashicorp/consul/latest
-          name: 'consul',
-          source: 'hashicorp/consul',
-        },
+
         {
           // https://registry.terraform.io/providers/hashicorp/random/latest
           name: 'random',
@@ -413,15 +409,33 @@ void (async () => {
               },
               homeL2tpVpnProxy: {
                 vpnServerAddr: workstationIpAddress,
-                vpnUsername:
-                  process.env
-                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
-                vpnPassword:
-                  process.env
-                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_PASSWORD!!,
+                // vpnUsername:
+                //   process.env
+                //     .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
+                // vpnPassword:
+                //   process.env
+                //     .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_PASSWORD!!,
                 vpnIpsToRoute:
                   process.env.WORKSTATION_VPN_L2TP_IPS_TO_ROUTE_CSV!!,
                 vpnGatewayIp: process.env.WORKSTATION_VPN_L2TP_GATEWAY_IP!!,
+                vpnAccounts: [
+                  {
+                    username:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_1_ACCOUNT!!,
+                    password:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_1_PASSWORD!!,
+                  },
+                  {
+                    username:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_2_ACCOUNT!!,
+                    password:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_2_PASSWORD!!,
+                  },
+                ],
               },
             },
             bastion: {
@@ -470,6 +484,7 @@ void (async () => {
           cloudflare: {
             ApexCaptain: {
               apiToken: process.env.APEX_CAPTAIN_CLOUDFLARE_API_TOKEN!!,
+              email: process.env.APEX_CAPTAIN_CLOUDFLARE_EMAIL!!,
             },
           },
 
@@ -543,6 +558,7 @@ void (async () => {
           '*.script.ts': 'coffee',
           '*.source.ts': 'cake',
           '*.terminal.ts': 'console',
+          '*.crd.ts': 'kubernetes',
         }),
       },
       folders: {
@@ -551,6 +567,7 @@ void (async () => {
           '.kube': 'kubernetes',
           kubectl: 'kubernetes',
           oke: 'kubernetes',
+          crd: 'kubernetes',
           workstation: 'home',
           '.projen': 'project',
           'cdktf.out': 'terraform',

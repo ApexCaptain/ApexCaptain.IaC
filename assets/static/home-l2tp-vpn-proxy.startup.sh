@@ -1,20 +1,32 @@
 #!/bin/sh
 
+while ! command -v sshd > /dev/null 2>&1; do
+    echo "Installing APK Packages..."
+    apk add --no-cache openssh curl
+    if [ $? -eq 0 ]; then
+        echo "SSH installed successfully."
+        mkdir -p /root/.ssh && chmod 700 /root/.ssh
+        ssh-keygen -t rsa -b 2048 -f /root/.ssh/id_rsa -N ''
+        cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+        chmod 600 /root/.ssh/authorized_keys
+        ls -al /root/.ssh
+        ssh-keygen -A
+        break
+    else
+        echo "Failed to install APK Packages. Retrying in 5 seconds..."
+        sleep 5
+    fi
+done
+
+/usr/sbin/sshd
+
+POD_INDEX=$(echo $HOSTNAME | awk -F '-' '{print $NF}')
+VPN_USERNAME=$(eval echo '$VPN_USERNAME_'$POD_INDEX)
+VPN_PASSWORD=$(eval echo '$VPN_PASSWORD_'$POD_INDEX)
+
 sed -i 's/lns = .*/lns = '$VPN_SERVER_ADDR'/' /etc/xl2tpd/xl2tpd.conf
 sed -i 's/name .*/name '$VPN_USERNAME'/' /etc/ppp/options.l2tpd.client
 sed -i 's/password .*/password '$VPN_PASSWORD'/' /etc/ppp/options.l2tpd.client
-
-# sed -i 's/right=.*/right='$VPN_SERVER_ADDR'/' /etc/ipsec.conf
-# echo ': PSK "'$VPN_PSK'"' > /etc/ipsec.secrets
-# modprobe af_key
-# ipsec initnss
-# sleep 1
-# ipsec pluto --stderrlog --config /etc/ipsec.conf
-# sleep 5
-# ipsec auto --up L2TP-PSK
-# sleep 3
-# ipsec --status
-# sleep 3
 
 (
     (sleep 7 && echo "c myVPN" > /var/run/xl2tpd/l2tp-control) &
@@ -35,21 +47,10 @@ sed -i 's/password .*/password '$VPN_PASSWORD'/' /etc/ppp/options.l2tpd.client
     done
 ) &
 
-if ! command -v sshd > /dev/null 2>&1; then
-    echo "Installing SSH..."
-    apk add --no-cache openssh
-    mkdir -p /root/.ssh && chmod 700 /root/.ssh
-    ssh-keygen -t rsa -b 2048 -f /root/.ssh/id_rsa -N ''
-    cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
-    chmod 600 /root/.ssh/authorized_keys
-    ls -al /root/.ssh
-    ssh-keygen -A
-fi
-
-/usr/sbin/sshd
 while ! nc -z localhost 22; do   
   echo "Waiting for SSH to be available on port 22..."
-  sleep 1
+  sleep 5
 done
+
 echo "Starting SSH tunnel..."
 ssh -o StrictHostKeyChecking=no -N -D 0.0.0.0:$PROXY_PORT root@localhost

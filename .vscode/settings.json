@@ -29,13 +29,15 @@
     "*.type.ts": "toml",
     "*.script.ts": "coffee",
     "*.source.ts": "cake",
-    "*.terminal.ts": "console"
+    "*.terminal.ts": "console",
+    "*.crd.ts": "kubernetes"
   },
   "material-icon-theme.folders.associations": {
     "abstract": "class",
     ".kube": "kubernetes",
     "kubectl": "kubernetes",
     "oke": "kubernetes",
+    "crd": "kubernetes",
     "workstation": "home",
     ".projen": "project",
     "cdktf.out": "terraform",

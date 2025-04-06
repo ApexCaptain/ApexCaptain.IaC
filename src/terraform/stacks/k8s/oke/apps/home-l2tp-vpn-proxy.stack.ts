@@ -7,19 +7,20 @@ import { Fn, LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import {
-  DeploymentV1,
-  DeploymentV1SpecTemplateSpecContainerPort,
-} from '@lib/terraform/providers/kubernetes/deployment-v1';
+  StatefulSetV1,
+  StatefulSetV1SpecTemplateSpecContainerPort,
+} from '@lib/terraform/providers/kubernetes/stateful-set-v1';
+
 import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import path from 'path';
 import _ from 'lodash';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
-import { K8S_Oke_Apps_Consul_Stack } from './consul.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Oke_System_Stack } from '../system.stack';
+import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
@@ -49,185 +50,203 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
     },
   };
 
-  // private readonly metadata = this.provide(Resource, 'metadata', () => [
-  //   {},
-  //   this.k8sOkeSystemStack.applicationMetadata.shared.homeL2tpVpnProxy,
-  // ]);
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sOkeSystemStack.applicationMetadata.shared.homeL2tpVpnProxy,
+  ]);
 
-  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
-  //   metadata: {
-  //     name: this.metadata.shared.namespace,
-  //   },
-  // }));
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
+    metadata: {
+      name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'enabled',
+      },
+    },
+  }));
 
-  // configmap = this.provide(ConfigMapV1, 'configmap', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   data: {
-  //     'startup.sh': Fn.file(
-  //       path.join(
-  //         process.cwd(),
-  //         'assets/static/home-l2tp-vpn-proxy.startup.sh',
-  //       ),
-  //     ),
-  //   },
-  // }));
+  configmap = this.provide(ConfigMapV1, 'configmap', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+    },
+    data: {
+      'startup.sh': Fn.file(
+        path.join(
+          process.cwd(),
+          'assets/static/home-l2tp-vpn-proxy.startup.sh',
+        ),
+      ),
+    },
+  }));
 
-  // secret = this.provide(SecretV1, 'secret', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   data: {
-  //     PROXY_PORT:
-  //       this.metadata.shared.services.homeL2tpVpnProxy.ports[0].port.toString(),
-  //     VPN_SERVER_ADDR: this.config.vpnServerAddr,
-  //     VPN_USERNAME: this.config.vpnUsername,
-  //     VPN_PASSWORD: this.config.vpnPassword,
-  //     VPN_IPS_TO_ROUTE: this.config.vpnIpsToRoute,
-  //     VPN_GATEWAY_IP: this.config.vpnGatewayIp,
-  //   },
-  //   type: 'Opaque',
-  // }));
+  secret = this.provide(SecretV1, 'secret', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+    },
+    data: {
+      PROXY_PORT:
+        this.metadata.shared.services.vpn.ports[
+          'home-l2tp-vpn-proxy'
+        ].port.toString(),
+      VPN_SERVER_ADDR: this.config.vpnServerAddr,
+      VPN_IPS_TO_ROUTE: this.config.vpnIpsToRoute,
+      VPN_GATEWAY_IP: this.config.vpnGatewayIp,
+      ...Object.fromEntries(
+        this.config.vpnAccounts
+          .map(({ username, password }, index) => [
+            [`VPN_USERNAME_${index}`, username],
+            [`VPN_PASSWORD_${index}`, password],
+          ])
+          .flat(),
+      ),
+    },
+    type: 'Opaque',
+  }));
 
-  // service = this.provide(ServiceV1, 'service', () => ({
-  //   metadata: {
-  //     name: this.metadata.shared.services.homeL2tpVpnProxy.name,
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   spec: {
-  //     selector: this.metadata.shared.services.homeL2tpVpnProxy.labels,
-  //     port: this.metadata.shared.services.homeL2tpVpnProxy.ports,
-  //   },
-  // }));
+  service = this.provide(ServiceV1, 'service', () => ({
+    metadata: {
+      name: this.metadata.shared.services.vpn.name,
+      namespace: this.namespace.element.metadata.name,
+    },
+    spec: {
+      selector: this.metadata.shared.services.vpn.labels,
+      port: Object.values(this.metadata.shared.services.vpn.ports),
+    },
+  }));
 
-  // deployment = this.provide(DeploymentV1, 'deployment', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   spec: {
-  //     replicas: '1',
-  //     selector: {
-  //       matchLabels: this.metadata.shared.services.homeL2tpVpnProxy.labels,
-  //     },
-  //     template: {
-  //       metadata: {
-  //         labels: this.metadata.shared.services.homeL2tpVpnProxy.labels,
-  //         annotations: {
-  //           'consul.hashicorp.com/connect-inject': 'true',
-  //         },
-  //       },
-  //       spec: {
-  //         initContainer: [
-  //           {
-  //             name: 'chmod-startup-sh',
-  //             image: 'busybox',
-  //             command: [
-  //               'sh',
-  //               '-c',
-  //               'cp /startup.sh /executable && chmod +x /executable/startup.sh',
-  //             ],
-  //             volumeMount: [
-  //               {
-  //                 name: this.configmap.element.metadata.name,
-  //                 mountPath: '/startup.sh',
-  //                 subPath: 'startup.sh',
-  //               },
-  //               {
-  //                 name: 'executable-startup',
-  //                 mountPath: '/executable',
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //         container: [
-  //           {
-  //             name: this.metadata.shared.services.homeL2tpVpnProxy.name,
-  //             image: 'jdrouet/l2tp-ipsec-vpn-client',
-  //             imagePullPolicy: 'Always',
-  //             ports:
-  //               this.metadata.shared.services.homeL2tpVpnProxy.ports.map<DeploymentV1SpecTemplateSpecContainerPort>(
-  //                 eachPort => ({
-  //                   containerPort: parseInt(eachPort.targetPort),
-  //                   protocol: eachPort.protocol,
-  //                 }),
-  //               ),
-  //             securityContext: {
-  //               privileged: true,
-  //             },
-  //             volumeMount: [
-  //               {
-  //                 name: 'executable-startup',
-  //                 mountPath: 'startup.sh',
-  //                 subPath: 'startup.sh',
-  //               },
-  //               {
-  //                 name: 'lib-modules',
-  //                 mountPath: '/lib/modules',
-  //                 readOnly: true,
-  //               },
-  //             ],
-  //             envFrom: [
-  //               {
-  //                 secretRef: {
-  //                   name: this.secret.element.metadata.name,
-  //                 },
-  //               },
-  //             ],
-  //             livenessProbe: {
-  //               exec: {
-  //                 command: [
-  //                   '/bin/sh',
-  //                   '-c',
-  //                   `nc -z localhost ${this.metadata.shared.services.homeL2tpVpnProxy.ports[0].port} && ping -c 2 ${this.config.vpnGatewayIp}`,
-  //                 ],
-  //               },
-  //               initialDelaySeconds: 120,
-  //               timeoutSeconds: 5,
-  //               periodSeconds: 10,
-  //               failureThreshold: 3,
-  //             },
-  //           },
-  //         ],
-  //         volume: [
-  //           {
-  //             name: this.configmap.element.metadata.name,
-  //             configMap: {
-  //               items: [
-  //                 {
-  //                   key: 'startup.sh',
-  //                   path: 'startup.sh',
-  //                 },
-  //               ],
-  //               name: this.configmap.element.metadata.name,
-  //             },
-  //           },
-  //           {
-  //             name: 'executable-startup',
-  //             emptyDir: {},
-  //           },
-  //           {
-  //             name: 'lib-modules',
-  //             hostPath: {
-  //               path: '/lib/modules',
-  //               type: 'Directory',
-  //             },
-  //           },
-  //         ],
-  //       },
-  //     },
-  //   },
-  //   lifecycle: {
-  //     replaceTriggeredBy: [
-  //       `${this.configmap.element.terraformResourceType}.${this.configmap.element.friendlyUniqueId}`,
-  //       `${this.secret.element.terraformResourceType}.${this.secret.element.friendlyUniqueId}`,
-  //     ],
-  //   },
-  //   dependsOn: [this.service.element],
-  // }));
+  statefulSet = this.provide(StatefulSetV1, 'statefulSet', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+    },
+    spec: {
+      serviceName: this.metadata.shared.services.vpn.name,
+      replicas: this.config.vpnAccounts.length.toString(),
+      updateStrategy: [
+        {
+          type: 'RollingUpdate',
+          rollingUpdate: [
+            {
+              partition: 1,
+            },
+          ],
+        },
+      ],
+      selector: {
+        matchLabels: this.metadata.shared.services.vpn.labels,
+      },
+      template: {
+        metadata: {
+          labels: this.metadata.shared.services.vpn.labels,
+          annotations: {},
+        },
+        spec: {
+          initContainer: [
+            {
+              name: 'chmod-startup-sh',
+              image: 'busybox',
+              command: [
+                'sh',
+                '-c',
+                'cp /startup.sh /executable && chmod +x /executable/startup.sh',
+              ],
+              volumeMount: [
+                {
+                  name: this.configmap.element.metadata.name,
+                  mountPath: '/startup.sh',
+                  subPath: 'startup.sh',
+                },
+                {
+                  name: 'executable-startup',
+                  mountPath: '/executable',
+                },
+              ],
+            },
+          ],
+          container: [
+            {
+              name: this.metadata.shared.services.vpn.name,
+              image: 'jdrouet/l2tp-ipsec-vpn-client',
+              imagePullPolicy: 'Always',
+              ports: Object.values(
+                this.metadata.shared.services.vpn.ports,
+              ).map<StatefulSetV1SpecTemplateSpecContainerPort>(eachPort => ({
+                containerPort: parseInt(eachPort.targetPort),
+                protocol: eachPort.protocol,
+              })),
+              securityContext: {
+                privileged: true,
+              },
+              volumeMount: [
+                {
+                  name: 'executable-startup',
+                  mountPath: 'startup.sh',
+                  subPath: 'startup.sh',
+                },
+                {
+                  name: 'lib-modules',
+                  mountPath: '/lib/modules',
+                  readOnly: true,
+                },
+              ],
+              envFrom: [
+                {
+                  secretRef: {
+                    name: this.secret.element.metadata.name,
+                  },
+                },
+              ],
+              livenessProbe: {
+                exec: {
+                  command: [
+                    '/bin/sh',
+                    '-c',
+                    `curl --socks5 localhost:$PROXY_PORT $VPN_GATEWAY_IP`,
+                  ],
+                },
+                initialDelaySeconds: 120,
+                timeoutSeconds: 5,
+                periodSeconds: 30,
+                failureThreshold: 3,
+              },
+            },
+          ],
+          volume: [
+            {
+              name: this.configmap.element.metadata.name,
+              configMap: {
+                items: [
+                  {
+                    key: 'startup.sh',
+                    path: 'startup.sh',
+                  },
+                ],
+                name: this.configmap.element.metadata.name,
+              },
+            },
+            {
+              name: 'executable-startup',
+              emptyDir: {},
+            },
+            {
+              name: 'lib-modules',
+              hostPath: {
+                path: '/lib/modules',
+                type: 'Directory',
+              },
+            },
+          ],
+        },
+      },
+    },
+    lifecycle: {
+      replaceTriggeredBy: [
+        `${this.configmap.element.terraformResourceType}.${this.configmap.element.friendlyUniqueId}`,
+        `${this.secret.element.terraformResourceType}.${this.secret.element.friendlyUniqueId}`,
+      ],
+    },
+  }));
 
   constructor(
     // Global
@@ -239,14 +258,14 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
-    private readonly k8sOkeAppsConsulStack: K8S_Oke_Apps_Consul_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
+    private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_HomeL2tpVpnProxy_Stack.name,
       'Home L2TP VPN Proxy stack for oke k8s',
     );
-    this.addDependency(this.k8sOkeAppsConsulStack);
+    this.addDependency(this.k8sOkeAppsIstioStack);
   }
 }
