@@ -6,8 +6,6 @@ CDK for Terraform project of ApexCaptain
 
 ### Kubernetes on Oracle Cloud Infrastructure
 
-- NFS Provisioning (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)
-
 ### Kubernetes on Workstation
 
 - Need to replace sftp to nas server

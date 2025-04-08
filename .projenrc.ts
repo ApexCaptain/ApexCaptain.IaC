@@ -307,7 +307,6 @@ void (async () => {
       projectId: process.env.CDKTF_PROJECT_ID,
       terraformProviders: [
         // Official
-
         {
           // https://registry.terraform.io/providers/hashicorp/random/latest
           name: 'random',
@@ -343,6 +342,7 @@ void (async () => {
           name: 'time',
           source: 'hashicorp/time',
         },
+
         // Partners
         {
           // https://registry.terraform.io/providers/integrations/github/latest
@@ -359,6 +359,7 @@ void (async () => {
           name: 'oci',
           source: 'oracle/oci',
         },
+
         // Community
         {
           // https://registry.terraform.io/providers/kreuzwerker/docker/latest
@@ -374,6 +375,7 @@ void (async () => {
   const workstationIpAddress = (
     await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
   ).address;
+
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
@@ -399,6 +401,11 @@ void (async () => {
         k8s: {
           oke: {
             apps: {
+              nfs: {
+                sftp: {
+                  userName: process.env.OKE_NFS_APP_SFTP_USER_NAME!!,
+                },
+              },
               oauth2Proxy: {
                 clientId:
                   process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
@@ -409,14 +416,22 @@ void (async () => {
               },
               homeL2tpVpnProxy: {
                 vpnServerAddr: workstationIpAddress,
-                // vpnUsername:
-                //   process.env
-                //     .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
-                // vpnPassword:
-                //   process.env
-                //     .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_PASSWORD!!,
-                vpnIpsToRoute:
-                  process.env.WORKSTATION_VPN_L2TP_IPS_TO_ROUTE_CSV!!,
+                vpnIpsToRoute: (
+                  await Promise.all(
+                    [
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_WORKSTATION!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_SI_CERIK_HOMEPAGE!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_SI_KPBMA_RMS!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_PROD!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_DEV!!,
+                    ].map(ip => dns.lookup(ip)),
+                  )
+                ).map(ip => ip.address),
                 vpnGatewayIp: process.env.WORKSTATION_VPN_L2TP_GATEWAY_IP!!,
                 vpnAccounts: [
                   {

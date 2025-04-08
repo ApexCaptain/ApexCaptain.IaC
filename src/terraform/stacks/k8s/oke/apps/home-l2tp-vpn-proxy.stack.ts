@@ -90,7 +90,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
           'home-l2tp-vpn-proxy'
         ].port.toString(),
       VPN_SERVER_ADDR: this.config.vpnServerAddr,
-      VPN_IPS_TO_ROUTE: this.config.vpnIpsToRoute,
+      VPN_IPS_TO_ROUTE: this.config.vpnIpsToRoute.join(','),
       VPN_GATEWAY_IP: this.config.vpnGatewayIp,
       ...Object.fromEntries(
         this.config.vpnAccounts
@@ -104,16 +104,23 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
     type: 'Opaque',
   }));
 
-  service = this.provide(ServiceV1, 'service', () => ({
-    metadata: {
-      name: this.metadata.shared.services.vpn.name,
-      namespace: this.namespace.element.metadata.name,
+  service = this.provide(ServiceV1, 'service', () => [
+    {
+      metadata: {
+        name: this.metadata.shared.services.vpn.name,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        selector: this.metadata.shared.services.vpn.labels,
+        port: Object.values(this.metadata.shared.services.vpn.ports),
+      },
     },
-    spec: {
-      selector: this.metadata.shared.services.vpn.labels,
-      port: Object.values(this.metadata.shared.services.vpn.ports),
+    {
+      proxyHost: `${this.namespace.element.metadata.name}.${this.metadata.shared.services.vpn.name}`,
+      proxyPort:
+        this.metadata.shared.services.vpn.ports['home-l2tp-vpn-proxy'].port,
     },
-  }));
+  ]);
 
   statefulSet = this.provide(StatefulSetV1, 'statefulSet', id => ({
     metadata: {
@@ -139,7 +146,6 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
       template: {
         metadata: {
           labels: this.metadata.shared.services.vpn.labels,
-          annotations: {},
         },
         spec: {
           initContainer: [

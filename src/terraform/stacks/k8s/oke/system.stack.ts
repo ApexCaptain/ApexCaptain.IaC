@@ -1,4 +1,8 @@
-import { AbstractStack, createK8sApplicationMetadata } from '@/common';
+import {
+  AbstractStack,
+  createK8sApplicationMetadata,
+  OciNetworkProtocol,
+} from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
@@ -77,6 +81,49 @@ export class K8S_Oke_System_Stack extends AbstractStack {
       {
         nfs: createK8sApplicationMetadata({
           namespace: 'nfs',
+          helm: {
+            'nfs-subdir-external-provisioner': {
+              name: 'nfs-subdir-external-provisioner',
+              chart: 'nfs-subdir-external-provisioner',
+              repository:
+                'https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner',
+            },
+          },
+          services: {
+            nfs: {
+              name: 'nfs',
+              labels: {
+                app: 'nfs',
+              },
+              ports: {
+                nfs: {
+                  name: 'nfs',
+                  port: 2049,
+                  targetPort: '2049',
+                  protocol: 'TCP',
+                },
+                'file-browser': {
+                  name: 'file-browser',
+                  port: 80,
+                  targetPort: '80',
+                  protocol: 'TCP',
+                },
+                sftp: {
+                  portBasedIngressPort:
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings
+                      .nfsSftpNodePort.inbound,
+                  name: 'sftp',
+                  port: 22,
+                  targetPort: '22',
+                  protocol:
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings
+                      .nfsSftpNodePort.protocol === OciNetworkProtocol.TCP
+                      ? 'TCP'
+                      : 'UDP',
+                },
+              },
+            },
+          },
         }),
 
         istio: createK8sApplicationMetadata({
@@ -140,23 +187,43 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           },
         }),
 
-        fileBrowser: createK8sApplicationMetadata({
-          namespace: 'file-browser',
+        cloudbeaver: createK8sApplicationMetadata({
+          namespace: 'cloudbeaver',
           services: {
-            fileBrowser: {
-              name: 'file-browser',
+            cloudbeaver: {
+              name: 'cloudbeaver',
               labels: {
-                app: 'file-browser',
+                app: 'cloudbeaver',
               },
               ports: {
-                'file-browser': {
-                  port: 80,
-                  targetPort: '80',
+                cloudbeaver: {
+                  name: 'cloudbeaver',
+                  port: 8978,
+                  targetPort: '8978',
                   protocol: 'TCP',
                 },
               },
             },
           },
+        }),
+        redisUi: createK8sApplicationMetadata({
+          namespace: 'redis-ui',
+          services : {
+            redisUi : {
+              name : 'redis-ui',
+              labels : {
+                app : 'redis-ui',
+              },
+              ports : {
+                redisUi : {
+                  name : 'redis-ui',
+                  port : 7843,
+                  targetPort : '7843',
+                  protocol : 'TCP',
+                }
+              }
+            }
+          }
         }),
       },
     ];

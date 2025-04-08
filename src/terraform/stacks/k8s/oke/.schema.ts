@@ -2,6 +2,11 @@ import Joi from '@hapi/joi';
 
 export const OkeSchema = Joi.object({
   apps: Joi.object({
+    nfs: Joi.object({
+      sftp: Joi.object({
+        userName: Joi.string().required(),
+      }).required(),
+    }).required(),
     oauth2Proxy: Joi.object({
       clientId: Joi.string().required(),
       clientSecret: Joi.string().required(),
@@ -9,7 +14,7 @@ export const OkeSchema = Joi.object({
     }).required(),
     homeL2tpVpnProxy: Joi.object({
       vpnServerAddr: Joi.string().required(),
-      vpnIpsToRoute: Joi.string().required(),
+      vpnIpsToRoute: Joi.array().items(Joi.string()).required(),
       vpnGatewayIp: Joi.string().required(),
       vpnAccounts: Joi.array()
         .items(

@@ -62,6 +62,13 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     },
   }));
 
+  /**
+   * @note
+   * - Flexible Load Balancer 사용 시 UDP 포트 배포 불가능 함...
+   * - 그래서 일단은 주석 처리 해둠.
+   * - NLB로 변경하면 가능은 한데, NLB는 아무래도 존재하는 것 만으로도 비용 차지가 발생하는 것 같음. 추후 확인 필요.
+   * - 아직까지 UDP 포트 개방이 필요한 상황이 아니므로 일단은 이대로 넘어가도 될듯?
+   */
   release = this.provide(Release, 'release', () => {
     const { helmSet, helmSetList } = convertJsonToHelmSet({
       controller: {
@@ -89,7 +96,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     });
 
     const tcpReleaseSet: ReleaseSet[] = [];
-    const udpReleaseSet: ReleaseSet[] = [];
+    // const udpReleaseSet: ReleaseSet[] = [];
 
     Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
       eachMetadata => {
@@ -104,10 +111,10 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             .forEach(eachPort => {
               const target = `${namespace}/${eachService.name}:${eachPort.port}`;
               if (eachPort.protocol?.toUpperCase() === 'UDP') {
-                udpReleaseSet.push({
-                  name: `udp.${eachPort.portBasedIngressPort!!.toString()}`,
-                  value: target,
-                });
+                // udpReleaseSet.push({
+                //   name: `udp.${eachPort.portBasedIngressPort!!.toString()}`,
+                //   value: target,
+                // });
               } else {
                 tcpReleaseSet.push({
                   name: `tcp.${eachPort.portBasedIngressPort!!.toString()}`,
@@ -119,7 +126,10 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       },
     );
 
-    helmSet.push(...tcpReleaseSet, ...udpReleaseSet);
+    helmSet.push(
+      ...tcpReleaseSet,
+      //...udpReleaseSet
+    );
 
     return {
       name: this.metadata.shared.helm.ingressController.name,

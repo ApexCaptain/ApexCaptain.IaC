@@ -80,21 +80,16 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       inbound: 443,
     });
 
-    const testPort = createLoadBalancerPortInfo({
-      inbound: 8080,
-      description: 'Test port',
-    });
-
-    const test2Port = createLoadBalancerPortInfo({
-      inbound: 8081,
-      description: 'Test port 2',
+    const nfsSftpNodePort = createLoadBalancerPortInfo({
+      inbound: 8022,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'SFTP port for NFS service',
     });
 
     const combination = {
       httpNodePort,
       httpsNodePort,
-      testPort,
-      test2Port,
+      nfsSftpNodePort,
     };
 
     const inboundPorts = Object.values(combination).map(
