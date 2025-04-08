@@ -12,7 +12,6 @@ import {
 } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
-import { TargetK8sEndpoint } from './scripts/enum';
 import { GlobalConfigType } from './src/global/config/global.config.schema';
 import { VsCode } from 'projen/lib/vscode';
 
@@ -234,6 +233,7 @@ const project = new typescript.TypeScriptAppProject({
     'lodash',
     'deepmerge',
     'cron-time-generator',
+    'yaml',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -244,6 +244,9 @@ const project = new typescript.TypeScriptAppProject({
     '@types/lodash',
     'commander',
     'flatley',
+    'fuzzy',
+    '@inquirer/prompts',
+    'inquirer-autocomplete-standalone',
   ],
 });
 
@@ -263,16 +266,8 @@ void (async () => {
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
 
-    // Kubernetes
-    'k8s@ws':
-      'kubectl --kubeconfig ${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}',
-    'k8s@oke': `ts-node ./scripts/kubectl.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
-
-    // Helm
-    'helm@oke': `ts-node ./scripts/helm.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
-
-    // SSH
-    'ssh@oke': `ts-node ./scripts/ssh.script.ts -t ${TargetK8sEndpoint.OKE_APEX_CAPTAIN}`,
+    // Terminal
+    terminal: 'ts-node ./scripts/terminal-v2.script.ts',
   });
 
   const apexCaptainOciPrivateKeyFile = new TextFile(
@@ -347,6 +342,7 @@ void (async () => {
           name: 'time',
           source: 'hashicorp/time',
         },
+
         // Partners
         {
           // https://registry.terraform.io/providers/integrations/github/latest
@@ -363,6 +359,7 @@ void (async () => {
           name: 'oci',
           source: 'oracle/oci',
         },
+
         // Community
         {
           // https://registry.terraform.io/providers/kreuzwerker/docker/latest
@@ -375,6 +372,10 @@ void (async () => {
   });
 
   // ENV
+  const workstationIpAddress = (
+    await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
+  ).address;
+
   const environment: GlobalConfigType = {
     terraform: {
       stacks: {
@@ -400,6 +401,11 @@ void (async () => {
         k8s: {
           oke: {
             apps: {
+              nfs: {
+                sftp: {
+                  userName: process.env.OKE_NFS_APP_SFTP_USER_NAME!!,
+                },
+              },
               oauth2Proxy: {
                 clientId:
                   process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
@@ -409,27 +415,49 @@ void (async () => {
                 allowedGithubUsers: ['ApexCaptain'],
               },
               homeL2tpVpnProxy: {
-                vpnServerAddr: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
-                vpnUsername:
-                  process.env
-                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_ACCOUNT!!,
-                vpnPassword:
-                  process.env
-                    .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_PASSWORD!!,
-                vpnIpsToRoute:
-                  process.env.WORKSTATION_VPN_L2TP_IPS_TO_ROUTE_CSV!!,
+                vpnServerAddr: workstationIpAddress,
+                vpnIpsToRoute: (
+                  await Promise.all(
+                    [
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_WORKSTATION!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_SI_CERIK_HOMEPAGE!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_SI_KPBMA_RMS!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_PROD!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_DEV!!,
+                    ].map(ip => dns.lookup(ip)),
+                  )
+                ).map(ip => ip.address),
                 vpnGatewayIp: process.env.WORKSTATION_VPN_L2TP_GATEWAY_IP!!,
+                vpnAccounts: [
+                  {
+                    username:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_1_ACCOUNT!!,
+                    password:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_1_PASSWORD!!,
+                  },
+                  {
+                    username:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_2_ACCOUNT!!,
+                    password:
+                      process.env
+                        .WORKSTATION_VPN_L2TP_OKE_PORXY_SERVICE_USER_2_PASSWORD!!,
+                  },
+                ],
               },
             },
             bastion: {
-              clientCidrBlockAllowList: [
-                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
-              ],
+              clientCidrBlockAllowList: [`${workstationIpAddress}/32`],
             },
             network: {
-              l2tpServerCidrBlocks: [
-                `${(await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')).address}/32`,
-              ],
+              l2tpServerCidrBlocks: [`${workstationIpAddress}/32`],
             },
           },
           workstation: {
@@ -471,6 +499,7 @@ void (async () => {
           cloudflare: {
             ApexCaptain: {
               apiToken: process.env.APEX_CAPTAIN_CLOUDFLARE_API_TOKEN!!,
+              email: process.env.APEX_CAPTAIN_CLOUDFLARE_EMAIL!!,
             },
           },
 
@@ -537,23 +566,28 @@ void (async () => {
           'cdktf.json': 'terraform',
           'cdktf.out.json': 'terraform',
           'index.ts': 'contributing',
-          //
           '*.template.ts': 'templ',
           '*.enum.ts': 'scheme',
           '*.function.ts': 'fortran',
           '*.type.ts': 'toml',
           '*.script.ts': 'coffee',
           '*.source.ts': 'cake',
+          '*.terminal.ts': 'console',
+          '*.crd.ts': 'kubernetes',
         }),
       },
       folders: {
         associations: new VsCodeObject({
           abstract: 'class',
           '.kube': 'kubernetes',
+          kubectl: 'kubernetes',
           oke: 'kubernetes',
+          crd: 'kubernetes',
           workstation: 'home',
           '.projen': 'project',
           'cdktf.out': 'terraform',
+          terminal: 'command',
+          ssh: 'command',
         }),
       },
     },

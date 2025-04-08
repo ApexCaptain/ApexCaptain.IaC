@@ -5,6 +5,7 @@ import {
   AbstractStack,
   OciNetworkProtocol,
   OciNetworkSourceType,
+  createLoadBalancerPortInfo,
 } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -43,22 +44,16 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
   ingressControllerFlexibleLoadbalancerReservedPublicIp = this.provide(
     CorePublicIp,
     'ingressControllerFlexibleLoadbalancerReservedPublicIp',
-    id => [
-      {
-        compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
-        displayName: id,
-        lifetime: 'RESERVED',
+    id => ({
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+      displayName: id,
+      lifetime: 'RESERVED',
 
-        lifecycle: {
-          ignoreChanges: ['private_ip_id'],
-        },
+      lifecycle: {
+        preventDestroy: true,
+        ignoreChanges: ['private_ip_id'],
       },
-      {
-        healthCheckPort: 10256,
-        httpNodePort: 30080,
-        httpsNodePort: 30443,
-      },
-    ],
+    }),
   );
 
   // @See https://docs.oracle.com/en-us/iaas/application-integration/doc/availability.html
@@ -67,6 +62,7 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
     name: 'All YNY Services In Oracle Services Network',
     destination: 'all-yny-services-in-oracle-services-network',
   };
+
   cidrBlockMeta = {
     okeVcnCidrBlock: '10.0.0.0/16',
     okeK8sEndpointPrivateSubnetCidrBlock: '10.0.0.0/30',
@@ -74,6 +70,37 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
     okeServiceLoadBalancerPublicSubnetCidrBlock: '10.0.2.0/24',
     okeBastionPrivateSubnetCidrBlock: '10.0.3.0/24',
   };
+
+  loadbalancerPortMappings = (() => {
+    const httpNodePort = createLoadBalancerPortInfo({
+      inbound: 80,
+    });
+
+    const httpsNodePort = createLoadBalancerPortInfo({
+      inbound: 443,
+    });
+
+    const nfsSftpNodePort = createLoadBalancerPortInfo({
+      inbound: 8022,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'SFTP port for NFS service',
+    });
+
+    const combination = {
+      httpNodePort,
+      httpsNodePort,
+      nfsSftpNodePort,
+    };
+
+    const inboundPorts = Object.values(combination).map(
+      eachPort => eachPort.inbound,
+    );
+    if (new Set(inboundPorts).size !== inboundPorts.length) {
+      throw new Error('Inbound ports must be unique.');
+    }
+
+    return combination;
+  })();
 
   // VCN
   okeVcn = this.provide(CoreVcn, 'okeVcn', id => ({
@@ -321,44 +348,42 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
           },
           description: 'Allow inbound SSH traffic to managed nodes.',
         },
+
         {
           source:
             this.cidrBlockMeta.okeServiceLoadBalancerPublicSubnetCidrBlock,
           sourceType: OciNetworkSourceType.CIDR_BLOCK,
           protocol: OciNetworkProtocol.TCP,
-          stateless: false,
           tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.healthCheckPort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.healthCheckPort,
+            min: 10256,
+            max: 10256,
           },
+          description:
+            'Allow inbound TCP health check traffic from the load balancer public subnet.',
+        },
+        {
+          source:
+            this.cidrBlockMeta.okeServiceLoadBalancerPublicSubnetCidrBlock,
+          sourceType: OciNetworkSourceType.CIDR_BLOCK,
+          protocol: OciNetworkProtocol.UDP,
+          udpOptions: {
+            min: 30000,
+            max: 32767,
+          },
+          description:
+            'Allow all inbound node port traffic from the load balancer public subnet.',
         },
         {
           source:
             this.cidrBlockMeta.okeServiceLoadBalancerPublicSubnetCidrBlock,
           sourceType: OciNetworkSourceType.CIDR_BLOCK,
           protocol: OciNetworkProtocol.TCP,
-          stateless: false,
           tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpNodePort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpNodePort,
+            min: 30000,
+            max: 32767,
           },
-        },
-        {
-          source:
-            this.cidrBlockMeta.okeServiceLoadBalancerPublicSubnetCidrBlock,
-          sourceType: OciNetworkSourceType.CIDR_BLOCK,
-          protocol: OciNetworkProtocol.TCP,
-          stateless: false,
-          tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpsNodePort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpsNodePort,
-          },
+          description:
+            'Allow all inbound node port traffic from the load balancer public subnet.',
         },
       ],
       egressSecurityRules: [
@@ -402,16 +427,25 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
           protocol: OciNetworkProtocol.TCP,
           description: 'Allow worker nodes to communicate with the internet.',
         },
-        ...this.config.l2tpServerCidrBlocks.map(eachCidrBlock => ({
-          destination: eachCidrBlock,
-          destinationType: OciNetworkSourceType.CIDR_BLOCK,
-          protocol: OciNetworkProtocol.UDP,
-          udpOptions: {
-            min: 1701,
-            max: 1701,
-          },
-          description: `Allow egress traffic for L2TP VPN on UDP port 1701 of ${eachCidrBlock}`,
-        })),
+
+        ...this.config.l2tpServerCidrBlocks
+          .map(eachL2tpVpnServerCidrBlock => {
+            return [
+              1701,
+              // 500,
+              // 4500
+            ].map(eachPort => ({
+              destination: eachL2tpVpnServerCidrBlock,
+              destinationType: OciNetworkSourceType.CIDR_BLOCK,
+              protocol: OciNetworkProtocol.UDP,
+              udpOptions: {
+                min: eachPort,
+                max: eachPort,
+              },
+              description: `Allow egress traffic for L2TP VPN on UDP port ${eachPort} of ${eachL2tpVpnServerCidrBlock}`,
+            }));
+          })
+          .flat(),
       ],
     }),
   );
@@ -455,63 +489,64 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       displayName: id,
       vcnId: this.okeVcn.element.id,
       ingressSecurityRules: [
-        // Generated by ingress-controller
-        {
-          source: '0.0.0.0/0',
-          sourceType: OciNetworkSourceType.CIDR_BLOCK,
-          protocol: OciNetworkProtocol.TCP,
-          stateless: false,
-          tcpOptions: {
-            min: 443,
-            max: 443,
-          },
-        },
-        {
-          source: '0.0.0.0/0',
-          sourceType: OciNetworkSourceType.CIDR_BLOCK,
-          protocol: OciNetworkProtocol.TCP,
-          stateless: false,
-          tcpOptions: {
-            min: 80,
-            max: 80,
-          },
-        },
+        ...Object.values(this.loadbalancerPortMappings)
+          .map(eachLbPortMapping =>
+            eachLbPortMapping.sourceCidrBlocks.map(eachSourceCidrBlock => ({
+              source: eachSourceCidrBlock,
+              sourceType: OciNetworkSourceType.CIDR_BLOCK,
+              protocol: eachLbPortMapping.protocol,
+              stateless: false,
+              description: eachLbPortMapping.description,
+              tcpOptions:
+                eachLbPortMapping.protocol == OciNetworkProtocol.TCP
+                  ? {
+                      min: eachLbPortMapping.inbound,
+                      max: eachLbPortMapping.inbound,
+                    }
+                  : undefined,
+              udpOptions:
+                eachLbPortMapping.protocol == OciNetworkProtocol.UDP
+                  ? {
+                      min: eachLbPortMapping.inbound,
+                      max: eachLbPortMapping.inbound,
+                    }
+                  : undefined,
+            })),
+          )
+          .flat(),
       ],
       egressSecurityRules: [
         {
           destination: this.cidrBlockMeta.okeWorkerNodePrivateSubnetCidrBlock,
           destinationType: OciNetworkSourceType.CIDR_BLOCK,
           protocol: OciNetworkProtocol.TCP,
-          stateless: false,
+          description:
+            'Allow outbound TCP health check traffic to the worker node private subnet.',
           tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.healthCheckPort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.healthCheckPort,
+            min: 10256,
+            max: 10256,
+          },
+        },
+        {
+          destination: this.cidrBlockMeta.okeWorkerNodePrivateSubnetCidrBlock,
+          destinationType: OciNetworkSourceType.CIDR_BLOCK,
+          protocol: OciNetworkProtocol.UDP,
+          description:
+            'Allow all outbound UDP node port traffic to the worker node private subnet.',
+          udpOptions: {
+            min: 30000,
+            max: 32767,
           },
         },
         {
           destination: this.cidrBlockMeta.okeWorkerNodePrivateSubnetCidrBlock,
           destinationType: OciNetworkSourceType.CIDR_BLOCK,
           protocol: OciNetworkProtocol.TCP,
-          stateless: false,
+          description:
+            'Allow all outbound TCP node port traffic to the worker node private subnet.',
           tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpNodePort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpNodePort,
-          },
-        },
-        {
-          destination: this.cidrBlockMeta.okeWorkerNodePrivateSubnetCidrBlock,
-          destinationType: OciNetworkSourceType.CIDR_BLOCK,
-          protocol: OciNetworkProtocol.TCP,
-          stateless: false,
-          tcpOptions: {
-            min: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpsNodePort,
-            max: this.ingressControllerFlexibleLoadbalancerReservedPublicIp
-              .shared.httpsNodePort,
+            min: 30000,
+            max: 32767,
           },
         },
       ],

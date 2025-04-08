@@ -14,6 +14,7 @@ export const TerraformSchema = Joi.object({
       cloudflare: Joi.object({
         ApexCaptain: Joi.object({
           apiToken: Joi.string().required(),
+          email: Joi.string().email().required(),
         }).required(),
       }).required(),
 

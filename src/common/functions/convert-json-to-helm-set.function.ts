@@ -15,7 +15,7 @@ export function convertJsonToHelmSet(json: Object) {
       }) as Object,
     ).forEach(([key, value]) => {
       const mergedKey = `${keyPrefix ? `${keyPrefix}.` : ''}${key}`;
-      if (_.isArray(value)) {
+      if (_.isArray(value) && typeof value[0] != 'object') {
         helmSetList.push({
           name: mergedKey,
           value: value,
@@ -32,7 +32,13 @@ export function convertJsonToHelmSet(json: Object) {
   };
   flattenJson(json);
   return {
-    helmSet,
-    helmSetList,
+    helmSet: helmSet.map(eachHelmSet => ({
+      ...eachHelmSet,
+      name: eachHelmSet.name.replace(/\.(\d+)/g, '[$1]'),
+    })),
+    helmSetList: helmSetList.map(eachHelmSetList => ({
+      ...eachHelmSetList,
+      name: eachHelmSetList.name.replace(/\.(\d+)/g, '[$1]'),
+    })),
   };
 }

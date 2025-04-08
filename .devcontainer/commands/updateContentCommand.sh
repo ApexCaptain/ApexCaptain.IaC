@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-echo Changing owner of directories $dirPathsToChangeOwner to $USER
+echo "🔄 Changing owner of directories $dirPathsToChangeOwner to $USER"
 sudo chown -R $USER:$USER $dirPathsToChangeOwner
 
-echo Updating apt package manager
+echo "🔄 Updating apt package manager"
 sudo apt update -y
 sudo apt upgrade -y
 
-echo Installing OCI CLI
+echo "🔄 Installing OCI CLI"
 bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
 
 echo "🔄 Installing Helm CLI"

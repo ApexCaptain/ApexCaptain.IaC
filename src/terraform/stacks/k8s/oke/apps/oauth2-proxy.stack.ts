@@ -9,7 +9,6 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
@@ -20,6 +19,10 @@ import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import _ from 'lodash';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { K8S_Oke_System_Stack } from '../system.stack';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
@@ -33,6 +36,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       kubernetes: this.provide(
         KubernetesProvider,
         'kubernetesProvider',
@@ -57,16 +61,14 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    name: 'oauth2-proxy',
-    labels: {
-      app: 'oauth2-proxy',
-    },
-  };
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sOkeSystemStack.applicationMetadata.shared.oauth2Proxy,
+  ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
-      name: this.meta.name,
+      name: this.metadata.shared.namespace,
     },
   }));
 
@@ -81,8 +83,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
 
   releaseSecret = this.provide(SecretV1, 'releaseSecret', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
-      labels: this.meta.labels,
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     data: {
@@ -136,9 +137,9 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
 
     return [
       {
-        name: this.meta.name,
-        chart: 'oauth2-proxy',
-        repository: 'https://oauth2-proxy.github.io/manifests',
+        name: this.metadata.shared.helm.oauth2Proxy.name,
+        chart: this.metadata.shared.helm.oauth2Proxy.chart,
+        repository: this.metadata.shared.helm.oauth2Proxy.repository,
         namespace: this.namespace.element.metadata.name,
         createNamespace: false,
         set: helmSet,
@@ -162,6 +163,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(

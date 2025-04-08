@@ -39,6 +39,7 @@ export class TerraformConfigService {
       ApexCaptain: (): CloudflareProviderConfig => {
         return {
           apiToken: this.config.providers.cloudflare.ApexCaptain.apiToken,
+          email: this.config.providers.cloudflare.ApexCaptain.email,
         };
       },
     };

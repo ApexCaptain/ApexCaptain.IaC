@@ -1076,7 +1076,7 @@ export class K8S_Workstation_Apps_Palworld_Stack extends AbstractStack {
 
   // service = this.provide(Service, 'service', id => ({
   //   metadata: {
-  //     name: _.kebabCase(`${this.meta.name}-${id}`),
+  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
   //     namespace: this.namespace.element.metadata.name,
   //   },
   //   spec: {

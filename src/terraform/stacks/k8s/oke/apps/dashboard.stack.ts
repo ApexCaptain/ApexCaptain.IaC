@@ -21,10 +21,11 @@ import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import path from 'path';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
@@ -35,6 +36,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       kubernetes: this.provide(
         KubernetesProvider,
         'kubernetesProvider',
@@ -51,20 +53,21 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    name: 'dashboard',
-  };
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sOkeSystemStack.applicationMetadata.shared.dashboard,
+  ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
-      name: this.meta.name,
+      name: this.metadata.shared.namespace,
     },
   }));
 
   service = this.provide(ServiceV1, 'service', id => [
     {
       metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
         namespace: this.namespace.element.metadata.name,
       },
       spec: {
@@ -84,7 +87,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
 
   serviceAccount = this.provide(ServiceAccountV1, 'serviceAccount', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
   }));
@@ -103,7 +106,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
 
   serviceAccountToken = this.provide(SecretV1, 'serviceAccountToken', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'kubernetes.io/service-account.name':
@@ -123,7 +126,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     'clusterRoleBinding',
     id => ({
       metadata: {
-        name: _.kebabCase(`${this.meta.name}-${id}`),
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       },
       roleRef: {
         apiGroup: 'rbac.authorization.k8s.io',
@@ -165,13 +168,12 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
 
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
-      name: _.kebabCase(`${this.meta.name}-${id}`),
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
         'kubernetes.io/ingress.class': 'nginx',
-
         'nginx.ingress.kubernetes.io/auth-url':
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
@@ -216,7 +218,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
@@ -224,7 +225,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       K8S_Oke_Apps_Dashboard_Stack.name,
       'Dashboard for OKE k8s',
     );
-    this.addDependency(this.k8sOkeAppsIngressControllerStack);
     this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

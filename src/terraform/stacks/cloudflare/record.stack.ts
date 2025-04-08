@@ -24,37 +24,31 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
-  cloudbeaverDnsRecord = this.provide(
-    DnsRecord,
-    'cloudbeaverDnsRecord',
-    () => ({
-      name: 'cloudbeaver',
-      ttl: 1,
-      type: 'CNAME',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-          .domain.iptime,
-      proxied: true,
-      comment: 'Cloudflare DNS record for CloudBeaver service',
-    }),
-  );
+  dbRecord = this.provide(DnsRecord, 'dbRecord', () => ({
+    name: 'db',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Database Client service',
+  }));
 
-  redisInsightDnsRecord = this.provide(
-    DnsRecord,
-    'redisInsightDnsRecord',
-    () => ({
-      name: 'redis-insight',
-      ttl: 1,
-      type: 'CNAME',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-          .domain.iptime,
-      proxied: true,
-      comment: 'Cloudflare DNS record for RedisInsight service',
-    }),
-  );
+  redisRecord = this.provide(DnsRecord, 'redisRecord', () => ({
+    name: 'redis',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Redis Client service',
+  }));
 
   workstationDashboardRecord = this.provide(
     DnsRecord,
@@ -68,11 +62,11 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         this.globalConfigService.config.terraform.stacks.k8s.workstation.common
           .domain.iptime,
       proxied: true,
-      comment: 'Cloudflare DNS record for Workstation Dashboard service',
+      comment: 'Cloudflare record for Workstation Dashboard service',
     }),
   );
 
-  okeDashboardRecord = this.provide(DnsRecord, 'okeDashboardRecore', () => ({
+  okeDashboardRecord = this.provide(DnsRecord, 'okeDashboardRecord', () => ({
     name: 'dashboard-oke',
     ttl: 1,
     type: 'A',
@@ -82,20 +76,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
         .ipAddress,
     proxied: true,
-    comment: 'Cloudflare DNS record for OKE Dashboard service',
-  }));
-
-  okeConsulRecord = this.provide(DnsRecord, 'okeConsulRecord', () => ({
-    name: 'consul-oke',
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare DNS record for OKE Consul service',
+    comment: 'Cloudflare record for OKE Dashboard service',
   }));
 
   oauth2ProxyRecord = this.provide(DnsRecord, 'oauth2ProxyRecord', () => ({
@@ -108,7 +89,20 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
         .ipAddress,
     proxied: true,
-    comment: 'Cloudflare DNS record for OAuth2 Proxy service',
+    comment: 'Cloudflare record for OAuth2 Proxy service',
+  }));
+
+  filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
+    name: 'files',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Files Browser service',
   }));
 
   constructor(
