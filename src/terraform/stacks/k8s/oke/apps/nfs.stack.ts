@@ -452,6 +452,14 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+        'nginx.ingress.kubernetes.io/auth-snippet': `
+          if ($request_uri ~ "/share") {
+            return 200;
+          }
+          if ($request_uri ~ "/api/public/dl") {
+            return 200;
+          }
+        `,
       },
     },
     spec: {
@@ -512,58 +520,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       { storageClassName },
     ];
   });
-
-  ///////// testing /////////
-  // testSubDirPvc = this.provide(
-  //   PersistentVolumeClaimV1,
-  //   'testSubDirPvc',
-  //   () => ({
-  //     metadata: {
-  //       name: 'test-sub-dir-pvc',
-  //       namespace: this.namespace.element.metadata.name,
-  //     },
-  //     spec: {
-  //       storageClassName: this.release.shared.storageClassName,
-  //       accessModes: ['ReadWriteMany'],
-  //       resources: {
-  //         requests: {
-  //           storage: '100Mi',
-  //         },
-  //       },
-  //     },
-  //     dependsOn: [this.release.element],
-  //   }),
-  // );
-
-  // testPod = this.provide(PodV1, 'testPod', () => ({
-  //   metadata: {
-  //     name: 'test-pod',
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   spec: {
-  //     container: [
-  //       {
-  //         name: 'test-container',
-  //         image: 'ubuntu',
-  //         command: ['sleep', 'infinity'],
-  //         volumeMount: [
-  //           {
-  //             name: 'test-volume',
-  //             mountPath: '/testtest',
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //     volume: [
-  //       {
-  //         name: 'test-volume',
-  //         persistentVolumeClaim: {
-  //           claimName: this.testSubDirPvc.element.metadata.name,
-  //         },
-  //       },
-  //     ],
-  //   },
-  // }));
 
   constructor(
     // Global
