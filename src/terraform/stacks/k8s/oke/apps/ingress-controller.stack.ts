@@ -1,8 +1,4 @@
-import {
-  AbstractStack,
-  convertJsonToHelmSet,
-  K8sApplicationMetadata,
-} from '@/common';
+import { AbstractStack, K8sApplicationMetadata } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
@@ -10,9 +6,10 @@ import { LocalBackend } from 'cdktf';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { Release, ReleaseSet } from '@lib/terraform/providers/helm/release';
+import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { K8S_Oke_Network_Stack } from '../network.stack';
+import yaml from 'yaml';
 import _ from 'lodash';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
@@ -70,7 +67,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
    * - 아직까지 UDP 포트 개방이 필요한 상황이 아니므로 일단은 이대로 넘어가도 될듯?
    */
   release = this.provide(Release, 'release', () => {
-    const { helmSet, helmSetList } = convertJsonToHelmSet({
+    const values = {
       controller: {
         service: {
           type: 'LoadBalancer',
@@ -79,12 +76,11 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
               .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
               .ipAddress,
           annotations: {
-            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape':
-              'flexible',
-            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-min': 10,
-            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-shape-flex-max': 10,
-            'service\\.beta\\.kubernetes\\.io/oci-load-balancer-security-list-management-mode':
+            'service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode':
               'None',
+            'service.beta.kubernetes.io/oci-load-balancer-shape': 'flexible',
+            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max': 10,
+            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min': 10,
           },
         },
         // https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
@@ -93,10 +89,9 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
           'annotations-risk-level': 'Critical',
         },
       },
-    });
-
-    const tcpReleaseSet: ReleaseSet[] = [];
-    // const udpReleaseSet: ReleaseSet[] = [];
+      tcp: {},
+      udp: {},
+    };
 
     Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
       eachMetadata => {
@@ -116,19 +111,12 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
                 //   value: target,
                 // });
               } else {
-                tcpReleaseSet.push({
-                  name: `tcp.${eachPort.portBasedIngressPort!!.toString()}`,
-                  value: target,
-                });
+                values.tcp[`${eachPort.portBasedIngressPort!!.toString()}`] =
+                  target;
               }
             });
         });
       },
-    );
-
-    helmSet.push(
-      ...tcpReleaseSet,
-      //...udpReleaseSet
     );
 
     return {
@@ -137,8 +125,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       repository: this.metadata.shared.helm.ingressController.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-      setSensitive: helmSet,
-      setList: helmSetList,
+      values: [yaml.stringify(values)],
     };
   });
 

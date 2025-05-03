@@ -18,7 +18,7 @@ cat > $MERGED_ENV_FILE_PATH <<EOL
 # Original DevContainer Arguments
 localWorkspaceFolder = $localWorkspaceFolder
 containerWorkspaceFolder = $containerWorkspaceFolder
-localWorkspaceFolderBasename =  $localWorkspaceFolderBasename
+localWorkspaceFolderBasename = $localWorkspaceFolderBasename
 containerWorkspaceFolderBasename = $containerWorkspaceFolderBasename 
 
 # Named Volume Arguments

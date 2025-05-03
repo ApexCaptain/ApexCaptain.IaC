@@ -164,7 +164,6 @@ const project = new typescript.TypeScriptAppProject({
   jest: false,
   defaultReleaseBranch: constants.branches.main,
   release: false,
-  // @ToDo 나중에 재설정
   depsUpgrade: true,
   depsUpgradeOptions: {
     workflowOptions: {
@@ -215,7 +214,6 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
   ],
-  // @ToDo 이 부분 나중에 수정
   deps: [
     'cdktf',
     'cdktf-cli',
@@ -234,6 +232,7 @@ const project = new typescript.TypeScriptAppProject({
     'deepmerge',
     'cron-time-generator',
     'yaml',
+    'dedent',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -265,6 +264,7 @@ void (async () => {
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
+    'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
 
     // Terminal
     terminal: 'ts-node ./scripts/terminal-v2.script.ts',
@@ -342,6 +342,16 @@ void (async () => {
           name: 'time',
           source: 'hashicorp/time',
         },
+        {
+          // https://registry.terraform.io/providers/hashicorp/external/latest
+          name: 'external',
+          source: 'hashicorp/external',
+        },
+        {
+          // https://registry.terraform.io/providers/hashicorp/vault/latest
+          name: 'vault',
+          source: 'hashicorp/vault',
+        },
 
         // Partners
         {
@@ -350,9 +360,13 @@ void (async () => {
           source: 'integrations/github',
         },
         {
+          // @ToDo 임시로 cloudflare 5.1.0 버전 사용
+          // https://github.com/cloudflare/terraform-provider-cloudflare/releases
+          // 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
+          version: '5.1.0',
         },
         {
           // https://registry.terraform.io/providers/oracle/oci/latest

@@ -629,7 +629,7 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Network_Stack.name,
-      'Kubernetes OKE network stack',
+      'K8S OKE network stack',
     );
   }
 }

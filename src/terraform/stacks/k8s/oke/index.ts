@@ -5,3 +5,4 @@ export * from './endpoint.stack';
 export * from './cluster.stack';
 export * from './system.stack';
 export * from './apps';
+export * from './policy.stack';

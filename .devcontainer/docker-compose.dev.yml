@@ -25,11 +25,5 @@ services:
       ## Node Modules
       - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
 
-    labels:
-      - com.nayuntech.devcontainer.accessible=true
-      - com.nayuntech.devcontainer.project=ApexCaptain/IaC
-      - com.nayuntech.devcontainer.workingDirectory=${containerWorkspaceFolder}
-      - com.nayuntech.devcontainer.user=vscode
-      - com.nayuntech.devcontainer.command=/bin/bash
 volumes:
   ApexCaptain.IaC.Workspace.node_modules:

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { AbstractStack, convertJsonToHelmSet } from '@/common';
+import { AbstractStack } from '@/common';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Oke_System_Stack } from '../system.stack';
@@ -33,6 +33,8 @@ import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
+import yaml from 'yaml';
+import dedent from 'dedent';
 
 // https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
 @Injectable()
@@ -132,6 +134,35 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     }),
   );
 
+  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
+    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
+
+    const privateSshKeyFileInSecrets = this.provide(
+      SensitiveFile,
+      `${idPrefix}-privateSshKeyFileInSecrets`,
+      id => ({
+        filename: path.join(
+          process.cwd(),
+          this.globalConfigService.config.terraform.stacks.common
+            .generatedKeyFilesDirPaths.relativeSecretsDirPath,
+          `${K8S_Oke_Apps_Nfs_Stack.name}-${id}.key`,
+        ),
+        content: key.element.privateKeyOpenssh,
+      }),
+    );
+
+    return [
+      {},
+      {
+        key,
+        privateSshKeyFileInSecrets,
+      },
+    ];
+  });
+
   nfsPersistentVolume = this.provide(
     PersistentVolumeV1,
     'nfsPersistentVolume',
@@ -185,35 +216,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       ],
     }),
   );
-
-  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
-    const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
-      algorithm: 'RSA',
-      rsaBits: 4096,
-    }));
-
-    const privateSshKeyFileInSecrets = this.provide(
-      SensitiveFile,
-      `${idPrefix}-privateSshKeyFileInSecrets`,
-      id => ({
-        filename: path.join(
-          process.cwd(),
-          this.globalConfigService.config.terraform.stacks.common
-            .generatedKeyFilesDirPaths.relativeSecretsDirPath,
-          `${K8S_Oke_Apps_Nfs_Stack.name}-${id}.key`,
-        ),
-        content: key.element.privateKeyOpenssh,
-      }),
-    );
-
-    return [
-      {},
-      {
-        key,
-        privateSshKeyFileInSecrets,
-      },
-    ];
-  });
 
   private readonly metadata = this.provide(Resource, 'metadata', () => [
     {},
@@ -390,8 +392,10 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
                   name: this.metadata.shared.services.nfs.ports.sftp.name,
                   image: 'jmcombs/sftp',
                   imagePullPolicy: 'Always',
-                  args: [
-                    `${this.config.sftp.userName}::1001:100:${sftpDataDirName}`,
+                  command: [
+                    'sh',
+                    '-c',
+                    `chmod o+w ${sftpDataDirContainerPath} && /entrypoint ${this.config.sftp.userName}::::${sftpDataDirName}`,
                   ],
                   port: [
                     {
@@ -452,6 +456,14 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+        'nginx.ingress.kubernetes.io/auth-snippet': dedent`
+          if ($request_uri ~ "/share") {
+            return 200;
+          }
+          if ($request_uri ~ "/api/public/dl") {
+            return 200;
+          }
+        `,
       },
     },
     spec: {
@@ -484,17 +496,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
 
   release = this.provide(Release, 'release', () => {
     const storageClassName = 'nfs-client';
-    const { helmSet, helmSetList } = convertJsonToHelmSet({
-      nfs: {
-        path: `/${this.deployment.shared.nfsSharedServiceDirName}`,
-        server: this.service.element.spec.clusterIp,
-      },
-      storageClass: {
-        storageClassName,
-        accessModes: 'ReadWriteMany',
-        pathPattern: '.pvc/$${.PVC.namespace}/$${.PVC.name}',
-      },
-    });
     return [
       {
         name: this.metadata.shared.helm['nfs-subdir-external-provisioner'].name,
@@ -505,65 +506,24 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
             .repository,
         namespace: this.namespace.element.metadata.name,
         createNamespace: false,
-        set: helmSet,
-        setList: helmSetList,
         dependsOn: [this.deployment.element],
+        values: [
+          yaml.stringify({
+            nfs: {
+              path: `/${this.deployment.shared.nfsSharedServiceDirName}`,
+              server: this.service.element.spec.clusterIp,
+            },
+            storageClass: {
+              storageClassName,
+              accessModes: 'ReadWriteMany',
+              pathPattern: '.pvc/$${.PVC.namespace}/$${.PVC.name}',
+            },
+          }),
+        ],
       },
       { storageClassName },
     ];
   });
-
-  ///////// testing /////////
-  // testSubDirPvc = this.provide(
-  //   PersistentVolumeClaimV1,
-  //   'testSubDirPvc',
-  //   () => ({
-  //     metadata: {
-  //       name: 'test-sub-dir-pvc',
-  //       namespace: this.namespace.element.metadata.name,
-  //     },
-  //     spec: {
-  //       storageClassName: this.release.shared.storageClassName,
-  //       accessModes: ['ReadWriteMany'],
-  //       resources: {
-  //         requests: {
-  //           storage: '100Mi',
-  //         },
-  //       },
-  //     },
-  //     dependsOn: [this.release.element],
-  //   }),
-  // );
-
-  // testPod = this.provide(PodV1, 'testPod', () => ({
-  //   metadata: {
-  //     name: 'test-pod',
-  //     namespace: this.namespace.element.metadata.name,
-  //   },
-  //   spec: {
-  //     container: [
-  //       {
-  //         name: 'test-container',
-  //         image: 'ubuntu',
-  //         command: ['sleep', 'infinity'],
-  //         volumeMount: [
-  //           {
-  //             name: 'test-volume',
-  //             mountPath: '/testtest',
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //     volume: [
-  //       {
-  //         name: 'test-volume',
-  //         persistentVolumeClaim: {
-  //           claimName: this.testSubDirPvc.element.metadata.name,
-  //         },
-  //       },
-  //     ],
-  //   },
-  // }));
 
   constructor(
     // Global

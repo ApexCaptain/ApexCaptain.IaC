@@ -164,6 +164,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           },
         }),
 
+        vault: createK8sApplicationMetadata({
+          namespace: 'vault',
+          helm: {
+            vault: {
+              name: 'vault',
+              chart: 'vault',
+              repository: 'https://helm.releases.hashicorp.com',
+            },
+          },
+        }),
+
         dashboard: createK8sApplicationMetadata({
           namespace: 'dashboard',
         }),
@@ -208,22 +219,22 @@ export class K8S_Oke_System_Stack extends AbstractStack {
         }),
         redisUi: createK8sApplicationMetadata({
           namespace: 'redis-ui',
-          services : {
-            redisUi : {
-              name : 'redis-ui',
-              labels : {
-                app : 'redis-ui',
+          services: {
+            redisUi: {
+              name: 'redis-ui',
+              labels: {
+                app: 'redis-ui',
               },
-              ports : {
-                redisUi : {
-                  name : 'redis-ui',
-                  port : 7843,
-                  targetPort : '7843',
-                  protocol : 'TCP',
-                }
-              }
-            }
-          }
+              ports: {
+                redisUi: {
+                  name: 'redis-ui',
+                  port: 7843,
+                  targetPort: '7843',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
         }),
       },
     ];
@@ -242,7 +253,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_System_Stack.name,
-      'OKE System Stack',
+      'K8S OKE System Stack',
     );
   }
 }

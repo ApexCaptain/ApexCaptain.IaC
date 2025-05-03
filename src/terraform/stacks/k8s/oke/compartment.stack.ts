@@ -39,6 +39,10 @@ export class K8S_Oke_Compartment_Stack extends AbstractStack {
     // Stacks
     private readonly projectStack: Project_Stack,
   ) {
-    super(terraformAppService.cdktfApp, K8S_Oke_Compartment_Stack.name);
+    super(
+      terraformAppService.cdktfApp,
+      K8S_Oke_Compartment_Stack.name,
+      'K8S OKE Compartment Stack',
+    );
   }
 }
