@@ -83,7 +83,6 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min': 10,
           },
         },
-        // https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
         config: {
           'allow-snippet-annotations': true,
           'annotations-risk-level': 'Critical',

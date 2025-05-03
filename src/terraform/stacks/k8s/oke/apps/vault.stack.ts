@@ -4,7 +4,7 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { AbstractStack } from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { LocalBackend } from 'cdktf';
@@ -43,9 +43,8 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       ),
       vault: this.provide(VaultProvider, 'vaultProvider', () => ({
         address: `https://${this.release.shared.host}`,
-        token: this.vaultRootToken.shared.rootToken,
+        token: this.cdktfToken.shared.cdktfToken,
       })),
-
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       external: this.provide(ExternalProvider, 'externalProvider', () => ({})),
       kubernetes: this.provide(
@@ -110,7 +109,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     const initialVaultPodName = 'vault-0';
     const containerName = 'vault';
     const internalDataPath = '/vault/data';
-    const internalInitResultJsonPath = `${internalDataPath}/init-result.json`;
     const host = `${this.cloudflareRecordStack.vaultRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
 
     return [
@@ -177,22 +175,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 }
               `,
               },
-
-              postStart: [
-                '/bin/sh',
-                '-c',
-                dedent`
-                  if [ "$HOSTNAME" != "${initialVaultPodName}" ]; then
-                    exit 0
-                  fi
-
-                  sleep 10;
-
-                  if ! vault operator init -status; then
-                    vault operator init -format=json > ${internalInitResultJsonPath}
-                  fi
-                `,
-              ],
             },
           }),
         ],
@@ -201,56 +183,77 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
         host,
         initialVaultPodName,
         containerName,
-        internalInitResultJsonPath,
       },
     ];
   });
 
-  vaultInitResult = this.provide(DataExternal, 'vaultInitResult', () => ({
-    dependsOn: [this.release.element],
-    program: [
-      'bash',
-      '-c',
-      dedent`
-        export HTTPS_PROXY=${this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5}
-        export KUBECONFIG=${this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath}
-        TARGET_NAMESPACE=${this.namespace.element.metadata.name}
-        TARGET_POD_NAME=${this.release.shared.initialVaultPodName}
-        TARGET_CONTAINER_NAME=${this.release.shared.containerName}
-        TARGET_INIT_RESULT_JSON_PATH=${this.release.shared.internalInitResultJsonPath}
-
-        while true; do
-          STATUS=$(kubectl get pod $TARGET_POD_NAME -n $TARGET_NAMESPACE -o jsonpath='{.status.phase}')
-          if [ "$STATUS" = "Running" ]; then
-            break
+  generateCdktfToken = this.provide(DataExternal, 'generateCdktfToken', () => {
+    const tokenKey = 'cdktfToken';
+    return [
+      {
+        dependsOn: [this.release.element],
+        program: [
+          'bash',
+          '-c',
+          dedent`
+          export HTTPS_PROXY=${this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5}
+          export KUBECONFIG=${this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath}
+          TARGET_NAMESPACE=${this.namespace.element.metadata.name}
+          TARGET_POD_NAME=${this.release.shared.initialVaultPodName}
+          TARGET_CONTAINER_NAME=${this.release.shared.containerName}
+          TARGET_CDKTF_TOKEN_PATH=/vault/data/cdktf-token.json
+  
+          while true; do
+              STATUS=$(kubectl get pod $TARGET_POD_NAME -n $TARGET_NAMESPACE -o jsonpath='{.status.phase}')
+              if [ "$STATUS" = "Running" ]; then
+                  break
+              fi
+              sleep 5
+          done
+  
+          execCommand="kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE"
+  
+          isVaultInitialized=$($execCommand -i -- sh << EOF
+              if vault operator init -status > /dev/null 2>&1; then
+                  echo "true"
+              else
+                  echo "false"
+              fi
+          EOF
+          )
+  
+          if [ "$isVaultInitialized" == "true" ]; then
+              previousToken=$($execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token')
+          else
+              previousToken=$($execCommand -- vault operator init -format=json | jq -r '.root_token')
           fi
-          sleep 5
-        done
+  
+          $execCommand -i -- sh << EOF
+              export VAULT_TOKEN=$previousToken
+              vault token create -format=json -orphan -policy=root > $TARGET_CDKTF_TOKEN_PATH
+              vault token revoke $previousToken > /dev/null 2>&1
+          EOF
+  
+          cdktfToken=$( $execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token')
+  
+          echo '{"${tokenKey}" : "'$cdktfToken'"}'
+        `,
+        ],
+      },
+      { tokenKey },
+    ];
+  });
 
-        while true; do
-          FILE_EXISTS=$(kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE -- sh -c "[ -f $TARGET_INIT_RESULT_JSON_PATH ] && echo 'exists'")
-          if [ "$FILE_EXISTS" == "exists" ]; then
-            break
-          fi
-          sleep 5
-        done
-
-        INIT_RESULT_FILE_CONTENT=$(kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE -- sh -c "cat $TARGET_INIT_RESULT_JSON_PATH")
-
-        echo $INIT_RESULT_FILE_CONTENT | jq -r '{rootToken: .root_token}'
-      `,
-    ],
-  }));
-
-  vaultRootToken = this.provide(Resource, 'vaultRootToken', () => [
+  cdktfToken = this.provide(Resource, 'cdktfToken', () => [
     {},
     {
-      rootToken: this.vaultInitResult.element.result.lookup('rootToken'),
+      cdktfToken: this.generateCdktfToken.element.result.lookup(
+        this.generateCdktfToken.shared.tokenKey,
+      ),
     },
   ]);
 
   // Vault
-
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
