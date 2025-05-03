@@ -19,6 +19,7 @@
     "tf@build": "cdktf synth",
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
     "tf@plan": "cdktf diff",
+    "tf@clean": "rm -rf cdktf.out",
     "terminal": "ts-node ./scripts/terminal-v2.script.ts"
   },
   "author": {
@@ -63,6 +64,7 @@
     "class-validator": "^0.14.1",
     "constructs": "^10.4.2",
     "cron-time-generator": "^2.0.3",
+    "dedent": "^1.5.3",
     "deepmerge": "^4.3.1",
     "flat": "5.0.2",
     "joi-extract-type": "^15.0.8",

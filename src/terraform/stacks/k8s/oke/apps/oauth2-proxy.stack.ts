@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AbstractStack,
-  convertJsonToHelmSet,
-  createExpirationInterval,
-} from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
+import yaml from 'yaml';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
@@ -23,6 +20,7 @@ import { Resource } from '@lib/terraform/providers/null/resource';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
+import dedent from 'dedent';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
@@ -97,43 +95,6 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
   release = this.provide(Release, 'release', () => {
     const rootDomain = this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
     const host = `${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${rootDomain}`;
-    const { helmSet, helmSetList } = convertJsonToHelmSet({
-      config: {
-        existingSecret: this.releaseSecret.element.metadata.name,
-        configFile: `
-                  redirect_url="/oauth2/callback"
-                  login_url="https://github.com/login/oauth/authorize"
-                  redeem_url="https://github.com/login/oauth/access_token"
-                  whitelist_domains="*.${rootDomain}"
-                  cookie_domains=".${rootDomain}"
-                  scope="read:org user:email"
-                  provider="github"
-                  skip_provider_button="true"
-                  session_store_type="cookie"
-                  cookie_samesite="lax"
-                  cookie_secure="true"
-                  cookie_expire="12h"
-                  reverse_proxy="true"
-                  pass_access_token="true"
-                  pass_authorization_header="true"
-                  cookie_csrf_per_request="true"
-                  cookie_csrf_expire="5m"
-                  cookie_refresh="5m"
-                  set_xauthrequest="true"
-                  set_authorization_header="false"
-                  skip_auth_preflight="true"
-                  github_users="${this.config.allowedGithubUsers.join(',')}"
-                  email_domains="*"
-              `,
-      },
-
-      ingress: {
-        enabled: true,
-        pathType: 'ImplementationSpecific',
-        className: 'nginx',
-        hosts: [host],
-      },
-    });
 
     return [
       {
@@ -142,8 +103,45 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
         repository: this.metadata.shared.helm.oauth2Proxy.repository,
         namespace: this.namespace.element.metadata.name,
         createNamespace: false,
-        set: helmSet,
-        setList: helmSetList,
+        values: [
+          yaml.stringify({
+            config: {
+              existingSecret: this.releaseSecret.element.metadata.name,
+              configFile: dedent`
+                redirect_url="/oauth2/callback"
+                login_url="https://github.com/login/oauth/authorize"
+                redeem_url="https://github.com/login/oauth/access_token"
+                whitelist_domains="*.${rootDomain}"
+                cookie_domains=".${rootDomain}"
+                scope="read:org user:email"
+                provider="github"
+                skip_provider_button="true"
+                session_store_type="cookie"
+                cookie_samesite="lax"
+                cookie_secure="true"
+                cookie_expire="12h"
+                reverse_proxy="true"
+                pass_access_token="true"
+                pass_authorization_header="true"
+                cookie_csrf_per_request="true"
+                cookie_csrf_expire="5m"
+                cookie_refresh="5m"
+                set_xauthrequest="true"
+                set_authorization_header="false"
+                skip_auth_preflight="true"
+                github_users="${this.config.allowedGithubUsers.join(',')}"
+                email_domains="*"
+            `,
+            },
+
+            ingress: {
+              enabled: true,
+              pathType: 'ImplementationSpecific',
+              className: 'nginx',
+              hosts: [host],
+            },
+          }),
+        ],
       },
       {
         authUrl: `https://${host}/oauth2/auth`,

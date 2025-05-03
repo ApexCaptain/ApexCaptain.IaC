@@ -24,6 +24,34 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
+  // For TCP / UDP Services
+  sftpRecord = this.provide(DnsRecord, 'sftpRecord', () => ({
+    name: 'sftp',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: false,
+    comment: 'Cloudflare record for SFTP service',
+  }));
+
+  // For Https Ingress Services
+  vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
+    name: 'vault',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Vault service',
+  }));
+
   dbRecord = this.provide(DnsRecord, 'dbRecord', () => ({
     name: 'db',
     ttl: 1,

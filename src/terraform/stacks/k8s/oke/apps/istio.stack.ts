@@ -13,7 +13,7 @@ import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { convertJsonToHelmSet } from '@/common';
+import yaml from 'yaml';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
 import _ from 'lodash';
 @Injectable()
@@ -61,30 +61,27 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
   }));
 
   istoiBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
-    const { helmSet, helmSetList } = convertJsonToHelmSet({
-      defaultRevision: 'default',
-    });
     return {
       name: this.metadata.shared.helm.base.name,
       chart: this.metadata.shared.helm.base.chart,
       repository: this.metadata.shared.helm.base.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-      setSensitive: helmSet,
-      setList: helmSetList,
+      values: [
+        yaml.stringify({
+          defaultRevision: 'default',
+        }),
+      ],
     };
   });
 
   istoidRelease = this.provide(Release, 'istoidRelease', () => {
-    const { helmSet, helmSetList } = convertJsonToHelmSet({});
     return {
       name: this.metadata.shared.helm.istiod.name,
       chart: this.metadata.shared.helm.istiod.chart,
       repository: this.metadata.shared.helm.istiod.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-      setSensitive: helmSet,
-      setList: helmSetList,
       dependsOn: [this.istoiBaseRelease.element],
     };
   });

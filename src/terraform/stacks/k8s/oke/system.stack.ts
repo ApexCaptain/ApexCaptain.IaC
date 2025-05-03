@@ -253,7 +253,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_System_Stack.name,
-      'OKE System Stack',
+      'K8S OKE System Stack',
     );
   }
 }

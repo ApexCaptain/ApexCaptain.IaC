@@ -142,6 +142,10 @@
       "type": "runtime"
     },
     {
+      "name": "dedent",
+      "type": "runtime"
+    },
+    {
       "name": "deepmerge",
       "type": "runtime"
     },
