@@ -265,6 +265,7 @@ void (async () => {
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
+    'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init'`,
 
     // Terminal
     terminal: 'ts-node ./scripts/terminal-v2.script.ts',

@@ -27,7 +27,10 @@ import dedent from 'dedent';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
-import { VaultProvider } from '@lib/terraform/providers/vault/provider';
+import {
+  VaultProvider,
+  VaultProviderConfig,
+} from '@lib/terraform/providers/vault/provider';
 
 @Injectable()
 export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
@@ -41,11 +44,11 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       oci: this.provide(OciProvider, 'ociProvider', () =>
         this.terraformConfigService.providers.oci.ApexCaptain(),
       ),
-      vault: this.provide(VaultProvider, 'vaultProvider', () => ({
-        address: `https://${this.release.shared.host}`,
-        token: this.vaultRootToken.shared.rootToken,
-      })),
-
+      vault: this.provide(
+        VaultProvider,
+        'vaultProvider',
+        () => this.cdktfVaultProviderConfig.shared,
+      ),
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       external: this.provide(ExternalProvider, 'externalProvider', () => ({})),
       kubernetes: this.provide(
@@ -94,7 +97,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     managementEndpoint: this.vaultKmsVault.element.managementEndpoint,
   }));
 
-  // K8S & Helm
+  // Kubernetes
   private readonly metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.vault,
@@ -110,7 +113,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     const initialVaultPodName = 'vault-0';
     const containerName = 'vault';
     const internalDataPath = '/vault/data';
-    const internalInitResultJsonPath = `${internalDataPath}/init-result.json`;
     const host = `${this.cloudflareRecordStack.vaultRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
 
     return [
@@ -177,22 +179,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 }
               `,
               },
-
-              postStart: [
-                '/bin/sh',
-                '-c',
-                dedent`
-                  if [ "$HOSTNAME" != "${initialVaultPodName}" ]; then
-                    exit 0
-                  fi
-
-                  sleep 10;
-
-                  if ! vault operator init -status; then
-                    vault operator init -format=json > ${internalInitResultJsonPath}
-                  fi
-                `,
-              ],
             },
           }),
         ],
@@ -201,55 +187,97 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
         host,
         initialVaultPodName,
         containerName,
-        internalInitResultJsonPath,
       },
     ];
   });
 
-  vaultInitResult = this.provide(DataExternal, 'vaultInitResult', () => ({
-    dependsOn: [this.release.element],
-    program: [
-      'bash',
-      '-c',
-      dedent`
-        export HTTPS_PROXY=${this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5}
-        export KUBECONFIG=${this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath}
-        TARGET_NAMESPACE=${this.namespace.element.metadata.name}
-        TARGET_POD_NAME=${this.release.shared.initialVaultPodName}
-        TARGET_CONTAINER_NAME=${this.release.shared.containerName}
-        TARGET_INIT_RESULT_JSON_PATH=${this.release.shared.internalInitResultJsonPath}
+  generateDynamicCdktfToken = this.provide(
+    DataExternal,
+    'generateDynamicCdktfToken',
+    () => {
+      const tokenKey = 'dynamicCdktfToken';
+      const expiredMinutes = 120;
+      return [
+        {
+          dependsOn: [this.release.element],
+          program: [
+            'bash',
+            '-c',
+            dedent`
+            export HTTPS_PROXY=${this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5}
+            export KUBECONFIG=${this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath}
+            TARGET_NAMESPACE=${this.namespace.element.metadata.name}
+            TARGET_POD_NAME=${this.release.shared.initialVaultPodName}
+            TARGET_CONTAINER_NAME=${this.release.shared.containerName}
+            TARGET_CDKTF_TOKEN_PATH=/vault/data/cdktf-token.json
 
-        while true; do
-          STATUS=$(kubectl get pod $TARGET_POD_NAME -n $TARGET_NAMESPACE -o jsonpath='{.status.phase}')
-          if [ "$STATUS" = "Running" ]; then
-            break
-          fi
-          sleep 5
-        done
+            while true; do
+                STATUS=$(kubectl get pod $TARGET_POD_NAME -n $TARGET_NAMESPACE -o jsonpath='{.status.phase}')
+                if [ "$STATUS" = "Running" ]; then
+                    break
+                fi
+                sleep 5
+            done
 
-        while true; do
-          FILE_EXISTS=$(kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE -- sh -c "[ -f $TARGET_INIT_RESULT_JSON_PATH ] && echo 'exists'")
-          if [ "$FILE_EXISTS" == "exists" ]; then
-            break
-          fi
-          sleep 5
-        done
+            execCommand="kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE"
 
-        INIT_RESULT_FILE_CONTENT=$(kubectl exec $TARGET_POD_NAME -c $TARGET_CONTAINER_NAME -n $TARGET_NAMESPACE -- sh -c "cat $TARGET_INIT_RESULT_JSON_PATH")
+            isVaultInitialized=$($execCommand -i -- sh << EOF
+                if vault operator init -status > /dev/null 2>&1; then
+                    echo "true"
+                else
+                    echo "false"
+                fi
+            EOF
+            )
 
-        echo $INIT_RESULT_FILE_CONTENT | jq -r '{rootToken: .root_token}'
-      `,
-    ],
-  }));
+            if [ "$isVaultInitialized" == "true" ]; then
+                previousToken=$($execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token')
+                isExpired=$(if [ -n "$($execCommand -- find $TARGET_CDKTF_TOKEN_PATH -mmin +${expiredMinutes})" ]; then echo "true"; else echo "false"; fi)
+            else
+                previousToken=$($execCommand -- vault operator init -format=json | jq -r '.root_token')
+                isExpired="true"
+            fi
 
-  vaultRootToken = this.provide(Resource, 'vaultRootToken', () => [
-    {},
-    {
-      rootToken: this.vaultInitResult.element.result.lookup('rootToken'),
+            if [ "$isExpired" == "true" ]; then
+                $execCommand -i -- sh << EOF
+                  export VAULT_TOKEN=$previousToken
+                  vault token create -format=json -orphan -policy=root > $TARGET_CDKTF_TOKEN_PATH
+                  vault token revoke $previousToken > /dev/null 2>&1
+            EOF
+            fi
+
+            newToken=$( $execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token' )
+
+            echo '{"${tokenKey}" : "'$newToken'"}'
+        `,
+          ],
+        },
+        { tokenKey },
+      ];
     },
-  ]);
+  );
+
+  cdktfVaultProviderConfig = this.provide(
+    Resource,
+    'cdktfVaultProviderConfig',
+    () => {
+      const vaultProviderConfig: VaultProviderConfig = {
+        address: `https://${this.release.shared.host}`,
+        token: this.generateDynamicCdktfToken.element.result.lookup(
+          this.generateDynamicCdktfToken.shared.tokenKey,
+        ),
+      };
+      return [{}, vaultProviderConfig];
+    },
+  );
 
   // Vault
+  /*
+    @ToDo
+    1. auth backend / method
+    2. secret engine
+    3. audit backend
+  */
 
   constructor(
     // Global
