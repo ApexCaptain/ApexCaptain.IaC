@@ -2,6 +2,11 @@ import Joi from '@hapi/joi';
 import { StacksSchema } from './stacks/.schema';
 
 export const TerraformSchema = Joi.object({
+  externalIpCidrBlocks: Joi.object({
+    apexCaptainHome: Joi.string().required(),
+    gjwoo960101: Joi.string().required(),
+    nayuntechCorp: Joi.string().required(),
+  }).required(),
   config: Joi.object({
     backends: Joi.object({
       localBackend: Joi.object({

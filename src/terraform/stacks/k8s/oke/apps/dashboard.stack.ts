@@ -173,7 +173,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'kubernetes.io/ingress.class': 'nginx',
         'nginx.ingress.kubernetes.io/auth-url':
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
@@ -210,6 +209,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     // Global
     private readonly globalConfigService: GlobalConfigService,
 
+    // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
 

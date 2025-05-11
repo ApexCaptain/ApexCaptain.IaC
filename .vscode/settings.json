@@ -5,7 +5,12 @@
     {
       "text": "@ToDo",
       "color": "red",
-      "backgroundColor": "pink"
+      "backgroundColor": "black"
+    },
+    {
+      "text": "@note",
+      "color": "blue",
+      "backgroundColor": "lightblue"
     }
   ],
   "todohighlight.exclude": [

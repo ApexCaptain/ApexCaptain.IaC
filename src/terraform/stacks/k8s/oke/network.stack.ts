@@ -24,9 +24,6 @@ import { GlobalConfigService } from '@/global/config/global.config.schema.servic
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {
-  private readonly config =
-    this.globalConfigService.config.terraform.stacks.k8s.oke.network;
-
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -86,10 +83,32 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       description: 'SFTP port for NFS service',
     });
 
+    const rolloutTriggerNodePort = createLoadBalancerPortInfo({
+      inbound: 33287,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'Rollout Trigger port',
+    });
+
+    const docentEngineNodePort = createLoadBalancerPortInfo({
+      inbound: 22583,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'Docent Engine port',
+      sourceCidrBlocks: [
+        this.globalConfigService.config.terraform.externalIpCidrBlocks
+          .apexCaptainHome,
+        this.globalConfigService.config.terraform.externalIpCidrBlocks
+          .gjwoo960101,
+        this.globalConfigService.config.terraform.externalIpCidrBlocks
+          .nayuntechCorp,
+      ],
+    });
+
     const combination = {
       httpNodePort,
       httpsNodePort,
       nfsSftpNodePort,
+      rolloutTriggerNodePort,
+      docentEngineNodePort,
     };
 
     const inboundPorts = Object.values(combination).map(
@@ -428,7 +447,10 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
           description: 'Allow worker nodes to communicate with the internet.',
         },
 
-        ...this.config.l2tpServerCidrBlocks
+        ...[
+          this.globalConfigService.config.terraform.externalIpCidrBlocks
+            .apexCaptainHome,
+        ]
           .map(eachL2tpVpnServerCidrBlock => {
             return [
               1701,

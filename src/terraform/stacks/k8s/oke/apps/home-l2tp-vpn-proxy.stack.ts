@@ -64,7 +64,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
     },
   }));
 
-  configmap = this.provide(ConfigMapV1, 'configmap', id => ({
+  configMap = this.provide(ConfigMapV1, 'configMap', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
@@ -159,7 +159,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
               ],
               volumeMount: [
                 {
-                  name: this.configmap.element.metadata.name,
+                  name: this.configMap.element.metadata.name,
                   mountPath: '/startup.sh',
                   subPath: 'startup.sh',
                 },
@@ -174,6 +174,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
             {
               name: this.metadata.shared.services.vpn.name,
               image: 'jdrouet/l2tp-ipsec-vpn-client',
+
               imagePullPolicy: 'Always',
               ports: Object.values(
                 this.metadata.shared.services.vpn.ports,
@@ -213,14 +214,14 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
                 },
                 initialDelaySeconds: 120,
                 timeoutSeconds: 5,
-                periodSeconds: 30,
+                periodSeconds: 15,
                 failureThreshold: 3,
               },
             },
           ],
           volume: [
             {
-              name: this.configmap.element.metadata.name,
+              name: this.configMap.element.metadata.name,
               configMap: {
                 items: [
                   {
@@ -228,7 +229,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
                     path: 'startup.sh',
                   },
                 ],
-                name: this.configmap.element.metadata.name,
+                name: this.configMap.element.metadata.name,
               },
             },
             {
@@ -248,7 +249,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
     },
     lifecycle: {
       replaceTriggeredBy: [
-        `${this.configmap.element.terraformResourceType}.${this.configmap.element.friendlyUniqueId}`,
+        `${this.configMap.element.terraformResourceType}.${this.configMap.element.friendlyUniqueId}`,
         `${this.secret.element.terraformResourceType}.${this.secret.element.friendlyUniqueId}`,
       ],
     },

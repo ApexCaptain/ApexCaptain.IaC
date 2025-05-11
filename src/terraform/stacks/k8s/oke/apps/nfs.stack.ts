@@ -451,7 +451,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'kubernetes.io/ingress.class': 'nginx',
         'nginx.ingress.kubernetes.io/auth-url':
           this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':

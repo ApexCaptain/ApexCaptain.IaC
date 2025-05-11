@@ -361,9 +361,12 @@ void (async () => {
           source: 'integrations/github',
         },
         {
-          // @ToDo 임시로 cloudflare 5.1.0 버전 사용
-          // https://github.com/cloudflare/terraform-provider-cloudflare/releases
-          // 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
+          /**
+           * @note
+           * - 임시로 cloudflare 5.1.0 버전 사용
+           * - 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
+           * @see: https://github.com/cloudflare/terraform-provider-cloudflare/releases
+           */
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
@@ -393,8 +396,17 @@ void (async () => {
 
   const environment: GlobalConfigType = {
     terraform: {
+      externalIpCidrBlocks: {
+        apexCaptainHome: `${workstationIpAddress}/32`,
+        gjwoo960101: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101!!,
+        nayuntechCorp: process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP!!,
+      },
       stacks: {
         common: {
+          generatedDockerConfigFileDirPath: path.join(
+            constants.paths.dirs.secretsDir,
+            'docker',
+          ),
           generatedKeyFilesDirPaths: {
             relativeSecretsDirPath: path.join(
               constants.paths.dirs.secretsDir,
@@ -468,12 +480,6 @@ void (async () => {
                 ],
               },
             },
-            bastion: {
-              clientCidrBlockAllowList: [`${workstationIpAddress}/32`],
-            },
-            network: {
-              l2tpServerCidrBlocks: [`${workstationIpAddress}/32`],
-            },
           },
           workstation: {
             common: {
@@ -494,6 +500,14 @@ void (async () => {
               adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
               serverPassword:
                 process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
+            },
+          },
+        },
+        project: {
+          externalGithubCollaborators: {
+            gjwoo960101: {
+              username:
+                process.env.EXTERNAL_COLLABORATOR_GJWOO960101_USERNAME!!,
             },
           },
         },
@@ -562,7 +576,8 @@ void (async () => {
       toggleURI: true,
       isCaseSensitive: false,
       keywords: new VsCodeObject([
-        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'pink' },
+        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'black' },
+        { text: '@' + 'note', color: 'blue', backgroundColor: 'lightblue' },
       ]),
       exclude: ['**/node_modules/**', '.vscode'],
     },

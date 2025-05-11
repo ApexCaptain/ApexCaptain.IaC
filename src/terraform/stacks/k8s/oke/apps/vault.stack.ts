@@ -7,7 +7,7 @@ import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { AbstractStack } from '@/common';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import yaml from 'yaml';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
@@ -32,6 +32,14 @@ import {
   VaultProviderConfig,
 } from '@lib/terraform/providers/vault/provider';
 
+// Testing vault...
+import { Mount } from '@lib/terraform/providers/vault/mount';
+import { KvSecretBackendV2 } from '@lib/terraform/providers/vault/kv-secret-backend-v2';
+import { KvSecretV2 } from '@lib/terraform/providers/vault/kv-secret-v2';
+import { AuthBackend } from '@lib/terraform/providers/vault/auth-backend';
+import { GenericEndpoint } from '@lib/terraform/providers/vault/generic-endpoint';
+import { Policy } from '@lib/terraform/providers/vault/policy';
+
 @Injectable()
 export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
   terraform = {
@@ -44,11 +52,11 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       oci: this.provide(OciProvider, 'ociProvider', () =>
         this.terraformConfigService.providers.oci.ApexCaptain(),
       ),
-      vault: this.provide(
-        VaultProvider,
-        'vaultProvider',
-        () => this.cdktfVaultProviderConfig.shared,
-      ),
+      // vault: this.provide(
+      //   VaultProvider,
+      //   'vaultProvider',
+      //   () => this.cdktfVaultProviderConfig.shared,
+      // ),
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       external: this.provide(ExternalProvider, 'externalProvider', () => ({})),
       kubernetes: this.provide(
@@ -136,7 +144,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 annotations: {
                   'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
                   'nginx.ingress.kubernetes.io/rewrite-target': '/',
-                  'kubernetes.io/ingress.class': 'nginx',
                   'nginx.ingress.kubernetes.io/auth-url':
                     this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
                   'nginx.ingress.kubernetes.io/auth-signin':
@@ -155,8 +162,11 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 ],
               },
 
-              // @ToDo Node의 수를 2개로 제한 해뒀기 때문에 고 가용성 쿼럼을 유지하는데 한계가 있음.
-              // 고로, standalone 모드로 변경, 추후 여유가 생기면 ha로 전환
+              /**
+               * @note
+               * - Node의 수를 2개로 제한 해뒀기 때문에 고 가용성 쿼럼을 유지하는데 한계가 있음.
+               * - 일단 standalone 모드 사용, 추후 여유가 생기면 ha로 전환
+               */
               standalone: {
                 enabled: true,
                 config: dedent`
@@ -196,7 +206,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     'generateDynamicCdktfToken',
     () => {
       const tokenKey = 'dynamicCdktfToken';
-      const expiredMinutes = 120;
+      const expirationMinutes = 60 * 12;
       return [
         {
           dependsOn: [this.release.element],
@@ -232,7 +242,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
 
             if [ "$isVaultInitialized" == "true" ]; then
                 previousToken=$($execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token')
-                isExpired=$(if [ -n "$($execCommand -- find $TARGET_CDKTF_TOKEN_PATH -mmin +${expiredMinutes})" ]; then echo "true"; else echo "false"; fi)
+                isExpired=$(if [ -n "$($execCommand -- find $TARGET_CDKTF_TOKEN_PATH -mmin +${expirationMinutes})" ]; then echo "true"; else echo "false"; fi)
             else
                 previousToken=$($execCommand -- vault operator init -format=json | jq -r '.root_token')
                 isExpired="true"
@@ -271,7 +281,57 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     },
   );
 
+  ///////////////////////////////////////////////////////////////////////
+
   // Vault
+  // testMount = this.provide(Mount, 'testMount', () => ({
+  //   path: 'test',
+  //   type: 'kv',
+  //   options: {
+  //     version: '2',
+  //   },
+  // }));
+
+  // testKvSecretBackendV2 = this.provide(
+  //   KvSecretBackendV2,
+  //   'testKvSecretBackendV2',
+  //   () => ({
+  //     mount: this.testMount.element.path,
+  //     maxVersions: 5,
+  //     deleteVersionAfter: 12600,
+  //     casRequired: false,
+  //   }),
+  // );
+
+  // testKvSecretV2 = this.provide(KvSecretV2, 'testKvSecretV2', () => ({
+  //   mount: this.testMount.element.path,
+  //   name: 'test',
+  //   deleteAllVersions: true,
+  //   dataJson: Fn.jsonencode({
+  //     some: 'value',
+  //   }),
+  //   customMetadata: {
+  //     maxVersions: 5,
+  //     data: {
+  //       foo: 'bar',
+  //     },
+  //   },
+  // }));
+
+  // testPolicy = this.provide(Policy, 'testPolicy', () => ({
+  //   name: 'test',
+  //   policy: dedent`
+  //     path "test/data/*" {
+  //       capabilities = ["read"]
+  //     }
+  //   `,
+  // }));
+
+  // // OIDC
+  // oidcAuthBackend = this.provide(AuthBackend, 'oidcAuthBackend', () => ({
+  //   type: 'oidc',
+  // }));
+
   /*
     @ToDo
     1. auth backend / method
@@ -293,7 +353,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
-    private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
   ) {
     super(
@@ -301,7 +360,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       K8S_Oke_Apps_Vault_Stack.name,
       'Vault stack for oke k8s',
     );
-    this.addDependency(this.k8sOkeAppsIngressControllerStack);
     this.addDependency(this.k8sOkeAppsNfsStack);
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

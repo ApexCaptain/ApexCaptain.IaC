@@ -100,6 +100,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
         if (!services) return;
         const namespace = eachMetadata.namespace;
         Object.values(services).forEach(eachService => {
+          if (!eachService.ports) return;
           Object.values(eachService.ports)
             .filter(eachPort => eachPort.portBasedIngressPort)
             .forEach(eachPort => {

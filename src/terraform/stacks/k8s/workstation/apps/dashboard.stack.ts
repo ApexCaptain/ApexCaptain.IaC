@@ -156,8 +156,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
-        'kubernetes.io/ingress.class': 'nginx',
-
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
 

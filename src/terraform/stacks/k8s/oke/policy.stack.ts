@@ -58,6 +58,94 @@ export class K8S_Oke_Policy_Stack extends AbstractStack {
     ],
   }));
 
+  // privateOciAppDeveloper = this.provide(
+  //   Resource,
+  //   'privateOciAppDeveloper',
+  //   idPrefix => {
+  //     const group = this.provide(IdentityGroup, `${idPrefix}-group`, id => ({
+  //       compartmentId: this.projectStack.dataRootOciTenancy.element.id,
+  //       description: 'Private OCI App Developer group',
+  //       name: id,
+  //     }));
+
+  //     const user = this.provide(IdentityUser, `${idPrefix}-user`, id => ({
+  //       compartmentId: this.projectStack.dataRootOciTenancy.element.id,
+  //       description: 'Private OCI App Developer user',
+  //       name: id,
+  //     }));
+
+  //     this.provide(
+  //       IdentityUserGroupMembership,
+  //       `${idPrefix}-userGroupMembership`,
+  //       () => ({
+  //         groupId: group.element.id,
+  //         userId: user.element.id,
+  //       }),
+  //     );
+  //     this.provide(
+  //       IdentityUserCapabilitiesManagement,
+  //       `${idPrefix}-userCapabilitiesManagement`,
+  //       () => ({
+  //         userId: user.element.id,
+  //         // Caps
+  //         canUseApiKeys: true,
+  //         canUseAuthTokens: true,
+  //         canUseConsolePassword: false,
+  //         canUseCustomerSecretKeys: false,
+  //         canUseSmtpCredentials: false,
+  //       }),
+  //     );
+
+  //     const authToken = this.provide(
+  //       IdentityAuthToken,
+  //       `${idPrefix}-authToken`,
+  //       () => ({
+  //         description: 'Private OCI App Developer auth token',
+  //         userId: user.element.id,
+  //       }),
+  //     );
+
+  //     const privateKey = this.provide(
+  //       PrivateKey,
+  //       `${idPrefix}-privateKey`,
+  //       () => ({
+  //         algorithm: 'RSA',
+  //         rsaBits: 4096,
+  //       }),
+  //     );
+
+  //     const apiKey = this.provide(IdentityApiKey, `${idPrefix}-apiKey`, id => ({
+  //       userId: user.element.id,
+  //       keyValue: privateKey.element.publicKeyPem,
+  //     }));
+
+  //     const policy = this.provide(IdentityPolicy, `${idPrefix}-policy`, id => ({
+  //       compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+  //       description: 'Private OCI App Developer policy',
+  //       name: id,
+  //       statements: [
+  //         createOciPolicyStatement({
+  //           subject: {
+  //             type: 'group',
+  //             targets: [group.element.name],
+  //           },
+  //           verb: 'manage',
+  //           resourceType: 'repos',
+  //           location: {
+  //             type: 'compartment',
+  //             expression:
+  //               this.k8sOkeCompartmentStack.okeCompartment.element.name,
+  //           },
+  //           // condition: `any {target.repo.name='some-repo'}`,
+  //           // allow group privateOciAppDeveloper-group to manage repos in compartment okeCompartment where all {target.repo.tag.Environment = 'Production'}
+  //         }),
+  //       ],
+  //     }));
+
+  //     return [{}, {}];
+  //   },
+  // );
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
