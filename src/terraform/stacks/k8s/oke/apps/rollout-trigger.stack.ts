@@ -130,7 +130,13 @@ export class K8S_Oke_Apps_RolloutTrigger_Stack extends AbstractStack {
         days: 30,
       }).toString(),
     },
-  }));
+  })).addOutput(
+    id => `${id}_out`,
+    ele => ({
+      value: ele,
+      sensitive: true,
+    }),
+  );
 
   deployment = this.provide(DeploymentV1, 'deployment', id => {
     const applicationPath = '/app';

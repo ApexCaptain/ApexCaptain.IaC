@@ -34,6 +34,8 @@ import {
   DeploymentV1SpecTemplateSpecContainerPort,
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
+import { K8S_Oke_Apps_DocentAiEngine_Stack } from './docent-ai-engine.stack';
+import dedent from 'dedent';
 
 @Injectable()
 export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
@@ -279,6 +281,28 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
     },
   }));
 
+  // externalEngineService = this.provide(
+  //   ServiceV1,
+  //   'externalEngineService',
+  //   id => [
+  //     {
+  //       metadata: {
+  //         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+  //         namespace: this.namespace.element.metadata.name,
+  //       },
+  //       spec: {
+  //         type: 'ExternalName',
+  //         externalName: `${this.k8sOkeAppsDocentAiEngineStack.service.element.metadata.name}.${this.k8sOkeAppsDocentAiEngineStack.namespace.element.metadata.name}.svc.cluster.local`,
+  //       },
+  //     },
+  //     {
+  //       servicePort:
+  //         this.k8sOkeAppsDocentAiEngineStack.metadata.shared.services
+  //           .docentAiEngine.ports,
+  //     },
+  //   ],
+  // );
+
   imagePullSecret = this.provide(SecretV1, 'imagePullSecret', id => {
     const server = `${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.ocir.io`;
     const username = `${this.projectStack.dataOciObjectstorageNamespace.element.namespace}/${this.applier.shared.user.element.name}`;
@@ -356,6 +380,14 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
+        'nginx.ingress.kubernetes.io/server-snippet': dedent`
+            location /api/ {
+              proxy_pass http://${this.k8sOkeAppsDocentAiEngineStack.service.element.metadata.name}.${this.k8sOkeAppsDocentAiEngineStack.namespace.element.metadata.name}.svc.cluster.local:${this.k8sOkeAppsDocentAiEngineStack.metadata.shared.services.docentAiEngine.ports.docentAiEngine.port}/api/;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
+        `,
       },
     },
     spec: {
@@ -379,6 +411,20 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
                   },
                 },
               },
+              // {
+              //   path: '/api',
+              //   pathType: 'Prefix',
+              //   backend: {
+              //     service: {
+              //       name: this.externalEngineService.element.metadata.name,
+              //       port: {
+              //         number:
+              //           this.externalEngineService.shared.servicePort
+              //             .docentAiEngine.port,
+              //       },
+              //     },
+              //   },
+              // },
             ],
           },
         },
@@ -401,6 +447,7 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
+    private readonly k8sOkeAppsDocentAiEngineStack: K8S_Oke_Apps_DocentAiEngine_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

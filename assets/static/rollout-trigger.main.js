@@ -35,6 +35,7 @@ app.post(process.env.API_RESOURCE_PATH, validateApiKey, (req, res) => {
       `kubectl rollout restart ${resourceType} ${resourceName} -n ${namespace}`,
     );
 
+    // @ToDo timeout시 그때까지의 로그 추적해서 출력하도록 수정해야 함
     const status = execSync(
       `kubectl rollout status ${resourceType} ${resourceName} -n ${namespace}`,
     ).toString('utf8');

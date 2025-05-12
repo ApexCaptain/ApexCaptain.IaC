@@ -33,8 +33,6 @@ import {
   DeploymentV1,
   DeploymentV1SpecTemplateSpecContainerPort,
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import { K8S_Oke_Apps_ArgoCd_Stack } from './argo-cd.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
@@ -253,7 +251,7 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     return [{}, { user, authToken, privateKey, apiKey }];
   });
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  readonly metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.docentAiEngine,
   ]);
@@ -269,16 +267,21 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     },
   }));
 
-  service = this.provide(ServiceV1, 'service', () => ({
-    metadata: {
-      name: this.metadata.shared.services.docentAiEngine.name,
-      namespace: this.namespace.element.metadata.name,
+  service = this.provide(ServiceV1, 'service', () => [
+    {
+      metadata: {
+        name: this.metadata.shared.services.docentAiEngine.name,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        selector: this.metadata.shared.services.docentAiEngine.labels,
+        port: Object.values(this.metadata.shared.services.docentAiEngine.ports),
+      },
     },
-    spec: {
-      selector: this.metadata.shared.services.docentAiEngine.labels,
-      port: Object.values(this.metadata.shared.services.docentAiEngine.ports),
+    {
+      ports: this.metadata.shared.services.docentAiEngine.ports,
     },
-  }));
+  ]);
 
   imagePullSecret = this.provide(SecretV1, 'imagePullSecret', id => {
     const server = `${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.ocir.io`;
@@ -356,43 +359,6 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
       ],
     },
   }));
-
-  // ingress = this.provide(IngressV1, 'ingress', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //     annotations: {
-  //       'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-  //       'nginx.ingress.kubernetes.io/rewrite-target': '/',
-  //     },
-  //   },
-  //   spec: {
-  //     ingressClassName: 'nginx',
-  //     rule: [
-  //       {
-  //         host: `${this.cloudflareRecordStack.docentEngineRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-  //         http: {
-  //           path: [
-  //             {
-  //               path: '/',
-  //               pathType: 'Prefix',
-  //               backend: {
-  //                 service: {
-  //                   name: this.service.element.metadata.name,
-  //                   port: {
-  //                     number:
-  //                       this.metadata.shared.services.docentAiEngine.ports
-  //                         .docentAiEngine.port,
-  //                   },
-  //                 },
-  //               },
-  //             },
-  //           ],
-  //         },
-  //       },
-  //     ],
-  //   },
-  // }));
 
   constructor(
     // Global
