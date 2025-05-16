@@ -51,8 +51,8 @@ export class Project_Apps_DocentAiWeb_Stack extends AbstractStack {
     () => ({
       repository: this.repository.element.name,
       username:
-        this.globalConfigService.config.terraform.stacks.project
-          .externalGithubCollaborators.gjwoo960101.username,
+        this.globalConfigService.config.terraform.externalGithubUsers
+          .gjwoo960101.githubUsername,
       permission: 'admin',
     }),
   );

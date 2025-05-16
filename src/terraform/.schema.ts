@@ -7,6 +7,14 @@ export const TerraformSchema = Joi.object({
     gjwoo960101: Joi.string().required(),
     nayuntechCorp: Joi.string().required(),
   }).required(),
+  externalGithubUsers: Joi.object({
+    ApexCaptain: Joi.object({
+      githubUsername: Joi.string().required(),
+    }).required(),
+    gjwoo960101: Joi.object({
+      githubUsername: Joi.string().required(),
+    }).required(),
+  }).required(),
   config: Joi.object({
     backends: Joi.object({
       localBackend: Joi.object({

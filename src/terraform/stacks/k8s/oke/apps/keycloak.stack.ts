@@ -13,7 +13,6 @@ import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import yaml from 'yaml';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
@@ -28,27 +27,27 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      // null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      // kubernetes: this.provide(
-      //   KubernetesProvider,
-      //   'kubernetesProvider',
-      //   () => ({
-      //     proxyUrl:
-      //       this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-      //     configPath:
-      //       this.k8sOkeEndpointStack.okeEndpointSource.shared
-      //         .kubeConfigFilePath,
-      //   }),
-      // ),
-      // helm: this.provide(HelmProvider, 'helmProvider', () => ({
-      //   kubernetes: {
-      //     proxyUrl:
-      //       this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-      //     configPath:
-      //       this.k8sOkeEndpointStack.okeEndpointSource.shared
-      //         .kubeConfigFilePath,
-      //   },
-      // })),
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          proxyUrl:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
+          configPath:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared
+              .kubeConfigFilePath,
+        }),
+      ),
+      helm: this.provide(HelmProvider, 'helmProvider', () => ({
+        kubernetes: {
+          proxyUrl:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
+          configPath:
+            this.k8sOkeEndpointStack.okeEndpointSource.shared
+              .kubeConfigFilePath,
+        },
+      })),
     },
   };
 
@@ -65,6 +64,7 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
 
   // release = this.provide(Release, 'release', () => {
   //   const host = `${this.cloudflareRecordStack.keycloakRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
+  //   const adminHost = `${this.cloudflareRecordStack.keycloakAdminRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
   //   return {
   //     name: this.metadata.shared.helm.keycloak.name,
   //     chart: `${this.metadata.shared.helm.keycloak.repository}/${this.metadata.shared.helm.keycloak.chart}-24.6.4.tgz`,
@@ -90,7 +90,7 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
   //         adminIngress: {
   //           enabled: true,
   //           ingressClassName: 'nginx',
-  //           hostname: host,
+  //           hostname: adminHost,
   //           annotations: {
   //             'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
   //             'nginx.ingress.kubernetes.io/rewrite-target': '/',
@@ -99,8 +99,31 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
   //             'nginx.ingress.kubernetes.io/auth-signin':
   //               this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
   //           },
-  //           path: '/admin',
+  //           path: '/',
   //         },
+  //         production: true,
+  //         extraEnvVars: [
+  //           {
+  //             name: 'KC_HOSTNAME',
+  //             value: `https://${host}`,
+  //           },
+  //           {
+  //             name: 'KC_HOSTNAME_ADMIN',
+  //             value: `https://${adminHost}`,
+  //           },
+  //           {
+  //             name: 'KEYCLOAK_FRONTEND_URL',
+  //             value: `https://${adminHost}`,
+  //           },
+  //           {
+  //             name: 'KC_HTTP_ENABLED',
+  //             value: 'true',
+  //           },
+  //           {
+  //             name: 'KC_PROXY',
+  //             value: 'edge',
+  //           },
+  //         ],
   //       }),
   //     ],
   //   };
@@ -121,14 +144,13 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
-    private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_Keycloak_Stack.name,
       'Keycloak stack for OKE k8s',
     );
-    this.addDependency(this.k8sOkeAppsIngressControllerStack);
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
     this.addDependency(this.k8sOkeAppsNfsStack);
   }
 }

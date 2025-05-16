@@ -347,6 +347,10 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
                   name: 'NODE_ENV',
                   value: 'production',
                 },
+                {
+                  name: 'TZ',
+                  value: 'Asia/Seoul',
+                },
               ],
             },
           ],
