@@ -7,3 +7,8 @@ export * from './nfs.stack';
 export * from './cloudbeaver.stack';
 export * from './redis-ui.stack';
 export * from './vault.stack';
+export * from './keycloak.stack';
+export * from './docent-ai-web.stack';
+export * from './docent-ai-engine.stack';
+export * from './argo-cd.stack';
+export * from './rollout-trigger.stack';

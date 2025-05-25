@@ -69,6 +69,7 @@ const constants = (() => {
   const keysDir = 'keys';
   const secretsDir = '.secrets';
   const tmpDir = 'tmp';
+  const cursorDir = '.cursor';
 
   const cdktfOutDir = 'cdktf.out';
 
@@ -78,6 +79,7 @@ const constants = (() => {
     process.cwd(),
     process.env.OCI_CLI_CONFIG_FILE ?? 'keys/oci.config',
   );
+  const mcpJsonFilePath = path.join(cursorDir, 'mcp.json');
 
   const paths = {
     dirs: {
@@ -91,11 +93,13 @@ const constants = (() => {
       keysDir,
       secretsDir,
       tmpDir,
+      cursorDir,
     },
     files: {
       cdktfConfigFilePath,
       cdktfOutFilePath,
       ociCliConfigFilePath,
+      mcpJsonFilePath,
     },
   };
 
@@ -213,6 +217,7 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
+    `/${constants.paths.files.mcpJsonFilePath}`,
   ],
   deps: [
     'cdktf',
@@ -263,6 +268,7 @@ void (async () => {
     // Terraform
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
+    'tf@deploy:single': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies`,
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
     'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init'`,
@@ -361,9 +367,12 @@ void (async () => {
           source: 'integrations/github',
         },
         {
-          // @ToDo 임시로 cloudflare 5.1.0 버전 사용
-          // https://github.com/cloudflare/terraform-provider-cloudflare/releases
-          // 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
+          /**
+           * @note
+           * - 임시로 cloudflare 5.1.0 버전 사용
+           * - 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
+           * @see: https://github.com/cloudflare/terraform-provider-cloudflare/releases
+           */
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
@@ -393,8 +402,25 @@ void (async () => {
 
   const environment: GlobalConfigType = {
     terraform: {
+      externalIpCidrBlocks: {
+        apexCaptainHome: `${workstationIpAddress}/32`,
+        gjwoo960101: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101!!,
+        nayuntechCorp: process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP!!,
+      },
+      externalGithubUsers: {
+        ApexCaptain: {
+          githubUsername: process.env.GITHUB_APEX_CAPTAIN_USERNAME!!,
+        },
+        gjwoo960101: {
+          githubUsername: process.env.GITHUB_GJWOO960101_USERNAME!!,
+        },
+      },
       stacks: {
         common: {
+          generatedDockerConfigFileDirPath: path.join(
+            constants.paths.dirs.secretsDir,
+            'docker',
+          ),
           generatedKeyFilesDirPaths: {
             relativeSecretsDirPath: path.join(
               constants.paths.dirs.secretsDir,
@@ -422,12 +448,28 @@ void (async () => {
                 },
               },
               oauth2Proxy: {
+                admin: {
+                  clientId:
+                    process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
+                  clientSecret:
+                    process.env
+                      .APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_SECRET!!,
+                },
+                contributor: {
+                  clientId:
+                    process.env
+                      .APEX_CAPTAIN_GITHUB_CONTRIBUTOR_OAUTH_APP_CLIENT_ID!!,
+                  clientSecret:
+                    process.env
+                      .APEX_CAPTAIN_GITHUB_CONTRIBUTOR_OAUTH_APP_CLIENT_SECRET!!,
+                },
+              },
+              keyCloackVaultProxy: {
                 clientId:
-                  process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
+                  process.env.APEX_CAPTAIN_GITHUB_VAULT_OAUTH_APP_CLIENT_ID!!,
                 clientSecret:
                   process.env
-                    .APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_SECRET!!,
-                allowedGithubUsers: ['ApexCaptain'],
+                    .APEX_CAPTAIN_GITHUB_VAULT_OAUTH_APP_CLIENT_SECRET!!,
               },
               homeL2tpVpnProxy: {
                 vpnServerAddr: workstationIpAddress,
@@ -467,12 +509,6 @@ void (async () => {
                   },
                 ],
               },
-            },
-            bastion: {
-              clientCidrBlockAllowList: [`${workstationIpAddress}/32`],
-            },
-            network: {
-              l2tpServerCidrBlocks: [`${workstationIpAddress}/32`],
             },
           },
           workstation: {
@@ -562,7 +598,8 @@ void (async () => {
       toggleURI: true,
       isCaseSensitive: false,
       keywords: new VsCodeObject([
-        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'pink' },
+        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'black' },
+        { text: '@' + 'note', color: 'blue', backgroundColor: 'lightblue' },
       ]),
       exclude: ['**/node_modules/**', '.vscode'],
     },
@@ -620,6 +657,19 @@ void (async () => {
       ],
     }),
   );
+
+  // mcp.json
+  new JsonFile(project, '.cursor/mcp.json', {
+    obj: {
+      mcpServers: {
+        context7: {
+          command: 'npx',
+          args: ['-y', '@upstash/context7-mcp'],
+        },
+      },
+    },
+    committed: false,
+  });
 
   project.postSynthesize = () => {
     execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);

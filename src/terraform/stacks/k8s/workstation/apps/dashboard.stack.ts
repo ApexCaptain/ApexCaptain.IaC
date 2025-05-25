@@ -156,15 +156,15 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
       annotations: {
-        'kubernetes.io/ingress.class': 'nginx',
-
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
 
         'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authSignin,
       },
     },
     spec: {

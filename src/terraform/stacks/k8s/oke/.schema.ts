@@ -8,10 +8,19 @@ export const OkeSchema = Joi.object({
       }).required(),
     }).required(),
     oauth2Proxy: Joi.object({
+      admin: Joi.object({
+        clientId: Joi.string().required(),
+        clientSecret: Joi.string().required(),
+      }).required(),
+      contributor: Joi.object({
+        clientId: Joi.string().required(),
+        clientSecret: Joi.string().required(),
+      }).required(),
+    }).required(),
+    keyCloackVaultProxy: Joi.object({
       clientId: Joi.string().required(),
       clientSecret: Joi.string().required(),
-      allowedGithubUsers: Joi.array().items(Joi.string()).required(),
-    }).required(),
+    }),
     homeL2tpVpnProxy: Joi.object({
       vpnServerAddr: Joi.string().required(),
       vpnIpsToRoute: Joi.array().items(Joi.string()).required(),
@@ -25,11 +34,5 @@ export const OkeSchema = Joi.object({
         )
         .required(),
     }).required(),
-  }).required(),
-  bastion: Joi.object({
-    clientCidrBlockAllowList: Joi.array().items(Joi.string()).required(),
-  }).required(),
-  network: Joi.object({
-    l2tpServerCidrBlocks: Joi.array().items(Joi.string()).required(),
   }).required(),
 }).required();

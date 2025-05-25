@@ -61,7 +61,17 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
 
   private readonly metadata = this.provide(Resource, 'metadata', () => [
     {},
-    this.k8sOkeSystemStack.applicationMetadata.shared.oauth2Proxy,
+    {
+      ...this.k8sOkeSystemStack.applicationMetadata.shared.oauth2Proxy,
+      adminGithubUsers: [
+        this.globalConfigService.config.terraform.externalGithubUsers
+          .ApexCaptain.githubUsername,
+      ],
+      contributorGithubUsers: [
+        this.globalConfigService.config.terraform.externalGithubUsers
+          .gjwoo960101.githubUsername,
+      ],
+    },
   ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
@@ -70,44 +80,89 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     },
   }));
 
-  cookieSecret = this.provide(StringResource, 'cookieSecret', () => ({
-    length: 32,
-    keepers: {
-      expirationDate: createExpirationInterval({
-        days: 30,
-      }).toString(),
-    },
-  }));
+  oauth2ProxyAdminReleaseCookieSecret = this.provide(
+    StringResource,
+    'oauth2ProxyAdminReleaseCookieSecret',
+    () => ({
+      length: 32,
+      keepers: {
+        expirationDate: createExpirationInterval({
+          days: 30,
+        }).toString(),
+      },
+    }),
+  );
 
-  releaseSecret = this.provide(SecretV1, 'releaseSecret', id => ({
-    metadata: {
-      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-      namespace: this.namespace.element.metadata.name,
-    },
-    data: {
-      'client-id': this.config.clientId,
-      'client-secret': this.config.clientSecret,
-      'cookie-secret': this.cookieSecret.element.result,
-    },
-    type: 'Opaque',
-  }));
+  oauth2ProxyContributorReleaseCookieSecret = this.provide(
+    StringResource,
+    'oauth2ProxyContributorReleaseCookieSecret',
+    () => ({
+      length: 32,
+      keepers: {
+        expirationDate: createExpirationInterval({
+          days: 30,
+        }).toString(),
+      },
+    }),
+  );
 
-  release = this.provide(Release, 'release', () => {
-    const rootDomain = this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
-    const host = `${this.cloudflareRecordStack.oauth2ProxyRecord.element.name}.${rootDomain}`;
-
-    return [
-      {
-        name: this.metadata.shared.helm.oauth2Proxy.name,
-        chart: this.metadata.shared.helm.oauth2Proxy.chart,
-        repository: this.metadata.shared.helm.oauth2Proxy.repository,
+  oauth2ProxyAdminReleaseSecret = this.provide(
+    SecretV1,
+    'oauth2ProxyAdminReleaseSecret',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
         namespace: this.namespace.element.metadata.name,
-        createNamespace: false,
-        values: [
-          yaml.stringify({
-            config: {
-              existingSecret: this.releaseSecret.element.metadata.name,
-              configFile: dedent`
+      },
+      data: {
+        'client-id': this.config.admin.clientId,
+        'client-secret': this.config.admin.clientSecret,
+        'cookie-secret':
+          this.oauth2ProxyAdminReleaseCookieSecret.element.result,
+      },
+      type: 'Opaque',
+    }),
+  );
+
+  oauth2ProxyContributorReleaseSecret = this.provide(
+    SecretV1,
+    'oauth2ProxyContributorReleaseSecret',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      data: {
+        'client-id': this.config.contributor.clientId,
+        'client-secret': this.config.contributor.clientSecret,
+        'cookie-secret':
+          this.oauth2ProxyContributorReleaseCookieSecret.element.result,
+      },
+      type: 'Opaque',
+    }),
+  );
+
+  oauth2ProxyAdminRelease = this.provide(
+    Release,
+    'oauth2ProxyAdminRelease',
+    () => {
+      const rootDomain =
+        this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
+      const host = `${this.cloudflareRecordStack.oauth2ProxyAdminRecord.element.name}.${rootDomain}`;
+
+      return [
+        {
+          name: `${this.metadata.shared.helm.oauth2Proxy.name}-admin`,
+          chart: this.metadata.shared.helm.oauth2Proxy.chart,
+          repository: this.metadata.shared.helm.oauth2Proxy.repository,
+          namespace: this.namespace.element.metadata.name,
+          createNamespace: false,
+          values: [
+            yaml.stringify({
+              config: {
+                existingSecret:
+                  this.oauth2ProxyAdminReleaseSecret.element.metadata.name,
+                configFile: dedent`
                 redirect_url="/oauth2/callback"
                 login_url="https://github.com/login/oauth/authorize"
                 redeem_url="https://github.com/login/oauth/access_token"
@@ -129,27 +184,95 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
                 set_xauthrequest="true"
                 set_authorization_header="false"
                 skip_auth_preflight="true"
-                github_users="${this.config.allowedGithubUsers.join(',')}"
+                github_users="${this.metadata.shared.adminGithubUsers.join(',')}"
                 email_domains="*"
             `,
-            },
+              },
 
-            ingress: {
-              enabled: true,
-              pathType: 'ImplementationSpecific',
-              className: 'nginx',
-              hosts: [host],
-            },
-          }),
-        ],
-      },
-      {
-        authUrl: `https://${host}/oauth2/auth`,
-        authSignin: `https://${host}/oauth2/start?rd=$scheme://$host$request_uri`,
-      },
-    ];
-  });
+              ingress: {
+                enabled: true,
+                pathType: 'ImplementationSpecific',
+                className: 'nginx',
+                hosts: [host],
+              },
+            }),
+          ],
+        },
+        {
+          authUrl: `https://${host}/oauth2/auth`,
+          authSignin: `https://${host}/oauth2/start?rd=$scheme://$host$request_uri`,
+        },
+      ];
+    },
+  );
 
+  oauth2ProxyContributorRelease = this.provide(
+    Release,
+    'oauth2ProxyContributorRelease',
+    () => {
+      const rootDomain =
+        this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
+      const host = `${this.cloudflareRecordStack.oauth2ProxyContributorRecord.element.name}.${rootDomain}`;
+
+      return [
+        {
+          name: `${this.metadata.shared.helm.oauth2Proxy.name}-contributor`,
+          chart: this.metadata.shared.helm.oauth2Proxy.chart,
+          repository: this.metadata.shared.helm.oauth2Proxy.repository,
+          namespace: this.namespace.element.metadata.name,
+          createNamespace: false,
+          values: [
+            yaml.stringify({
+              config: {
+                existingSecret:
+                  this.oauth2ProxyContributorReleaseSecret.element.metadata
+                    .name,
+                configFile: dedent`
+                redirect_url="/oauth2/callback"
+                login_url="https://github.com/login/oauth/authorize"
+                redeem_url="https://github.com/login/oauth/access_token"
+                whitelist_domains="*.${rootDomain}"
+                cookie_domains=".${rootDomain}"
+                scope="read:org user:email"
+                provider="github"
+                skip_provider_button="true"
+                session_store_type="cookie"
+                cookie_samesite="lax"
+                cookie_secure="true"
+                cookie_expire="12h"
+                reverse_proxy="true"
+                pass_access_token="true"
+                pass_authorization_header="true"
+                cookie_csrf_per_request="true"
+                cookie_csrf_expire="5m"
+                cookie_refresh="5m"
+                set_xauthrequest="true"
+                set_authorization_header="false"
+                skip_auth_preflight="true"
+                github_users="${[
+                  ...this.metadata.shared.adminGithubUsers,
+                  ...this.metadata.shared.contributorGithubUsers,
+                ].join(',')}"
+                email_domains="*"
+            `,
+              },
+
+              ingress: {
+                enabled: true,
+                pathType: 'ImplementationSpecific',
+                className: 'nginx',
+                hosts: [host],
+              },
+            }),
+          ],
+        },
+        {
+          authUrl: `https://${host}/oauth2/auth`,
+          authSignin: `https://${host}/oauth2/start?rd=$scheme://$host$request_uri`,
+        },
+      ];
+    },
+  );
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

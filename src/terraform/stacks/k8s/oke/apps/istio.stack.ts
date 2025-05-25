@@ -60,7 +60,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     },
   }));
 
-  istoiBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
+  istioBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
     return {
       name: this.metadata.shared.helm.base.name,
       chart: this.metadata.shared.helm.base.chart,
@@ -75,14 +75,14 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     };
   });
 
-  istoidRelease = this.provide(Release, 'istoidRelease', () => {
+  istiodRelease = this.provide(Release, 'istiodRelease', () => {
     return {
       name: this.metadata.shared.helm.istiod.name,
       chart: this.metadata.shared.helm.istiod.chart,
       repository: this.metadata.shared.helm.istiod.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-      dependsOn: [this.istoiBaseRelease.element],
+      dependsOn: [this.istioBaseRelease.element],
     };
   });
 

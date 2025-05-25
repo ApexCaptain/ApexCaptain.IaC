@@ -28,9 +28,6 @@ import { Project_Stack } from '../../project.stack';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {
-  private readonly config =
-    this.globalConfigService.config.terraform.stacks.k8s.oke.bastion;
-
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -104,7 +101,10 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     displayName: id,
     name: id,
     targetSubnetId: this.k8sOkeNetworkStack.okeBastionPrivateSubnet.element.id,
-    clientCidrBlockAllowList: this.config.clientCidrBlockAllowList,
+    clientCidrBlockAllowList: [
+      this.globalConfigService.config.terraform.externalIpCidrBlocks
+        .apexCaptainHome,
+    ],
     dnsProxyStatus: 'ENABLED',
   }));
 

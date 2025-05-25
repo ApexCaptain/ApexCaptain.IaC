@@ -79,13 +79,17 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             'service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode':
               'None',
             'service.beta.kubernetes.io/oci-load-balancer-shape': 'flexible',
-            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max': 10,
-            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min': 10,
+            // @ToDo 외부 요청에 따라 속도 조절
+            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max': 100,
+            'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min': 100,
           },
+          externalTrafficPolicy: 'Local',
         },
         config: {
           'allow-snippet-annotations': true,
           'annotations-risk-level': 'Critical',
+          'use-forwarded-headers': 'true',
+          'compute-full-forwarded-for': 'true',
         },
       },
       tcp: {},
@@ -100,6 +104,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
         if (!services) return;
         const namespace = eachMetadata.namespace;
         Object.values(services).forEach(eachService => {
+          if (!eachService.ports) return;
           Object.values(eachService.ports)
             .filter(eachPort => eachPort.portBasedIngressPort)
             .forEach(eachPort => {

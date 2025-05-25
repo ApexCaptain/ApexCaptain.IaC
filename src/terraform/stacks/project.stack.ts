@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Fn, LocalBackend } from 'cdktf';
+import { LocalBackend } from 'cdktf';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
-import { AbstractStack, GithubRepositorySecretArgs } from '@/common';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { ActionsSecret } from '@lib/terraform/providers/github/actions-secret';
 import { DataGithubRepository } from '@lib/terraform/providers/github/data-github-repository';
@@ -10,14 +10,13 @@ import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
-import { flatten } from 'flat';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
 import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
 import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { DataOciObjectstorageNamespace } from '@lib/terraform/providers/oci/data-oci-objectstorage-namespace';
-import { IdentityCustomerSecretKey } from '@lib/terraform/providers/oci/identity-customer-secret-key';
+import _ from 'lodash';
 
 @Injectable()
 export class Project_Stack extends AbstractStack {
@@ -46,53 +45,35 @@ export class Project_Stack extends AbstractStack {
     }),
   );
 
-  iacGithubRepositorySecretArgs = this.provide(
+  iacGithubRepositoryActionArgs = this.provide(
     Resource,
-    'iacGithubRepositorySecretArgs',
+    'iacGithubRepositoryActionArgs',
     id => {
-      const secretArgs: GithubRepositorySecretArgs = {
-        workflow: {
-          token:
-            this.globalConfigService.config.terraform.config.providers.github
-              .ApexCaptain.token,
-        },
+      const secrets = {
+        workflowToken:
+          this.globalConfigService.config.terraform.config.providers.github
+            .ApexCaptain.token,
       };
 
-      const valueArgs: GithubRepositorySecretArgs = {};
+      const variables = {};
 
-      Object.entries(
-        flatten<
-          GithubRepositorySecretArgs,
-          {
-            [key: string]: string | number | boolean;
-          }
-        >(secretArgs, {
-          delimiter: '_',
-          transformKey: key => key.toUpperCase(),
-        }),
-      ).forEach(([key, value]) => {
-        this.provide(ActionsSecret, `${id}-${key}`, () => ({
+      Object.entries<string>(secrets).forEach(([key, value]) => {
+        const idPostFix = _.snakeCase(key).replace(/_/gi, '-');
+        const secretName = _.snakeCase(key).toUpperCase();
+        this.provide(ActionsSecret, `${id}-${idPostFix}`, () => ({
           repository: this.dataIacGithubRepository.element.name,
-          secretName: key,
-          plaintextValue: value.toString(),
+          secretName,
+          plaintextValue: value,
         }));
       });
 
-      Object.entries(
-        flatten<
-          GithubRepositorySecretArgs,
-          {
-            [key: string]: string | number | boolean;
-          }
-        >(valueArgs, {
-          delimiter: '_',
-          transformKey: key => key.toUpperCase(),
-        }),
-      ).forEach(([key, value]) => {
-        this.provide(ActionsVariable, `${id}-${key}`, () => ({
+      Object.entries<string>(variables).forEach(([key, value]) => {
+        const idPostFix = _.snakeCase(key).replace(/_/gi, '-');
+        const variableName = _.snakeCase(key).toUpperCase();
+        this.provide(ActionsVariable, `${id}-${idPostFix}`, () => ({
           repository: this.dataIacGithubRepository.element.name,
-          variableName: key,
-          value: value.toString(),
+          variableName,
+          value,
         }));
       });
 
@@ -139,6 +120,14 @@ export class Project_Stack extends AbstractStack {
     () => ({
       compartmentId: this.dataOciRootCompartment.element.id,
       adNumber: 1,
+    }),
+  );
+
+  dataOciObjectstorageNamespace = this.provide(
+    DataOciObjectstorageNamespace,
+    'dataOciObjectstorageNamespace',
+    () => ({
+      compartmentId: this.dataOciRootCompartment.element.id,
     }),
   );
 

@@ -77,8 +77,49 @@ export class K8S_Oke_System_Stack extends AbstractStack {
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
     return [
       {},
-
       {
+        rolloutTrigger: createK8sApplicationMetadata({
+          namespace: 'rollout-trigger',
+          services: {
+            rolloutTrigger: {
+              name: 'rollout-trigger',
+              labels: {
+                app: 'rollout-trigger',
+              },
+              ports: {
+                rolloutTrigger: {
+                  portBasedIngressPort:
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings
+                      .rolloutTriggerNodePort.inbound,
+                  name: 'rollout-trigger',
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol:
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings
+                      .rolloutTriggerNodePort.protocol ===
+                    OciNetworkProtocol.TCP
+                      ? 'TCP'
+                      : 'UDP',
+                },
+              },
+            },
+          },
+        }),
+        argoCd: createK8sApplicationMetadata({
+          namespace: 'argocd',
+          helm: {
+            argoCd: {
+              name: 'argo-cd',
+              chart: 'argo-cd',
+              repository: 'https://argoproj.github.io/argo-helm',
+            },
+            argoCdImageUpdater: {
+              name: 'argocd-image-updater',
+              chart: 'argocd-image-updater',
+              repository: 'https://argoproj.github.io/argo-helm',
+            },
+          },
+        }),
         nfs: createK8sApplicationMetadata({
           namespace: 'nfs',
           helm: {
@@ -153,6 +194,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           },
         }),
 
+        keycloak: createK8sApplicationMetadata({
+          namespace: 'keycloak',
+          helm: {
+            keycloak: {
+              name: 'keycloak',
+              chart: 'keycloak',
+              repository: 'https://charts.bitnami.com/bitnami',
+            },
+          },
+        }),
+
         oauth2Proxy: createK8sApplicationMetadata({
           namespace: 'oauth2-proxy',
           helm: {
@@ -189,6 +241,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               },
               ports: {
                 'home-l2tp-vpn-proxy': {
+                  name: 'home-l2tp-vpn-proxy',
                   port: 11530,
                   targetPort: '11530',
                   protocol: 'TCP',
@@ -230,6 +283,43 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                   name: 'redis-ui',
                   port: 7843,
                   targetPort: '7843',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+        docentAiWeb: createK8sApplicationMetadata({
+          namespace: 'docent-ai-web',
+          services: {
+            docentAiWeb: {
+              name: 'docent-ai-web',
+              labels: {
+                app: 'docent-ai-web',
+              },
+              ports: {
+                docentAiWeb: {
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+        docentAiEngine: createK8sApplicationMetadata({
+          namespace: 'docent-ai-engine',
+          services: {
+            docentAiEngine: {
+              name: 'docent-ai-engine',
+              labels: {
+                app: 'docent-ai-engine',
+              },
+              ports: {
+                docentAiEngine: {
+                  name: 'docent-ai-engine',
+                  port: 22583,
+                  targetPort: '22583',
                   protocol: 'TCP',
                 },
               },

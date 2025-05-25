@@ -25,6 +25,7 @@ import {
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
+import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
@@ -164,11 +165,12 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'kubernetes.io/ingress.class': 'nginx',
         'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authSignin,
       },
     },
     spec: {
@@ -214,6 +216,7 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsHomeL2tpVpnProxyStack: K8S_Oke_Apps_HomeL2tpVpnProxy_Stack,
+    private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -222,5 +225,6 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
     );
     this.addDependency(this.k8sOkeAppsNfsStack);
     this.addDependency(this.k8sOkeAppsHomeL2tpVpnProxyStack);
+    this.addDependency(this.k8sOkeAppsIstioStack);
   }
 }

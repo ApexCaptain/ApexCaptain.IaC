@@ -70,7 +70,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
   okeCluster = this.provide(ContainerengineCluster, 'okeCluster', id => ({
     compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
-    kubernetesVersion: 'v1.31.1',
+    kubernetesVersion: 'v1.32.1',
     name: id,
     vcnId: this.k8sOkeNetworkStack.okeVcn.element.id,
 
@@ -115,13 +115,26 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
         },
       },
       nodeSourceDetails: {
-        // @Note: 무슨 이유에서인지 dataCoreImages로는 검색이 안 됨. 별도로 output만들어서 수동으로 가져옴
-        // @ToDo: 추후 자동화 필요
-        // @See: https://github.com/oracle/terraform-provider-oci/issues/1771
+        /**
+         * @note
+         * - 무슨 이유에서인지 dataCoreImages로는 검색이 안 됨. 별도로 output만들어서 수동으로 가져옴
+         * - 추후 자동화 필요
+         * @see: https://github.com/oracle/terraform-provider-oci/issues/1771
+         */
         imageId:
           'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaahe7qtoxzq42rdvll5mhx7bpgibtvguxipbt5ueyrmzc7q3hrwlla',
         sourceType: 'IMAGE',
       },
+      /**
+       * @note
+       * - Cycling 사용하려면 Basic Type으론 안된다.
+       * - Enhanced Cluster로 Type 변경하란다... 시간당 $0.1 소모됨.
+       */
+      // nodePoolCyclingDetails: {
+      //   isNodeCyclingEnabled: true,
+      //   maximumSurge: '0',
+      //   maximumUnavailable: '50%',
+      // },
       nodeShape: 'VM.Standard.A1.Flex',
       nodeShapeConfig: {
         memoryInGbs: 12,

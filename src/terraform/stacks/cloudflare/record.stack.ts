@@ -8,6 +8,7 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DnsRecord } from '@lib/terraform/providers/cloudflare/dns-record';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { K8S_Oke_Network_Stack } from '../k8s/oke/network.stack';
+import { PageRule } from '@lib/terraform/providers/cloudflare/page-rule';
 
 @Injectable()
 export class Cloudflare_Record_Stack extends AbstractStack {
@@ -24,7 +25,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
-  // For TCP / UDP Services
   sftpRecord = this.provide(DnsRecord, 'sftpRecord', () => ({
     name: 'sftp',
     ttl: 1,
@@ -39,6 +39,72 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   // For Https Ingress Services
+
+  // argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
+  //   name: 'argocd',
+  //   ttl: 1,
+  //   type: 'A',
+  //   zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+  //   content:
+  //     this.k8sOkeNetworkStack
+  //       .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+  //       .ipAddress,
+  //   proxied: true,
+  //   comment: 'Cloudflare record for Argo CD service',
+  // }));
+
+  docentRecord = this.provide(DnsRecord, 'docentRecord', () => ({
+    name: 'docent',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Docent service',
+  }));
+
+  docentEngineRecord = this.provide(DnsRecord, 'docentEngineRecord', () => ({
+    name: 'docent-engine',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Docent Engine service',
+  }));
+
+  keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
+    name: 'keycloak',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Keycloak service',
+  }));
+
+  keycloakAdminRecord = this.provide(DnsRecord, 'keycloakAdminRecord', () => ({
+    name: 'keycloak-admin',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Keycloak Admin service',
+  }));
+
   vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
     name: 'vault',
     ttl: 1,
@@ -107,18 +173,39 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for OKE Dashboard service',
   }));
 
-  oauth2ProxyRecord = this.provide(DnsRecord, 'oauth2ProxyRecord', () => ({
-    name: 'oauth2-proxy',
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for OAuth2 Proxy service',
-  }));
+  oauth2ProxyAdminRecord = this.provide(
+    DnsRecord,
+    'oauth2ProxyAdminRecord',
+    () => ({
+      name: 'oauth2-proxy-admin',
+      ttl: 1,
+      type: 'A',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.k8sOkeNetworkStack
+          .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+          .ipAddress,
+      proxied: true,
+      comment: 'Cloudflare record for OAuth2 Proxy Admin service',
+    }),
+  );
+
+  oauth2ProxyContributorRecord = this.provide(
+    DnsRecord,
+    'oauth2ProxyContributorRecord',
+    () => ({
+      name: 'oauth2-proxy-contributor',
+      ttl: 1,
+      type: 'A',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.k8sOkeNetworkStack
+          .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+          .ipAddress,
+      proxied: true,
+      comment: 'Cloudflare record for OAuth2 Proxy Contributor service',
+    }),
+  );
 
   filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
     name: 'files',

@@ -451,11 +451,12 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'kubernetes.io/ingress.class': 'nginx',
         'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authUrl,
         'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authSignin,
         'nginx.ingress.kubernetes.io/auth-snippet': dedent`
           if ($request_uri ~ "/share") {
             return 200;
