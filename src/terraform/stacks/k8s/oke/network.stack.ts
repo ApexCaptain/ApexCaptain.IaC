@@ -89,26 +89,11 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       description: 'Rollout Trigger port',
     });
 
-    const docentEngineNodePort = createLoadBalancerPortInfo({
-      inbound: 22583,
-      protocol: OciNetworkProtocol.TCP,
-      description: 'Docent Engine port',
-      sourceCidrBlocks: [
-        this.globalConfigService.config.terraform.externalIpCidrBlocks
-          .apexCaptainHome,
-        this.globalConfigService.config.terraform.externalIpCidrBlocks
-          .gjwoo960101,
-        this.globalConfigService.config.terraform.externalIpCidrBlocks
-          .nayuntechCorp,
-      ],
-    });
-
     const combination = {
       httpNodePort,
       httpsNodePort,
       nfsSftpNodePort,
       rolloutTriggerNodePort,
-      docentEngineNodePort,
     };
 
     const inboundPorts = Object.values(combination).map(

@@ -411,20 +411,6 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
                   },
                 },
               },
-              // {
-              //   path: '/api',
-              //   pathType: 'Prefix',
-              //   backend: {
-              //     service: {
-              //       name: this.externalEngineService.element.metadata.name,
-              //       port: {
-              //         number:
-              //           this.externalEngineService.shared.servicePort
-              //             .docentAiEngine.port,
-              //       },
-              //     },
-              //   },
-              // },
             ],
           },
         },

@@ -69,6 +69,7 @@ const constants = (() => {
   const keysDir = 'keys';
   const secretsDir = '.secrets';
   const tmpDir = 'tmp';
+  const cursorDir = '.cursor';
 
   const cdktfOutDir = 'cdktf.out';
 
@@ -78,6 +79,7 @@ const constants = (() => {
     process.cwd(),
     process.env.OCI_CLI_CONFIG_FILE ?? 'keys/oci.config',
   );
+  const mcpJsonFilePath = path.join(cursorDir, 'mcp.json');
 
   const paths = {
     dirs: {
@@ -91,11 +93,13 @@ const constants = (() => {
       keysDir,
       secretsDir,
       tmpDir,
+      cursorDir,
     },
     files: {
       cdktfConfigFilePath,
       cdktfOutFilePath,
       ociCliConfigFilePath,
+      mcpJsonFilePath,
     },
   };
 
@@ -213,6 +217,7 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
+    `/${constants.paths.files.mcpJsonFilePath}`,
   ],
   deps: [
     'cdktf',
@@ -652,6 +657,19 @@ void (async () => {
       ],
     }),
   );
+
+  // mcp.json
+  new JsonFile(project, '.cursor/mcp.json', {
+    obj: {
+      mcpServers: {
+        context7: {
+          command: 'npx',
+          args: ['-y', '@upstash/context7-mcp'],
+        },
+      },
+    },
+    committed: false,
+  });
 
   project.postSynthesize = () => {
     execSync(`chmod 400 ${apexCaptainOciPrivateKeyFile.absolutePath}`);

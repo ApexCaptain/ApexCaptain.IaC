@@ -25,21 +25,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
-  // For TCP / UDP Services
-  docentEngineRecord = this.provide(DnsRecord, 'docentEngineRecord', () => ({
-    // name: 'docent-engine',
-    name: 'engine.docent',
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: false,
-    comment: 'Cloudflare record for Docent Engine service',
-  }));
-
   sftpRecord = this.provide(DnsRecord, 'sftpRecord', () => ({
     name: 'sftp',
     ttl: 1,
@@ -79,6 +64,19 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .ipAddress,
     proxied: true,
     comment: 'Cloudflare record for Docent service',
+  }));
+
+  docentEngineRecord = this.provide(DnsRecord, 'docentEngineRecord', () => ({
+    name: 'docent-engine',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Docent Engine service',
   }));
 
   keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({

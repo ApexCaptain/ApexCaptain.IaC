@@ -18,6 +18,66 @@ import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack'
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 
+/*
+-- Previous Values --
+
+
+          // global: {
+          //   defaultStorageClass:
+          //     this.k8sOkeAppsNfsStack.release.shared.storageClassName,
+          // },
+          // ingress: {
+          //   enabled: true,
+          //   ingressClassName: 'nginx',
+          //   hostname: host,
+          //   hostnameStrict: true,
+          //   annotations: {
+          //     'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+          //     'nginx.ingress.kubernetes.io/rewrite-target': '/',
+          //   },
+          //   path: '/',
+          // },
+          // adminIngress: {
+          //   enabled: true,
+          //   ingressClassName: 'nginx',
+          //   hostname: adminHost,
+          //   annotations: {
+          //     'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+          //     'nginx.ingress.kubernetes.io/rewrite-target': '/',
+          //     'nginx.ingress.kubernetes.io/auth-url':
+          //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+          //         .authUrl,
+          //     'nginx.ingress.kubernetes.io/auth-signin':
+          //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+          //         .authSignin,
+          //   },
+          //   path: '/',
+          // },
+          // production: true,
+          // extraEnvVars: [
+          //   {
+          //     name: 'KC_HOSTNAME',
+          //     value: `https://${host}`,
+          //   },
+          //   {
+          //     name: 'KC_HOSTNAME_ADMIN',
+          //     value: `https://${adminHost}`,
+          //   },
+          //   {
+          //     name: 'KEYCLOAK_FRONTEND_URL',
+          //     value: `https://${adminHost}`,
+          //   },
+          //   {
+          //     name: 'KC_HTTP_ENABLED',
+          //     value: 'true',
+          //   },
+          //   {
+          //     name: 'KC_PROXY',
+          //     value: 'edge',
+          //   },
+          // ],
+*/
+
 @Injectable()
 export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
   terraform = {
@@ -76,54 +136,23 @@ export class K8S_Oke_Apps_Keycloak_Stack extends AbstractStack {
   //           defaultStorageClass:
   //             this.k8sOkeAppsNfsStack.release.shared.storageClassName,
   //         },
+  //         replicaCount: 2,
   //         ingress: {
   //           enabled: true,
   //           ingressClassName: 'nginx',
   //           hostname: host,
-  //           hostnameStrict: true,
-  //           annotations: {
-  //             'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-  //             'nginx.ingress.kubernetes.io/rewrite-target': '/',
-  //           },
   //           path: '/',
+  //           annotations: {
+  //             'kubernetes.io/ingress.class': 'nginx',
+  //           },
+  //           tls: true,
+  //           servicePort: 'https',
   //         },
-  //         adminIngress: {
-  //           enabled: true,
-  //           ingressClassName: 'nginx',
-  //           hostname: adminHost,
-  //           annotations: {
-  //             'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-  //             'nginx.ingress.kubernetes.io/rewrite-target': '/',
-  //             'nginx.ingress.kubernetes.io/auth-url':
-  //               this.k8sOkeAppsOAuth2ProxyStack.release.shared.authUrl,
-  //             'nginx.ingress.kubernetes.io/auth-signin':
-  //               this.k8sOkeAppsOAuth2ProxyStack.release.shared.authSignin,
-  //           },
-  //           path: '/',
+  //         auth: {
+  //           adminUser: 'admin',
+  //           adminPassword: 'admin',
   //         },
   //         production: true,
-  //         extraEnvVars: [
-  //           {
-  //             name: 'KC_HOSTNAME',
-  //             value: `https://${host}`,
-  //           },
-  //           {
-  //             name: 'KC_HOSTNAME_ADMIN',
-  //             value: `https://${adminHost}`,
-  //           },
-  //           {
-  //             name: 'KEYCLOAK_FRONTEND_URL',
-  //             value: `https://${adminHost}`,
-  //           },
-  //           {
-  //             name: 'KC_HTTP_ENABLED',
-  //             value: 'true',
-  //           },
-  //           {
-  //             name: 'KC_PROXY',
-  //             value: 'edge',
-  //           },
-  //         ],
   //       }),
   //     ],
   //   };

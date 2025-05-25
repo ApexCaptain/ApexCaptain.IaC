@@ -52,4 +52,5 @@ jspm_packages/
 /cdktf.json
 /env/prod.env
 !/.vscode/settings.json
+/.cursor/mcp.json
 !/.projenrc.ts

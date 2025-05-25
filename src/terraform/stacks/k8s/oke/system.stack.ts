@@ -317,17 +317,10 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               },
               ports: {
                 docentAiEngine: {
-                  portBasedIngressPort:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings
-                      .docentEngineNodePort.inbound,
                   name: 'docent-ai-engine',
                   port: 22583,
                   targetPort: '22583',
-                  protocol:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings
-                      .docentEngineNodePort.protocol === OciNetworkProtocol.TCP
-                      ? 'TCP'
-                      : 'UDP',
+                  protocol: 'TCP',
                 },
               },
             },

@@ -83,10 +83,13 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
             'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max': 100,
             'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min': 100,
           },
+          externalTrafficPolicy: 'Local',
         },
         config: {
           'allow-snippet-annotations': true,
           'annotations-risk-level': 'Critical',
+          'use-forwarded-headers': 'true',
+          'compute-full-forwarded-for': 'true',
         },
       },
       tcp: {},

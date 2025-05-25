@@ -33,6 +33,8 @@ import {
   DeploymentV1,
   DeploymentV1SpecTemplateSpecContainerPort,
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
@@ -364,6 +366,52 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     },
   }));
 
+  ingress = this.provide(IngressV1, 'ingress', id => {
+    const externalIpCidrBlocks =
+      this.globalConfigService.config.terraform.externalIpCidrBlocks;
+    return {
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+        annotations: {
+          'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+          'nginx.ingress.kubernetes.io/rewrite-target': '/',
+          'nginx.ingress.kubernetes.io/whitelist-source-range': [
+            externalIpCidrBlocks.apexCaptainHome,
+            externalIpCidrBlocks.gjwoo960101,
+            externalIpCidrBlocks.nayuntechCorp,
+          ].join(','),
+        },
+      },
+      spec: {
+        ingressClassName: 'nginx',
+        rule: [
+          {
+            host: `${this.cloudflareRecordStack.docentEngineRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            http: {
+              path: [
+                {
+                  path: '/',
+                  pathType: 'Prefix',
+                  backend: {
+                    service: {
+                      name: this.service.element.metadata.name,
+                      port: {
+                        number:
+                          this.metadata.shared.services.docentAiEngine.ports
+                            .docentAiEngine.port,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+  });
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
@@ -379,6 +427,7 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
+    private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -386,5 +435,6 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
       'Docent AI Engine for OKE k8s',
     );
     this.addDependency(this.k8sOkeAppsIstioStack);
+    this.addDependency(this.k8sOkeAppsIngressControllerStack);
   }
 }
