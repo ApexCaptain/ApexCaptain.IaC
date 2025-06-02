@@ -35,6 +35,8 @@ import {
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
+import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
+import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
@@ -285,6 +287,27 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     },
   ]);
 
+  assetPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'assetPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sOkeAppsNfsStack.release.shared.storageClassName,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '2Gi',
+          },
+        },
+      },
+    }),
+  );
+
   imagePullSecret = this.provide(SecretV1, 'imagePullSecret', id => {
     const server = `${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.ocir.io`;
     const username = `${this.projectStack.dataOciObjectstorageNamespace.element.namespace}/${this.applier.shared.user.element.name}`;
@@ -344,6 +367,12 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
                 containerPort: parseInt(eachPort.targetPort),
                 protocol: eachPort.protocol,
               })),
+              volumeMount: [
+                {
+                  name: this.assetPersistentVolumeClaim.element.metadata.name,
+                  mountPath: '/app/assets',
+                },
+              ],
               env: [
                 {
                   name: 'NODE_ENV',
@@ -354,6 +383,15 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
                   value: 'Asia/Seoul',
                 },
               ],
+            },
+          ],
+          volume: [
+            {
+              name: this.assetPersistentVolumeClaim.element.metadata.name,
+              persistentVolumeClaim: {
+                claimName:
+                  this.assetPersistentVolumeClaim.element.metadata.name,
+              },
             },
           ],
         },
@@ -376,10 +414,12 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
         annotations: {
           'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
           'nginx.ingress.kubernetes.io/rewrite-target': '/',
+
           'nginx.ingress.kubernetes.io/whitelist-source-range': [
-            externalIpCidrBlocks.apexCaptainHome,
-            externalIpCidrBlocks.gjwoo960101,
-            externalIpCidrBlocks.nayuntechCorp,
+            externalIpCidrBlocks.apexCaptainHomeIpv4,
+            externalIpCidrBlocks.gjwoo960101Ipv4,
+            externalIpCidrBlocks.gjwoo960101Ipv6,
+            externalIpCidrBlocks.nayuntechCorpIpv4,
           ].join(','),
         },
       },
@@ -426,6 +466,7 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
     private readonly k8sOkeAppsIngressControllerStack: K8S_Oke_Apps_IngressController_Stack,
   ) {
@@ -434,6 +475,7 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
       K8S_Oke_Apps_DocentAiEngine_Stack.name,
       'Docent AI Engine for OKE k8s',
     );
+    this.addDependency(this.k8sOkeAppsNfsStack);
     this.addDependency(this.k8sOkeAppsIstioStack);
     this.addDependency(this.k8sOkeAppsIngressControllerStack);
   }

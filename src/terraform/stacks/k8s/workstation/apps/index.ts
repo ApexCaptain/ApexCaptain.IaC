@@ -1,4 +1,3 @@
-export * from './7dtd.stack';
 export * from './dashboard.stack';
-export * from './sftp.stack';
-export * from './palworld.stack';
+export * from './istio.stack';
+export * from './longhorn.stack';

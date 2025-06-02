@@ -269,6 +269,8 @@ void (async () => {
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@deploy:single': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies`,
+    'pretf@deploy:selection': `cdktf synth`,
+    'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
     'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init'`,
@@ -403,9 +405,11 @@ void (async () => {
   const environment: GlobalConfigType = {
     terraform: {
       externalIpCidrBlocks: {
-        apexCaptainHome: `${workstationIpAddress}/32`,
-        gjwoo960101: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101!!,
-        nayuntechCorp: process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP!!,
+        apexCaptainHomeIpv4: `${workstationIpAddress}/32`,
+        gjwoo960101Ipv4: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV4!!,
+        gjwoo960101Ipv6: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV6!!,
+        nayuntechCorpIpv4:
+          process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_IPV4!!,
       },
       externalGithubUsers: {
         ApexCaptain: {
@@ -522,14 +526,6 @@ void (async () => {
                 hddVolume:
                   process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_HDD_VOLUME!!,
               },
-            },
-            sftp: {
-              userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
-            },
-            palworld: {
-              adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
-              serverPassword:
-                process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
             },
           },
         },

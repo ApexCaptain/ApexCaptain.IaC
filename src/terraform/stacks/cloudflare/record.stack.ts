@@ -25,8 +25,8 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
-  sftpRecord = this.provide(DnsRecord, 'sftpRecord', () => ({
-    name: 'sftp',
+  keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
+    name: 'keycloak',
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -34,24 +34,22 @@ export class Cloudflare_Record_Stack extends AbstractStack {
       this.k8sOkeNetworkStack
         .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
         .ipAddress,
-    proxied: false,
-    comment: 'Cloudflare record for SFTP service',
+    proxied: true,
+    comment: 'Cloudflare record for Keycloak service',
   }));
 
-  // For Https Ingress Services
-
-  // argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
-  //   name: 'argocd',
-  //   ttl: 1,
-  //   type: 'A',
-  //   zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-  //   content:
-  //     this.k8sOkeNetworkStack
-  //       .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-  //       .ipAddress,
-  //   proxied: true,
-  //   comment: 'Cloudflare record for Argo CD service',
-  // }));
+  keycloakAdminRecord = this.provide(DnsRecord, 'keycloakAdminRecord', () => ({
+    name: 'keycloak-admin',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Keycloak Admin service',
+  }));
 
   docentRecord = this.provide(DnsRecord, 'docentRecord', () => ({
     name: 'docent',
@@ -79,8 +77,8 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Docent Engine service',
   }));
 
-  keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
-    name: 'keycloak',
+  okeSftpRecord = this.provide(DnsRecord, 'okeSftpRecord', () => ({
+    name: 'sftp-oke',
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -88,22 +86,40 @@ export class Cloudflare_Record_Stack extends AbstractStack {
       this.k8sOkeNetworkStack
         .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
         .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Keycloak service',
+    proxied: false,
+    comment: 'Cloudflare record for OKE SFTP service',
   }));
 
-  keycloakAdminRecord = this.provide(DnsRecord, 'keycloakAdminRecord', () => ({
-    name: 'keycloak-admin',
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Keycloak Admin service',
-  }));
+  workstationSftpRecord = this.provide(
+    DnsRecord,
+    'workstationSftpRecord',
+    () => ({
+      name: 'sftp-workstation',
+      ttl: 1,
+      type: 'CNAME',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+          .domain.iptime,
+      proxied: false,
+      comment: 'Cloudflare record for Workstation SFTP service',
+    }),
+  );
+
+  // For Https Ingress Services
+
+  // argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
+  //   name: 'argocd',
+  //   ttl: 1,
+  //   type: 'A',
+  //   zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+  //   content:
+  //     this.k8sOkeNetworkStack
+  //       .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+  //       .ipAddress,
+  //   proxied: true,
+  //   comment: 'Cloudflare record for Argo CD service',
+  // }));
 
   vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
     name: 'vault',
@@ -207,8 +223,8 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     }),
   );
 
-  filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
-    name: 'files',
+  okeFilesRecord = this.provide(DnsRecord, 'okeFilesRecord', () => ({
+    name: 'files-oke',
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -217,7 +233,35 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
         .ipAddress,
     proxied: true,
-    comment: 'Cloudflare record for Files Browser service',
+    comment: 'Cloudflare record for OKE Files Browser service',
+  }));
+
+  workstationFilesRecord = this.provide(
+    DnsRecord,
+    'workstationFilesRecord',
+    () => ({
+      name: 'files-workstation',
+      ttl: 1,
+      type: 'CNAME',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+          .domain.iptime,
+      proxied: true,
+      comment: 'Cloudflare record for Workstation Files Browser service',
+    }),
+  );
+
+  longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
+    name: 'longhorn',
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Longhorn service',
   }));
 
   constructor(

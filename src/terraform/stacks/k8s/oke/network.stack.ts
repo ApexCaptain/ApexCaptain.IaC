@@ -434,7 +434,7 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
 
         ...[
           this.globalConfigService.config.terraform.externalIpCidrBlocks
-            .apexCaptainHome,
+            .apexCaptainHomeIpv4,
         ]
           .map(eachL2tpVpnServerCidrBlock => {
             return [

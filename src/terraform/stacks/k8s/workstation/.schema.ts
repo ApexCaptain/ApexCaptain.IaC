@@ -10,11 +10,4 @@ export const WorkstationSchema = Joi.object({
       hddVolume: Joi.string().required(),
     }).required(),
   }).required(),
-  sftp: Joi.object({
-    userName: Joi.string().required(),
-  }).required(),
-  palworld: Joi.object({
-    adminPassword: Joi.string().required(),
-    serverPassword: Joi.string().required(),
-  }).required(),
 }).required();

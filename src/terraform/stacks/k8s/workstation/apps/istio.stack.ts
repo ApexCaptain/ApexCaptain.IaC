@@ -3,18 +3,17 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_System_Stack } from '../system.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import { K8S_Oke_System_Stack } from '../system.stack';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
 import yaml from 'yaml';
 
 @Injectable()
-export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
+export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -23,24 +22,15 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(
-        KubernetesProvider,
-        'kubernetesProvider',
-        () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
-        }),
+      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
+        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
           configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
+              .configPath,
+          insecure: true,
         },
       })),
     },
@@ -48,7 +38,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
 
   private readonly metadata = this.provide(Resource, 'metadata', () => [
     {},
-    this.k8sOkeSystemStack.applicationMetadata.shared.istio,
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.istio,
   ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
@@ -89,13 +79,12 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
-    private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
+    private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Oke_Apps_Istio_Stack.name,
-      'Istio stack for OKE k8s',
+      K8S_Workstation_Apps_Istio_Stack.name,
+      'Istio stack for workstation k8s',
     );
   }
 }

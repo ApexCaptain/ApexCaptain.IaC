@@ -21,6 +21,8 @@ import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -31,6 +33,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       }),
     ),
     providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
@@ -39,13 +42,14 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     },
   };
 
-  meta = {
-    name: 'dashboard',
-  };
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.dashboard,
+  ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
-      name: this.meta.name,
+      name: this.metadata.shared.namespace,
     },
   }));
 
@@ -212,5 +216,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       K8S_Workstation_Apps_Dashboard_Stack.name,
       'Dashboard stack for workstation k8s',
     );
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }
