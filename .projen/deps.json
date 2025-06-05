@@ -163,6 +163,14 @@
       "type": "runtime"
     },
     {
+      "name": "moment",
+      "type": "runtime"
+    },
+    {
+      "name": "moment-timezone",
+      "type": "runtime"
+    },
+    {
       "name": "reflect-metadata",
       "type": "runtime"
     },

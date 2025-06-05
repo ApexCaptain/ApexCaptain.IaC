@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
 
-# echo "🔄 Pulling latest changes from remote repository"
-# git pull
+if [ "$ENABLE_AUTO_SYNC" = false ]; then
+    echo "🔄 Auto sync is disabled"
+    exit 0
+fi
 
-# echo "🔄 Installing dependencies"
-# yarn
+echo "🔄 Pulling latest changes from remote repository"
+git pull
 
-# echo "🔄 Initializing Projen"
-# yarn projen
+echo "🔄 Installing dependencies"
+yarn
 
-# echo "🔄 Building cdktf project"
-# yarn tf@build
+echo "🔄 Initializing Projen"
+yarn projen
 
-# echo "🔄 Installing terraform providers"
-# yarn tf@install
+echo "🔄 Building cdktf project"
+yarn tf@build
+
+echo "🔄 Installing terraform providers"
+yarn tf@install
 
 echo "✅ Synchronization is complete"

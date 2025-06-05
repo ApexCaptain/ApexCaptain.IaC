@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
-import {
-  AbstractStack,
-  createK8sApplicationMetadata,
-  OnPremiseNodePortInfo,
-} from '@/common';
+import { AbstractStack, createK8sApplicationMetadata } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DataKubernetesNamespace } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace';
@@ -12,7 +8,6 @@ import { DataKubernetesService } from '@lib/terraform/providers/kubernetes/data-
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { DataKubernetesNodes } from '@lib/terraform/providers/kubernetes/data-kubernetes-nodes';
 import { K8S_Workstation_NodeMeta_Stack } from './node-meta.stack';
 
 @Injectable()
@@ -30,17 +25,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       ),
     },
   };
-
-  // dataNodes = this.provide(
-  //   DataKubernetesNodes,
-  //   'dataNodes',
-  //   () => ({}),
-  // ).addOutput(
-  //   id => `${id}_out`,
-  //   ele => ({
-  //     value: ele.nodes,
-  //   }),
-  // );
 
   dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
     metadata: {
@@ -63,28 +47,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       },
     ],
   );
-
-  // nodePorts = (() => {
-  //   // 30000~32767
-  //   const onPremiseNodePortInfos = {
-  //     nfsSftp: {
-  //       nodePort: 30001,
-  //       protocol: 'TCP',
-  //     },
-  //     nfsSft2: {
-  //       nodePort: 30001,
-  //       protocol: 'TCP',
-  //     },
-  //   };
-  //   const onPremiseNodePortInfoValues = Object.values(onPremiseNodePortInfos);
-  //   if (
-  //     new Set(onPremiseNodePortInfoValues.map(each => each.nodePort)).size !==
-  //     onPremiseNodePortInfoValues.length
-  //   ) {
-  //     throw new Error('Node ports must be unique.');
-  //   }
-  //   return onPremiseNodePortInfos;
-  // })();
 
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
     return [
@@ -120,51 +82,12 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
         }),
-        // nfs: createK8sApplicationMetadata({
-        //   namespace: 'nfs',
-        //   helm: {
-        //     'nfs-subdir-external-provisioner': {
-        //       name: 'nfs-subdir-external-provisioner',
-        //       chart: 'nfs-subdir-external-provisioner',
-        //       repository:
-        //         'https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner',
-        //     },
-        //   },
-        //   services: {
-        //     nfs: {
-        //       name: 'nfs',
-        //       labels: {
-        //         app: 'nfs',
-        //       },
-        //       ports: {
-        //         nfs: {
-        //           name: 'nfs',
-        //           port: 2049,
-        //           targetPort: '2049',
-        //           protocol: 'TCP',
-        //         },
-        //         'file-browser': {
-        //           name: 'file-browser',
-        //           port: 80,
-        //           targetPort: '80',
-        //           protocol: 'TCP',
-        //         },
-        //         sftp: {
-        //           nodePort: 30001,
-        //           name: 'sftp',
-        //           port: 22,
-        //           targetPort: '22',
-        //           protocol: 'TCP',
-        //         },
-        //       },
-        //     },
-        //   },
-        // }),
       },
     ];
   });
 
   constructor(
+    // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
 
