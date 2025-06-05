@@ -7,7 +7,8 @@ services:
     environment:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
-      dirPathsToChangeOwner: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH}
+      ENABLE_AUTO_SYNC: true
+      DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH}
 
     env_file:
       - .env

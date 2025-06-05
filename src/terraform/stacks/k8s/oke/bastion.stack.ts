@@ -103,7 +103,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     targetSubnetId: this.k8sOkeNetworkStack.okeBastionPrivateSubnet.element.id,
     clientCidrBlockAllowList: [
       this.globalConfigService.config.terraform.externalIpCidrBlocks
-        .apexCaptainHome,
+        .apexCaptainHomeIpv4,
     ],
     dnsProxyStatus: 'ENABLED',
   }));

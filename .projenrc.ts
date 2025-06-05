@@ -217,7 +217,6 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.cdktfOutDir}`,
     `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
-    `/${constants.paths.files.mcpJsonFilePath}`,
   ],
   deps: [
     'cdktf',
@@ -238,6 +237,8 @@ const project = new typescript.TypeScriptAppProject({
     'cron-time-generator',
     'yaml',
     'dedent',
+    'moment',
+    'moment-timezone',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -269,6 +270,8 @@ void (async () => {
     'tf@build': 'cdktf synth',
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
     'tf@deploy:single': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies`,
+    'pretf@deploy:selection': `cdktf synth`,
+    'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
     'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init'`,
@@ -277,6 +280,7 @@ void (async () => {
     terminal: 'ts-node ./scripts/terminal-v2.script.ts',
   });
 
+  // Oci Private Key
   const apexCaptainOciPrivateKeyFile = new TextFile(
     project,
     path.join(constants.paths.dirs.keysDir, 'APEX_CAPTAIN_OCI_PRIVATE_KEY.pem'),
@@ -286,7 +290,7 @@ void (async () => {
     },
   );
 
-  // Generate Oci Cli Config File
+  // Oci Cli Config
   const ociCliConfigFile = new TextFile(
     project,
     constants.paths.files.ociCliConfigFilePath,
@@ -399,13 +403,14 @@ void (async () => {
   const workstationIpAddress = (
     await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
   ).address;
-
   const environment: GlobalConfigType = {
     terraform: {
       externalIpCidrBlocks: {
-        apexCaptainHome: `${workstationIpAddress}/32`,
-        gjwoo960101: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101!!,
-        nayuntechCorp: process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP!!,
+        apexCaptainHomeIpv4: `${workstationIpAddress}/32`,
+        gjwoo960101Ipv4: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV4!!,
+        gjwoo960101Ipv6: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV6!!,
+        nayuntechCorpIpv4:
+          process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_IPV4!!,
       },
       externalGithubUsers: {
         ApexCaptain: {
@@ -516,20 +521,31 @@ void (async () => {
               domain: {
                 iptime: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
               },
-              volumeDirPath: {
-                ssdVolume:
-                  process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_SDD_VOLUME!!,
-                hddVolume:
-                  process.env.WORKSTATION_COMMON_VOLUME_DIR_PATH_HDD_VOLUME!!,
+            },
+            apps: {
+              longhorn: {
+                nodes: [
+                  {
+                    name: process.env.WORKSTATION_NODE_0_NAME!!,
+                    disks: [
+                      {
+                        name: process.env.WORKSTATION_NODE_0_DISK_0_NAME!!,
+                        path: process.env.WORKSTATION_NODE_0_DISK_0_PATH!!,
+                        isSsd: JSON.parse(
+                          process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD!!,
+                        ) as boolean,
+                      },
+                      {
+                        name: process.env.WORKSTATION_NODE_0_DISK_1_NAME!!,
+                        path: process.env.WORKSTATION_NODE_0_DISK_1_PATH!!,
+                        isSsd: JSON.parse(
+                          process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD!!,
+                        ) as boolean,
+                      },
+                    ],
+                  },
+                ],
               },
-            },
-            sftp: {
-              userName: process.env.WORKSTATION_SFTP_USER_NAME!!,
-            },
-            palworld: {
-              adminPassword: process.env.WORKSTATION_PALWORLD_ADMIN_PASSWORD!!,
-              serverPassword:
-                process.env.WORKSTATION_PALWORLD_SERVER_PASSWORD!!,
             },
           },
         },
@@ -584,7 +600,6 @@ void (async () => {
       },
     },
   };
-
   new IniFile(project, 'env/prod.env', {
     obj: flatten(environment, {
       delimiter: '_',
@@ -593,82 +608,92 @@ void (async () => {
   });
 
   // Vscode Settings
-  const vscodeSettings = {
-    todohighlight: {
-      toggleURI: true,
-      isCaseSensitive: false,
-      keywords: new VsCodeObject([
-        { text: '@' + 'ToDo', color: 'red', backgroundColor: 'black' },
-        { text: '@' + 'note', color: 'blue', backgroundColor: 'lightblue' },
-      ]),
-      exclude: ['**/node_modules/**', '.vscode'],
-    },
-    workbench: {
-      colorTheme: 'Tomorrow Night Blue',
-      editorAssociations: new VsCodeObject({
-        '*.md': 'vscode.markdown.preview.editor',
-      }),
-    },
-    'material-icon-theme': {
-      files: {
-        associations: new VsCodeObject({
-          '.projenrc.ts': 'cabal',
-          '*.schema.ts': 'scheme',
-          '*.stack.ts': 'terraform',
-          'cdktf.json': 'terraform',
-          'cdktf.out.json': 'terraform',
-          'index.ts': 'contributing',
-          '*.template.ts': 'templ',
-          '*.enum.ts': 'scheme',
-          '*.function.ts': 'fortran',
-          '*.type.ts': 'toml',
-          '*.script.ts': 'coffee',
-          '*.source.ts': 'cake',
-          '*.terminal.ts': 'console',
-          '*.crd.ts': 'kubernetes',
-        }),
-      },
-      folders: {
-        associations: new VsCodeObject({
-          abstract: 'class',
-          '.kube': 'kubernetes',
-          kubectl: 'kubernetes',
-          oke: 'kubernetes',
-          crd: 'kubernetes',
-          workstation: 'home',
-          '.projen': 'project',
-          'cdktf.out': 'terraform',
-          terminal: 'command',
-          ssh: 'command',
-        }),
-      },
-    },
-  };
   new VsCode(project).settings.addSettings(
-    flatley(vscodeSettings, {
-      safe: true,
-      coercion: [
-        {
-          test: (_, value) => {
-            return VsCodeObject.isVscodeObject(value);
-          },
-          transform: (value: VsCodeObject<any>) => value.object,
+    flatley(
+      {
+        todohighlight: {
+          toggleURI: true,
+          isCaseSensitive: false,
+          keywords: new VsCodeObject([
+            { text: '@' + 'ToDo', color: 'red', backgroundColor: 'black' },
+            { text: '@' + 'note', color: 'blue', backgroundColor: 'lightblue' },
+          ]),
+          exclude: ['**/node_modules/**', '.vscode'],
         },
-      ],
-    }),
+        workbench: {
+          colorTheme: 'Tomorrow Night Blue',
+          editorAssociations: new VsCodeObject({
+            '*.md': 'vscode.markdown.preview.editor',
+          }),
+        },
+        'material-icon-theme': {
+          files: {
+            associations: new VsCodeObject({
+              '.projenrc.ts': 'cabal',
+              '*.schema.ts': 'scheme',
+              '*.stack.ts': 'terraform',
+              'cdktf.json': 'terraform',
+              'cdktf.out.json': 'terraform',
+              'index.ts': 'contributing',
+              '*.template.ts': 'templ',
+              '*.enum.ts': 'scheme',
+              '*.function.ts': 'fortran',
+              '*.type.ts': 'toml',
+              '*.script.ts': 'coffee',
+              '*.source.ts': 'cake',
+              '*.terminal.ts': 'console',
+              '*.crd.ts': 'kubernetes',
+              '*.external.ts': 'coffee',
+            }),
+          },
+          folders: {
+            associations: new VsCodeObject({
+              abstract: 'class',
+              '.kube': 'kubernetes',
+              kubectl: 'kubernetes',
+              oke: 'kubernetes',
+              crd: 'kubernetes',
+              workstation: 'home',
+              '.projen': 'project',
+              'cdktf.out': 'terraform',
+              terminal: 'command',
+              ssh: 'command',
+              external: 'admin',
+            }),
+          },
+        },
+      },
+      {
+        safe: true,
+        coercion: [
+          {
+            test: (_, value) => {
+              return VsCodeObject.isVscodeObject(value);
+            },
+            transform: (value: VsCodeObject<any>) => value.object,
+          },
+        ],
+      },
+    ),
   );
 
   // mcp.json
-  new JsonFile(project, '.cursor/mcp.json', {
+  new JsonFile(project, constants.paths.files.mcpJsonFilePath, {
     obj: {
       mcpServers: {
         context7: {
           command: 'npx',
-          args: ['-y', '@upstash/context7-mcp'],
+          args: [
+            '-y',
+            '@smithery/cli@latest',
+            'run',
+            '@upstash/context7-mcp',
+            '--key',
+            '$SMITHERY_APEX_CAPTAIN_API_KEY',
+          ],
         },
       },
     },
-    committed: false,
   });
 
   project.postSynthesize = () => {
