@@ -15,13 +15,19 @@ CDK for Terraform project of ApexCaptain
 - Keycloak
 - [7 Days to Die Game Server](https://hub.docker.com/r/ich777/csmm-7dtd)
 - [Palworld Game Server](https://hub.docker.com/r/thijsvanloef/palworld-server-docker)
+- Prometheus & Grafana
 
 ### K8S Workstation
 
-- Longhorn 분산 스토리지 저장소를 storage class로 설정해야 함
+- Longhorn : 특이하게도 Node 레벨에서 nfs-common을 설치해야 동작한다.
+- Ceph : Longhorn이 거지같아서 이걸로 대체할 수 있는지 조사중...
 - DevPod 활성화
 - [Qbittorrent](https://hub.docker.com/r/linuxserver/qbittorrent)
 
 ## 먹고싶은 거
 
-- 선드라이 토마토 크림 치즈
+- [x] 호두 파이
+- [x] 선드라이 토마토 크림 치즈 샌드위치
+- [ ] 들깨 수제비
+- [ ] 페퍼로니 피자
+- [ ] 물회

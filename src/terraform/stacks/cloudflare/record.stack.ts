@@ -252,8 +252,20 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     }),
   );
 
-  longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
-    name: 'longhorn',
+  // longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
+  //   name: 'longhorn',
+  //   ttl: 1,
+  //   type: 'CNAME',
+  //   zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+  //   content:
+  //     this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+  //       .domain.iptime,
+  //   proxied: true,
+  //   comment: 'Cloudflare record for Longhorn service',
+  // }));
+
+  cephRecord = this.provide(DnsRecord, 'cephRecord', () => ({
+    name: 'ceph',
     ttl: 1,
     type: 'CNAME',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -261,7 +273,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
       this.globalConfigService.config.terraform.stacks.k8s.workstation.common
         .domain.iptime,
     proxied: true,
-    comment: 'Cloudflare record for Longhorn service',
+    comment: 'Cloudflare record for Ceph MGR Dashboard service',
   }));
 
   constructor(

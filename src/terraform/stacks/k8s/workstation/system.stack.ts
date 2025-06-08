@@ -26,65 +26,90 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     },
   };
 
-  dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
-    metadata: {
-      name: 'kube-system',
-    },
-  }));
+  // dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
+  //   metadata: {
+  //     name: 'kube-system',
+  //   },
+  // }));
 
-  dataKubernetesDashboardService = this.provide(
-    DataKubernetesService,
-    'dataKubernetesDashboardService',
-    () => [
-      {
-        metadata: {
-          name: 'kubernetes-dashboard',
-          namespace: this.dataNamespace.element.metadata.name,
-        },
-      },
-      {
-        servicePort: 443,
-      },
-    ],
-  );
+  // dataKubernetesDashboardService = this.provide(
+  //   DataKubernetesService,
+  //   'dataKubernetesDashboardService',
+  //   () => [
+  //     {
+  //       metadata: {
+  //         name: 'kubernetes-dashboard',
+  //         namespace: this.dataNamespace.element.metadata.name,
+  //       },
+  //     },
+  //     {
+  //       servicePort: 443,
+  //     },
+  //   ],
+  // );
 
-  applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
-    return [
-      {},
-      {
-        dashboard: createK8sApplicationMetadata({
-          namespace: 'dashboard',
-        }),
+  // applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
+  //   return [
+  //     {},
+  //     {
+  //       dashboard: createK8sApplicationMetadata({
+  //         namespace: 'dashboard',
+  //       }),
 
-        istio: createK8sApplicationMetadata({
-          namespace: 'istio-system',
-          helm: {
-            istiod: {
-              name: 'istiod',
-              chart: 'istiod',
-              repository: 'https://istio-release.storage.googleapis.com/charts',
-            },
-            base: {
-              name: 'istio-base',
-              chart: 'base',
-              repository: 'https://istio-release.storage.googleapis.com/charts',
-            },
-          },
-        }),
+  //       istio: createK8sApplicationMetadata({
+  //         namespace: 'istio-system',
+  //         helm: {
+  //           istiod: {
+  //             name: 'istiod',
+  //             chart: 'istiod',
+  //             repository: 'https://istio-release.storage.googleapis.com/charts',
+  //           },
+  //           base: {
+  //             name: 'istio-base',
+  //             chart: 'base',
+  //             repository: 'https://istio-release.storage.googleapis.com/charts',
+  //           },
+  //         },
+  //       }),
 
-        longhorn: createK8sApplicationMetadata({
-          namespace: 'longhorn-system',
-          helm: {
-            longhorn: {
-              name: 'longhorn',
-              chart: 'longhorn',
-              repository: 'https://charts.longhorn.io',
-            },
-          },
-        }),
-      },
-    ];
-  });
+  //       ceph: createK8sApplicationMetadata({
+  //         namespace: 'rook-ceph',
+  //         helm: {
+  //           cephOperator: {
+  //             name: 'rook-ceph',
+  //             chart: 'rook-ceph',
+  //             repository: 'https://charts.rook.io/release',
+  //           },
+  //           cephCluster: {
+  //             name: 'rook-ceph-cluster',
+  //             chart: 'rook-ceph-cluster',
+  //             repository: 'https://charts.rook.io/release',
+  //           },
+  //         },
+  //       }),
+
+  //       //
+  //       longhorn: createK8sApplicationMetadata({
+  //         namespace: 'longhorn',
+  //         helm: {
+  //           longhorn: {
+  //             name: 'longhorn',
+  //             chart: 'longhorn',
+  //             repository: 'https://charts.longhorn.io',
+  //           },
+  //         },
+  //       }),
+
+  //       test1: createK8sApplicationMetadata({
+  //         namespace: 'test1',
+  //       }),
+
+  //       test2: createK8sApplicationMetadata({
+  //         namespace: 'test1',
+  //       }),
+  //     },
+  //   ];
+  // });
 
   constructor(
     // Terraform

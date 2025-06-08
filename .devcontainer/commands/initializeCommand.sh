@@ -16,18 +16,21 @@ MERGED_ENV_FILE_PATH=.devcontainer/.env
 # Create docker-compose.deb.yml arg
 cat > $MERGED_ENV_FILE_PATH <<EOL
 # Original DevContainer Arguments
-localWorkspaceFolder = $localWorkspaceFolder
-containerWorkspaceFolder = $containerWorkspaceFolder
-localWorkspaceFolderBasename = $localWorkspaceFolderBasename
-containerWorkspaceFolderBasename = $containerWorkspaceFolderBasename 
+localWorkspaceFolder=$localWorkspaceFolder
+containerWorkspaceFolder=$containerWorkspaceFolder
+localWorkspaceFolderBasename=$localWorkspaceFolderBasename
+containerWorkspaceFolderBasename=$containerWorkspaceFolderBasename 
 
 # Named Volume Arguments
-CONTAINER_NODE_MODULES_DIR_PATH = ${containerWorkspaceFolder}/node_modules
+CONTAINER_NODE_MODULES_DIR_PATH=${containerWorkspaceFolder}/node_modules
 
 # Unonymous Volume Arguments
-HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH = $HOME/.kube/config
-CONTAINER_KUBE_CONFIG_DIR_PATH = ${containerWorkspaceFolder}/.kube
-CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH = ${containerWorkspaceFolder}/.kube/workstation.config
+HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH=$HOME/.kube/config
+CONTAINER_KUBE_CONFIG_DIR_PATH=${containerWorkspaceFolder}/.kube
+CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH=${containerWorkspaceFolder}/.kube/workstation.config
+
+# Kubernetes Arguments
+KUBECONFIG=${containerWorkspaceFolder}/.kube/workstation.config
 
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH
 CONTAINER_SECRETS_DIR_PATH=$containerWorkspaceFolder/.secrets

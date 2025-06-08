@@ -36,42 +36,42 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
-    {},
-    this.k8sWorkstationSystemStack.applicationMetadata.shared.istio,
-  ]);
+  // private readonly metadata = this.provide(Resource, 'metadata', () => [
+  //   {},
+  //   this.k8sWorkstationSystemStack.applicationMetadata.shared.istio,
+  // ]);
 
-  namespace = this.provide(NamespaceV1, 'namespace', () => ({
-    metadata: {
-      name: this.metadata.shared.namespace,
-    },
-  }));
+  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
+  //   metadata: {
+  //     name: this.metadata.shared.namespace,
+  //   },
+  // }));
 
-  istioBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
-    return {
-      name: this.metadata.shared.helm.base.name,
-      chart: this.metadata.shared.helm.base.chart,
-      repository: this.metadata.shared.helm.base.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      values: [
-        yaml.stringify({
-          defaultRevision: 'default',
-        }),
-      ],
-    };
-  });
+  // istioBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
+  //   return {
+  //     name: this.metadata.shared.helm.base.name,
+  //     chart: this.metadata.shared.helm.base.chart,
+  //     repository: this.metadata.shared.helm.base.repository,
+  //     namespace: this.namespace.element.metadata.name,
+  //     createNamespace: false,
+  //     values: [
+  //       yaml.stringify({
+  //         defaultRevision: 'default',
+  //       }),
+  //     ],
+  //   };
+  // });
 
-  istiodRelease = this.provide(Release, 'istiodRelease', () => {
-    return {
-      name: this.metadata.shared.helm.istiod.name,
-      chart: this.metadata.shared.helm.istiod.chart,
-      repository: this.metadata.shared.helm.istiod.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      dependsOn: [this.istioBaseRelease.element],
-    };
-  });
+  // istiodRelease = this.provide(Release, 'istiodRelease', () => {
+  //   return {
+  //     name: this.metadata.shared.helm.istiod.name,
+  //     chart: this.metadata.shared.helm.istiod.chart,
+  //     repository: this.metadata.shared.helm.istiod.repository,
+  //     namespace: this.namespace.element.metadata.name,
+  //     createNamespace: false,
+  //     dependsOn: [this.istioBaseRelease.element],
+  //   };
+  // });
 
   constructor(
     // Terraform
