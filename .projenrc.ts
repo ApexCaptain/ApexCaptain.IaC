@@ -531,6 +531,8 @@ void (async () => {
                       {
                         name: process.env.WORKSTATION_NODE_0_DISK_0_NAME!!,
                         path: process.env.WORKSTATION_NODE_0_DISK_0_PATH!!,
+                        diskType:
+                          process.env.WORKSTATION_NODE_0_DISK_0_DISK_TYPE!!,
                         isSsd: JSON.parse(
                           process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD!!,
                         ) as boolean,
@@ -538,6 +540,8 @@ void (async () => {
                       {
                         name: process.env.WORKSTATION_NODE_0_DISK_1_NAME!!,
                         path: process.env.WORKSTATION_NODE_0_DISK_1_PATH!!,
+                        diskType:
+                          process.env.WORKSTATION_NODE_0_DISK_1_DISK_TYPE!!,
                         isSsd: JSON.parse(
                           process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD!!,
                         ) as boolean,
@@ -545,6 +549,11 @@ void (async () => {
                     ],
                   },
                 ],
+              },
+              files: {
+                sftp: {
+                  userName: process.env.WORKSTATION_FILE_APP_SFTP_USER_NAME!!,
+                },
               },
             },
           },
@@ -659,6 +668,7 @@ void (async () => {
               terminal: 'command',
               ssh: 'command',
               external: 'admin',
+              'dev-pods': 'development',
             }),
           },
         },

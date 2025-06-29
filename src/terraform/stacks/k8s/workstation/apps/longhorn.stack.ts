@@ -23,6 +23,8 @@ import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { StorageClassV1 } from '@lib/terraform/providers/kubernetes/storage-class-v1';
 import dedent from 'dedent';
 import path from 'path';
+import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
+import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 
 @Injectable()
 export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
@@ -88,12 +90,10 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
                   .authSignin,
             },
           },
-          csi: { kubeletRootDir: '/var/lib/kubelet' },
-
+          csi: { kubeletRootDir: '/var/snap/microk8s/common/var/lib/kubelet' },
           defaultSettings: {
             createDefaultDiskLabeledNodes: true,
             defaultReplicaCount: 1,
-
             deletingConfirmationFlag: true, // -- true: Allow to delete longhorn chart, false: Prevent to delete longhorn chart
           },
           persistence: {
@@ -110,10 +110,20 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     id => {
       const nodes = this.config.nodes.map((eachNodeInfo, index) => {
         const disks = Object.fromEntries(
-          eachNodeInfo.disks.map(({ name, path, isSsd }) => [
+          eachNodeInfo.disks.map<
+            [
+              string,
+              {
+                path: string;
+                diskType: string;
+                tags: string[];
+              },
+            ]
+          >(({ name, path, diskType, isSsd }) => [
             name,
             {
               path,
+              diskType,
               tags: isSsd ? ['ssd'] : ['hdd'],
             },
           ]),
@@ -123,6 +133,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           DataExternal,
           `${id}-${index}-node`,
           () => ({
+            dependsOn: [this.release.element],
             program: [
               'bash',
               '-c',
@@ -147,6 +158,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     StorageClassV1,
     'longhornSsdStorageClass',
     id => ({
+      dependsOn: [this.release.element],
       metadata: {
         name: _.kebabCase(id),
         annotations: {
@@ -155,9 +167,12 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       },
       storageProvisioner: 'driver.longhorn.io',
       allowVolumeExpansion: true,
+      reclaimPolicy: 'Delete',
       parameters: {
         numberOfReplicas: '1',
         diskSelector: 'ssd',
+        fsType: 'ext4',
+        nfsOptions: 'vers=4.2,noresvport,softerr',
       },
     }),
   );
@@ -166,14 +181,18 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     StorageClassV1,
     'longhornHddStorageClass',
     id => ({
+      dependsOn: [this.release.element],
       metadata: {
         name: _.kebabCase(id),
       },
       storageProvisioner: 'driver.longhorn.io',
       allowVolumeExpansion: true,
+      reclaimPolicy: 'Delete',
       parameters: {
         numberOfReplicas: '1',
         diskSelector: 'hdd',
+        fsType: 'ext4',
+        nfsOptions: 'vers=4.2,noresvport,softerr',
       },
     }),
   );

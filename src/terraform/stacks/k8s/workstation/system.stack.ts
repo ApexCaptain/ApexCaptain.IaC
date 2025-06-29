@@ -48,6 +48,25 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     ],
   );
 
+  nodePorts = (() => {
+    const minNodePort = 30000;
+    const maxNodePort = 32767;
+    const nodePorts = {
+      sftp: 30022,
+    };
+
+    const ports = Object.values(nodePorts);
+    if (ports.length != new Set(ports).size) {
+      throw new Error('Node ports must be unique');
+    }
+    if (ports.some(port => port < minNodePort || port > maxNodePort)) {
+      throw new Error(
+        `Node ports must be between ${minNodePort} and ${maxNodePort}`,
+      );
+    }
+    return nodePorts;
+  })();
+
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
     return [
       {},
@@ -82,6 +101,47 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        files: createK8sApplicationMetadata({
+          namespace: 'files',
+          services: {
+            files: {
+              name: 'files',
+              labels: {
+                app: 'files',
+              },
+              ports: {
+                'file-browser': {
+                  name: 'file-browser',
+                  port: 80,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+                sftp: {
+                  nodePort: this.nodePorts.sftp,
+                  name: 'sftp',
+                  port: 22,
+                  targetPort: '22',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+      },
+    ];
+  });
+
+  devPodsMetadata = this.provide(Resource, 'devPodsMetadata', () => {
+    // 이 부분은 아직 schema가 명확히 정해져 있지 않고, 현재로서 home cluster에서 devpod 사용자는 나밖에 없으니 dynamic 하게 처리함.
+    // 추후 회사 k8s에 devpod를 도입하게 될 경우 재고 필요.
+    const namespacePrefix = 'devpod';
+    return [
+      {},
+      {
+        ApexCaptain: {
+          namespace: `${namespacePrefix}-apex-captain`,
+        },
       },
     ];
   });
