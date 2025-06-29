@@ -534,7 +534,8 @@ void (async () => {
                         diskType:
                           process.env.WORKSTATION_NODE_0_DISK_0_DISK_TYPE!!,
                         isSsd: JSON.parse(
-                          process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD!!,
+                          process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD ??
+                            'false',
                         ) as boolean,
                       },
                       {
@@ -543,7 +544,8 @@ void (async () => {
                         diskType:
                           process.env.WORKSTATION_NODE_0_DISK_1_DISK_TYPE!!,
                         isSsd: JSON.parse(
-                          process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD!!,
+                          process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD ??
+                            'false',
                         ) as boolean,
                       },
                     ],
