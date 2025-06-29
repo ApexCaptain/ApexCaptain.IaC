@@ -17,6 +17,7 @@ export const WorkstationSchema = Joi.object({
                 Joi.object({
                   name: Joi.string().required(),
                   path: Joi.string().required(),
+                  diskType: Joi.string().required(),
                   isSsd: Joi.boolean().required(),
                 }),
               )
@@ -24,6 +25,11 @@ export const WorkstationSchema = Joi.object({
           }).required(),
         )
         .required(),
+    }).required(),
+    files: Joi.object({
+      sftp: Joi.object({
+        userName: Joi.string().required(),
+      }).required(),
     }).required(),
   }).required(),
 }).required();

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { AbstractStack } from '@/common';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Oke_System_Stack } from '../system.stack';
@@ -35,6 +35,8 @@ import { GlobalConfigService } from '@/global/config/global.config.schema.servic
 import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
 import yaml from 'yaml';
 import dedent from 'dedent';
+import { StaticResource } from '@lib/terraform/providers/time/static-resource';
+import { TimeProvider } from '@lib/terraform/providers/time/provider';
 
 // https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
 @Injectable()
@@ -75,6 +77,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
               .kubeConfigFilePath,
         },
       })),
+      time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
   };
 
@@ -134,10 +137,28 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     }),
   );
 
+  privateKeyExpiration = this.provide(
+    StaticResource,
+    `privateKeyExpiration`,
+    () => ({
+      triggers: {
+        expirationDate: createExpirationInterval({
+          days: 60,
+        }).toString(),
+      },
+    }),
+  );
+
   privateKey = this.provide(Resource, 'privateKey', idPrefix => {
+    const expirationElement = this.privateKeyExpiration.element;
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
+      lifecycle: {
+        replaceTriggeredBy: [
+          `${expirationElement.terraformResourceType}.${expirationElement.friendlyUniqueId}`,
+        ],
+      },
     }));
 
     const privateSshKeyFileInSecrets = this.provide(

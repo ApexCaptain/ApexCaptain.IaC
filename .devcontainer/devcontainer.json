@@ -4,7 +4,7 @@
   "dockerComposeFile": "docker-compose.dev.yml",
   "service": "workspace",
   "workspaceFolder": "/home/vscode/workspace/${localWorkspaceFolderBasename}",
-  // Featuring
+  // Features
   "features": {
     "ghcr.io/devcontainers/features/python:1": {},
     "ghcr.io/devcontainers-contrib/features/projen:1": {},

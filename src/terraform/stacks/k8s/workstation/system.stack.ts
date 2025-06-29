@@ -26,90 +26,125 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     },
   };
 
-  // dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
-  //   metadata: {
-  //     name: 'kube-system',
-  //   },
-  // }));
+  dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
+    metadata: {
+      name: 'kube-system',
+    },
+  }));
 
-  // dataKubernetesDashboardService = this.provide(
-  //   DataKubernetesService,
-  //   'dataKubernetesDashboardService',
-  //   () => [
-  //     {
-  //       metadata: {
-  //         name: 'kubernetes-dashboard',
-  //         namespace: this.dataNamespace.element.metadata.name,
-  //       },
-  //     },
-  //     {
-  //       servicePort: 443,
-  //     },
-  //   ],
-  // );
+  dataKubernetesDashboardService = this.provide(
+    DataKubernetesService,
+    'dataKubernetesDashboardService',
+    () => [
+      {
+        metadata: {
+          name: 'kubernetes-dashboard',
+          namespace: this.dataNamespace.element.metadata.name,
+        },
+      },
+      {
+        servicePort: 443,
+      },
+    ],
+  );
 
-  // applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
-  //   return [
-  //     {},
-  //     {
-  //       dashboard: createK8sApplicationMetadata({
-  //         namespace: 'dashboard',
-  //       }),
+  nodePorts = (() => {
+    const minNodePort = 30000;
+    const maxNodePort = 32767;
+    const nodePorts = {
+      sftp: 30022,
+    };
 
-  //       istio: createK8sApplicationMetadata({
-  //         namespace: 'istio-system',
-  //         helm: {
-  //           istiod: {
-  //             name: 'istiod',
-  //             chart: 'istiod',
-  //             repository: 'https://istio-release.storage.googleapis.com/charts',
-  //           },
-  //           base: {
-  //             name: 'istio-base',
-  //             chart: 'base',
-  //             repository: 'https://istio-release.storage.googleapis.com/charts',
-  //           },
-  //         },
-  //       }),
+    const ports = Object.values(nodePorts);
+    if (ports.length != new Set(ports).size) {
+      throw new Error('Node ports must be unique');
+    }
+    if (ports.some(port => port < minNodePort || port > maxNodePort)) {
+      throw new Error(
+        `Node ports must be between ${minNodePort} and ${maxNodePort}`,
+      );
+    }
+    return nodePorts;
+  })();
 
-  //       ceph: createK8sApplicationMetadata({
-  //         namespace: 'rook-ceph',
-  //         helm: {
-  //           cephOperator: {
-  //             name: 'rook-ceph',
-  //             chart: 'rook-ceph',
-  //             repository: 'https://charts.rook.io/release',
-  //           },
-  //           cephCluster: {
-  //             name: 'rook-ceph-cluster',
-  //             chart: 'rook-ceph-cluster',
-  //             repository: 'https://charts.rook.io/release',
-  //           },
-  //         },
-  //       }),
+  applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
+    return [
+      {},
+      {
+        dashboard: createK8sApplicationMetadata({
+          namespace: 'dashboard',
+        }),
 
-  //       //
-  //       longhorn: createK8sApplicationMetadata({
-  //         namespace: 'longhorn',
-  //         helm: {
-  //           longhorn: {
-  //             name: 'longhorn',
-  //             chart: 'longhorn',
-  //             repository: 'https://charts.longhorn.io',
-  //           },
-  //         },
-  //       }),
+        istio: createK8sApplicationMetadata({
+          namespace: 'istio-system',
+          helm: {
+            istiod: {
+              name: 'istiod',
+              chart: 'istiod',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+            base: {
+              name: 'istio-base',
+              chart: 'base',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+          },
+        }),
 
-  //       test1: createK8sApplicationMetadata({
-  //         namespace: 'test1',
-  //       }),
+        longhorn: createK8sApplicationMetadata({
+          namespace: 'longhorn-system',
+          helm: {
+            longhorn: {
+              name: 'longhorn',
+              chart: 'longhorn',
+              repository: 'https://charts.longhorn.io',
+            },
+          },
+        }),
 
-  //       test2: createK8sApplicationMetadata({
-  //         namespace: 'test1',
-  //       }),
-  //     },
-  //   ];
-  // });
+        files: createK8sApplicationMetadata({
+          namespace: 'files',
+          services: {
+            files: {
+              name: 'files',
+              labels: {
+                app: 'files',
+              },
+              ports: {
+                'file-browser': {
+                  name: 'file-browser',
+                  port: 80,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+                sftp: {
+                  nodePort: this.nodePorts.sftp,
+                  name: 'sftp',
+                  port: 22,
+                  targetPort: '22',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+      },
+    ];
+  });
+
+  devPodsMetadata = this.provide(Resource, 'devPodsMetadata', () => {
+    // 이 부분은 아직 schema가 명확히 정해져 있지 않고, 현재로서 home cluster에서 devpod 사용자는 나밖에 없으니 dynamic 하게 처리함.
+    // 추후 회사 k8s에 devpod를 도입하게 될 경우 재고 필요.
+    const namespacePrefix = 'devpod';
+    return [
+      {},
+      {
+        ApexCaptain: {
+          namespace: `${namespacePrefix}-apex-captain`,
+        },
+      },
+    ];
+  });
 
   constructor(
     // Terraform

@@ -87,8 +87,12 @@ export class ExternalManageLonghornNode extends ExternalProgram<
     const passedSpecDisksInfo: DisksSpec = JSON.parse(disks);
 
     const isAlreadySynced = _.isEqual(
-      _.mapValues(currentSpecDisksInfo, disk => _.pick(disk, ['path', 'tags'])),
-      _.mapValues(passedSpecDisksInfo, disk => _.pick(disk, ['path', 'tags'])),
+      _.mapValues(currentSpecDisksInfo, disk =>
+        _.pick(disk, ['path', 'tags', 'diskType']),
+      ),
+      _.mapValues(passedSpecDisksInfo, disk =>
+        _.pick(disk, ['path', 'tags', 'diskType']),
+      ),
     );
 
     if (isAlreadySynced) {

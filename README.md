@@ -6,8 +6,8 @@ CDK for Terraform project of ApexCaptain
 
 ### Common
 
-- terraform deploy (혹은 plan도) interactive 하게 골라서 진행 할 수 있게 스크립트 작성
 - 두 k8s간의 istio 연결
+- dashboard 없애고 prometheus랑 grafana 및 elk(옵션)으로 변경
 
 ### K8S OCI
 
@@ -15,12 +15,9 @@ CDK for Terraform project of ApexCaptain
 - Keycloak
 - [7 Days to Die Game Server](https://hub.docker.com/r/ich777/csmm-7dtd)
 - [Palworld Game Server](https://hub.docker.com/r/thijsvanloef/palworld-server-docker)
-- Prometheus & Grafana
 
 ### K8S Workstation
 
-- Longhorn : 특이하게도 Node 레벨에서 nfs-common을 설치해야 동작한다.
-- Ceph : Longhorn이 거지같아서 이걸로 대체할 수 있는지 조사중...
 - DevPod 활성화
 - [Qbittorrent](https://hub.docker.com/r/linuxserver/qbittorrent)
 
