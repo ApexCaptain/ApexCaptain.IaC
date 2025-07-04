@@ -7,20 +7,29 @@ echo "🔄 Updating apt package manager"
 sudo apt update -y
 sudo apt upgrade -y
 
-echo "🔄 Installing OCI CLI"
-bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
-
-echo "🔄 Installing Helm CLI"
-bash -c "$(curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3)"
-
 echo "🔄 Installing apt packages"
 sudo apt install -y \
     netcat-openbsd \
-    iputils-ping
+    iputils-ping \
+    parallel
 
-echo "🔄 Installing global npm packages"
-npm install -g \
-    npm@latest
+install_oci() {
+    echo "🔄 Installing OCI CLI"
+    bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
+}
+
+install_helm() {
+    echo "🔄 Installing Helm CLI"
+    bash -c "$(curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3)"
+}
+
+install_npm_packages() {
+    echo "🔄 Installing global npm packages"
+    npm install -g npm@latest @google/gemini-cli
+}
+
+export -f install_oci install_helm install_npm_packages
+parallel --jobs 10 ::: install_oci install_helm install_npm_packages
 
 echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh

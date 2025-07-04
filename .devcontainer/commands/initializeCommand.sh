@@ -23,6 +23,7 @@ containerWorkspaceFolderBasename=$containerWorkspaceFolderBasename
 
 # Named Volume Arguments
 CONTAINER_NODE_MODULES_DIR_PATH=${containerWorkspaceFolder}/node_modules
+CONTAINER_GEMINI_CONFIG_DIR_PATH=/home/vscode/.gemini
 
 # Unonymous Volume Arguments
 HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH=$HOME/.kube/config
