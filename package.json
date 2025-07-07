@@ -32,13 +32,13 @@
     "organization": false
   },
   "devDependencies": {
-    "@inquirer/prompts": "^7.5.3",
+    "@inquirer/prompts": "^7.6.0",
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.19",
     "@types/flat": "5.0.2",
-    "@types/lodash": "^4.17.19",
-    "@types/node": "^22.15.34",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^22.16.0",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "commander": "^13.1.0",
