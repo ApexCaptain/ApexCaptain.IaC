@@ -146,7 +146,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                 'file-browser': {
                   name: 'file-browser',
                   port: 80,
-                  targetPort: '80',
+                  targetPort: '8080',
                   protocol: 'TCP',
                 },
                 sftp: {

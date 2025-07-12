@@ -264,6 +264,30 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Longhorn service',
   }));
 
+  jellyfinRecord = this.provide(DnsRecord, 'jellyfinRecord', () => ({
+    name: 'jellyfin',
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Jellyfin service',
+  }));
+
+  torrentRecord = this.provide(DnsRecord, 'qbittorrentRecord', () => ({
+    name: 'torrent',
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Qbittorrent service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
