@@ -53,6 +53,7 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     const maxNodePort = 32767;
     const nodePorts = {
       sftp: 30022,
+      qbittorrent: 30881,
     };
 
     const ports = Object.values(nodePorts);
@@ -104,29 +105,83 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
 
         files: createK8sApplicationMetadata({
           namespace: 'files',
+          helm: {
+            jellyfin: {
+              name: 'jellyfin',
+              chart: 'jellyfin',
+              repository: 'https://jellyfin.github.io/jellyfin-helm',
+            },
+          },
           services: {
-            files: {
-              name: 'files',
-              labels: {
-                app: 'files',
-              },
+            'file-browser': {
+              name: 'file-browser',
               ports: {
-                'file-browser': {
-                  name: 'file-browser',
+                web: {
+                  name: 'web',
                   port: 80,
                   targetPort: '8080',
                   protocol: 'TCP',
                 },
+              },
+            },
+            sftp: {
+              name: 'sftp',
+              ports: {
                 sftp: {
-                  nodePort: this.nodePorts.sftp,
                   name: 'sftp',
+                  nodePort: this.nodePorts.sftp,
                   port: 22,
                   targetPort: '22',
                   protocol: 'TCP',
                 },
               },
             },
+            qbittorrent: {
+              name: 'qbittorrent',
+              ports: {
+                web: {
+                  name: 'web',
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+                'torrenting-tcp': {
+                  name: 'torrenting-tcp',
+                  nodePort: this.nodePorts.qbittorrent,
+                  port: 6881,
+                  targetPort: '6881',
+                  protocol: 'TCP',
+                },
+                'torrenting-udp': {
+                  name: 'torrenting-udp',
+                  nodePort: this.nodePorts.qbittorrent,
+                  port: 6881,
+                  targetPort: '6881',
+                  protocol: 'UDP',
+                },
+              },
+            },
           },
+          // services: {
+          //   files: {
+          //     name: 'files',
+          //     ports: {
+          //       'file-browser': {
+          //         name: 'file-browser',
+          //         port: 80,
+          //         targetPort: '8080',
+          //         protocol: 'TCP',
+          //       },
+          //       sftp: {
+          //         nodePort: this.nodePorts.sftp,
+          //         name: 'sftp',
+          //         port: 22,
+          //         targetPort: '22',
+          //         protocol: 'TCP',
+          //       },
+          //     },
+          //   },
+          // },
         }),
       },
     ];

@@ -375,12 +375,13 @@ void (async () => {
            * @note
            * - 임시로 cloudflare 5.1.0 버전 사용
            * - 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
+           * - 5.6.0으로 업데이트 이후 deploy시마다 리소스 업데이트가 뜨는데, 추후 확인 필요
            * @see: https://github.com/cloudflare/terraform-provider-cloudflare/releases
            */
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
-          version: '5.1.0',
+          // version: '5.1.0',
         },
         {
           // https://registry.terraform.io/providers/oracle/oci/latest
@@ -393,6 +394,11 @@ void (async () => {
           // https://registry.terraform.io/providers/kreuzwerker/docker/latest
           name: 'docker',
           source: 'kreuzwerker/docker',
+        },
+        {
+          // https://registry.terraform.io/providers/goauthentik/authentik/latest
+          name: 'authentik',
+          source: 'goauthentik/authentik',
         },
       ],
     },
@@ -534,7 +540,8 @@ void (async () => {
                         diskType:
                           process.env.WORKSTATION_NODE_0_DISK_0_DISK_TYPE!!,
                         isSsd: JSON.parse(
-                          process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD!!,
+                          process.env.WORKSTATION_NODE_0_DISK_0_IS_SSD ??
+                            'false',
                         ) as boolean,
                       },
                       {
@@ -543,7 +550,8 @@ void (async () => {
                         diskType:
                           process.env.WORKSTATION_NODE_0_DISK_1_DISK_TYPE!!,
                         isSsd: JSON.parse(
-                          process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD!!,
+                          process.env.WORKSTATION_NODE_0_DISK_1_IS_SSD ??
+                            'false',
                         ) as boolean,
                       },
                     ],

@@ -331,6 +331,23 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
               labels: this.metadata.shared.services.nfs.labels,
             },
             spec: {
+              initContainer: [
+                {
+                  name: 'init-filebrowser-db',
+                  image: 'busybox:1.35',
+                  command: [
+                    '/bin/sh',
+                    '-c',
+                    `mkdir -p ${path.join(nfsStoragePath, fbDatabaseVolumeDirPath)} && chown -R 1000:1000 ${path.join(nfsStoragePath, fbDatabaseVolumeDirPath)} && chmod -R 755 ${path.join(nfsStoragePath, fbDatabaseVolumeDirPath)}`,
+                  ],
+                  volumeMount: [
+                    {
+                      name: this.persistentVolumeClaim.element.metadata.name,
+                      mountPath: nfsStoragePath,
+                    },
+                  ],
+                },
+              ],
               container: [
                 {
                   name: this.metadata.shared.services.nfs.ports.nfs.name,
@@ -386,6 +403,11 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
                           .protocol,
                     },
                   ],
+                  securityContext: {
+                    runAsUser: '1000',
+                    runAsGroup: '1000',
+                    fsGroup: '1000',
+                  },
                   volumeMount: [
                     {
                       name: this.persistentVolumeClaim.element.metadata.name,
@@ -406,6 +428,12 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
                     {
                       name: 'FB_DATABASE',
                       value: fbDatabaseFileContainerPath,
+                    },
+                    {
+                      name: 'FB_PORT',
+                      value:
+                        this.metadata.shared.services.nfs.ports['file-browser']
+                          .targetPort,
                     },
                   ],
                 },

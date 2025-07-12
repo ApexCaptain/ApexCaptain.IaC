@@ -27,6 +27,9 @@ import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack'
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 import dedent from 'dedent';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import yaml from 'yaml';
 
 @Injectable()
 export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
@@ -46,13 +49,69 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
+      helm: this.provide(HelmProvider, 'helmProvider', () => ({
+        kubernetes: {
+          configPath:
+            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
+              .configPath,
+          insecure: true,
+        },
+      })),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
   };
 
-  privateKeyExpiration = this.provide(
+  private readonly metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.files,
+  ]);
+
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
+    metadata: {
+      name: this.metadata.shared.namespace,
+    },
+  }));
+
+  sharedFilesPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sharedFilesPersistentVolumeClaim',
+    id => {
+      const dataRootDirPath = 'data';
+      const torrentDirName = 'torrent';
+
+      return [
+        {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace: this.namespace.element.metadata.name,
+          },
+          spec: {
+            storageClassName:
+              this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
+                .metadata.name,
+            accessModes: ['ReadWriteMany'],
+            resources: {
+              requests: {
+                storage: '2Ti',
+              },
+            },
+          },
+          lifecycle: {
+            preventDestroy: true,
+          },
+        },
+        {
+          dataRootDirPath,
+          torrentDirPath: path.join(dataRootDirPath, torrentDirName),
+        },
+      ];
+    },
+  );
+
+  // SFTP
+  sftpPrivateKeyExpiration = this.provide(
     StaticResource,
-    `privateKeyExpiration`,
+    `sftpPrivateKeyExpiration`,
     () => ({
       triggers: {
         expirationDate: createExpirationInterval({
@@ -62,8 +121,8 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     }),
   );
 
-  privateKey = this.provide(Resource, 'privateKey', idPrefix => {
-    const expirationElement = this.privateKeyExpiration.element;
+  sftpPrivateKey = this.provide(Resource, 'sftpPrivateKey', idPrefix => {
+    const expirationElement = this.sftpPrivateKeyExpiration.element;
     const key = this.provide(PrivateKey, `${idPrefix}-key`, () => ({
       algorithm: 'RSA',
       rsaBits: 4096,
@@ -97,90 +156,37 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     ];
   });
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
-    {},
-    this.k8sWorkstationSystemStack.applicationMetadata.shared.files,
-  ]);
-
-  namespace = this.provide(NamespaceV1, 'namespace', () => ({
-    metadata: {
-      name: this.metadata.shared.namespace,
-    },
-  }));
-
-  fbDatabasePersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'fbDatabasePersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '100Mi',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
-
-  dataPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'dataPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '2Ti',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
-
-  sftpConfigMap = this.provide(ConfigMap, 'sftpConfigMap', id => ({
+  sftpAuthConfigMap = this.provide(ConfigMap, 'sftpAuthConfigMap', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
     },
     data: {
-      'ssh-public-key': this.privateKey.shared.key.element.publicKeyOpenssh,
+      'ssh-public-key': this.sftpPrivateKey.shared.key.element.publicKeyOpenssh,
     },
   }));
 
-  service = this.provide(ServiceV1, 'service', () => ({
-    metadata: {
-      name: this.metadata.shared.services.files.name,
-      namespace: this.namespace.element.metadata.name,
-    },
-    spec: {
-      selector: this.metadata.shared.services.files.labels,
-      type: 'NodePort',
-      port: Object.values(this.metadata.shared.services.files.ports),
-    },
-  }));
+  sftpService = this.provide(ServiceV1, 'sftpService', id => {
+    const selector = {
+      app: 'sftp',
+    };
+    return [
+      {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          selector,
+          type: 'NodePort',
+          port: [this.metadata.shared.services.sftp.ports.sftp],
+        },
+      },
+      { selector },
+    ];
+  });
 
-  deployment = this.provide(DeploymentV1, 'deployment', id => {
+  sftpDeployment = this.provide(DeploymentV1, 'sftpDeployment', id => {
     const sftpDataDirName = 'data';
     const sftpDataDirContainerPath = path.join(
       'home',
@@ -196,69 +202,16 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       spec: {
         replicas: '1',
         selector: {
-          matchLabels: this.metadata.shared.services.files.labels,
+          matchLabels: this.sftpService.shared.selector,
         },
         template: {
           metadata: {
-            labels: this.metadata.shared.services.files.labels,
+            labels: this.sftpService.shared.selector,
           },
           spec: {
-            securityContext: {
-              fsGroup: '1000',
-            },
             container: [
               {
-                name: this.metadata.shared.services.files.ports['file-browser']
-                  .name,
-                image: 'filebrowser/filebrowser',
-                imagePullPolicy: 'Always',
-                port: [
-                  {
-                    containerPort:
-                      this.metadata.shared.services.files.ports['file-browser']
-                        .port,
-                    protocol:
-                      this.metadata.shared.services.files.ports['file-browser']
-                        .protocol,
-                  },
-                ],
-                securityContext: {
-                  runAsUser: '1000',
-                  runAsGroup: '1000',
-                },
-                volumeMount: [
-                  {
-                    name: this.fbDatabasePersistentVolumeClaim.element.metadata
-                      .name,
-                    mountPath: '/database',
-                    subPath: 'database',
-                  },
-                  {
-                    name: this.fbDatabasePersistentVolumeClaim.element.metadata
-                      .name,
-                    mountPath: '/config',
-                    subPath: 'config',
-                  },
-                  {
-                    name: this.dataPersistentVolumeClaim.element.metadata.name,
-                    mountPath: '/srv',
-                  },
-                ],
-                env: [
-                  {
-                    name: 'FB_NOAUTH',
-                    value: 'true',
-                  },
-                  {
-                    name: 'FB_PORT',
-                    value:
-                      this.metadata.shared.services.files.ports['file-browser']
-                        .targetPort,
-                  },
-                ],
-              },
-              {
-                name: this.metadata.shared.services.files.ports.sftp.name,
+                name: this.metadata.shared.services.sftp.ports.sftp.name,
                 image: 'atmoz/sftp',
                 imagePullPolicy: 'Always',
                 command: [
@@ -269,44 +222,41 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
                 port: [
                   {
                     containerPort:
-                      this.metadata.shared.services.files.ports.sftp.port,
+                      this.metadata.shared.services.sftp.ports.sftp.port,
                     protocol:
-                      this.metadata.shared.services.files.ports.sftp.protocol,
+                      this.metadata.shared.services.sftp.ports.sftp.protocol,
                   },
                 ],
                 volumeMount: [
                   {
-                    mountPath: `/home/${this.config.sftp.userName}/.ssh/keys`,
-                    name: this.sftpConfigMap.element.metadata.name,
-                    readOnly: true,
+                    name: this.sharedFilesPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: sftpDataDirContainerPath,
+                    subPath:
+                      this.sharedFilesPersistentVolumeClaim.shared
+                        .dataRootDirPath,
                   },
                   {
-                    name: this.dataPersistentVolumeClaim.element.metadata.name,
-                    mountPath: sftpDataDirContainerPath,
+                    mountPath: `/home/${this.config.sftp.userName}/.ssh/keys`,
+                    name: this.sftpAuthConfigMap.element.metadata.name,
+                    readOnly: true,
                   },
                 ],
               },
             ],
             volume: [
               {
-                name: this.fbDatabasePersistentVolumeClaim.element.metadata
+                name: this.sharedFilesPersistentVolumeClaim.element.metadata
                   .name,
                 persistentVolumeClaim: {
                   claimName:
-                    this.fbDatabasePersistentVolumeClaim.element.metadata.name,
+                    this.sharedFilesPersistentVolumeClaim.element.metadata.name,
                 },
               },
               {
-                name: this.dataPersistentVolumeClaim.element.metadata.name,
-                persistentVolumeClaim: {
-                  claimName:
-                    this.dataPersistentVolumeClaim.element.metadata.name,
-                },
-              },
-              {
-                name: this.sftpConfigMap.element.metadata.name,
+                name: this.sftpAuthConfigMap.element.metadata.name,
                 configMap: {
-                  name: this.sftpConfigMap.element.metadata.name,
+                  name: this.sftpAuthConfigMap.element.metadata.name,
                 },
               },
             ],
@@ -316,7 +266,156 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     };
   });
 
-  ingress = this.provide(IngressV1, 'ingress', id => ({
+  // File Browser
+  fileBrowserConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'fileBrowserConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '200Mi',
+          },
+        },
+      },
+    }),
+  );
+
+  fileBrowserService = this.provide(ServiceV1, 'fileBrowserService', id => {
+    const selector = {
+      app: 'file-browser',
+    };
+    return [
+      {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          selector,
+          type: 'ClusterIP',
+          port: [this.metadata.shared.services['file-browser'].ports.web],
+        },
+      },
+      { selector },
+    ];
+  });
+
+  fileBrowserDeployment = this.provide(
+    DeploymentV1,
+    'fileBrowserDeployment',
+    id => {
+      const fsGroup = '1000';
+      return {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          replicas: '1',
+          selector: {
+            matchLabels: this.fileBrowserService.shared.selector,
+          },
+          template: {
+            metadata: {
+              labels: this.fileBrowserService.shared.selector,
+            },
+            spec: {
+              securityContext: {
+                fsGroup,
+              },
+              container: [
+                {
+                  name: this.metadata.shared.services['file-browser'].ports.web
+                    .name,
+                  image: 'filebrowser/filebrowser',
+                  imagePullPolicy: 'Always',
+                  port: [
+                    {
+                      containerPort:
+                        this.metadata.shared.services['file-browser'].ports.web
+                          .port,
+                      protocol:
+                        this.metadata.shared.services['file-browser'].ports.web
+                          .protocol,
+                    },
+                  ],
+                  securityContext: {
+                    runAsUser: fsGroup,
+                    runAsGroup: fsGroup,
+                  },
+                  volumeMount: [
+                    {
+                      name: this.sharedFilesPersistentVolumeClaim.element
+                        .metadata.name,
+                      mountPath: '/srv',
+                      subPath:
+                        this.sharedFilesPersistentVolumeClaim.shared
+                          .dataRootDirPath,
+                    },
+                    {
+                      name: this.fileBrowserConfigPersistentVolumeClaim.element
+                        .metadata.name,
+                      mountPath: '/database',
+                      subPath: 'database',
+                    },
+                    {
+                      name: this.fileBrowserConfigPersistentVolumeClaim.element
+                        .metadata.name,
+                      mountPath: '/config',
+                      subPath: 'config',
+                    },
+                  ],
+                  env: [
+                    {
+                      name: 'FB_NOAUTH',
+                      value: 'true',
+                    },
+                    {
+                      name: 'FB_PORT',
+                      value:
+                        this.metadata.shared.services['file-browser'].ports.web
+                          .targetPort,
+                    },
+                  ],
+                },
+              ],
+              volume: [
+                {
+                  name: this.sharedFilesPersistentVolumeClaim.element.metadata
+                    .name,
+                  persistentVolumeClaim: {
+                    claimName:
+                      this.sharedFilesPersistentVolumeClaim.element.metadata
+                        .name,
+                  },
+                },
+                {
+                  name: this.fileBrowserConfigPersistentVolumeClaim.element
+                    .metadata.name,
+                  persistentVolumeClaim: {
+                    claimName:
+                      this.fileBrowserConfigPersistentVolumeClaim.element
+                        .metadata.name,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      };
+    },
+  );
+
+  filebrowserIngress = this.provide(IngressV1, 'filebrowserIngress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
@@ -352,12 +451,11 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
                 pathType: 'Prefix',
                 backend: {
                   service: {
-                    name: this.service.element.metadata.name,
+                    name: this.fileBrowserService.element.metadata.name,
                     port: {
                       number:
-                        this.metadata.shared.services.files.ports[
-                          'file-browser'
-                        ].port,
+                        this.metadata.shared.services['file-browser'].ports.web
+                          .port,
                     },
                   },
                 },
@@ -368,6 +466,315 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       ],
     },
   }));
+
+  // Qbittorrent
+  qbittorrentConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '100Mi',
+          },
+        },
+      },
+    }),
+  );
+
+  qbittorrentWebService = this.provide(
+    ServiceV1,
+    'qbittorrentWebService',
+    id => {
+      const selector = {
+        app: 'qbittorrent',
+      };
+      return [
+        {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace: this.namespace.element.metadata.name,
+          },
+          spec: {
+            selector,
+            type: 'ClusterIP',
+            port: [this.metadata.shared.services.qbittorrent.ports.web],
+          },
+        },
+        { selector },
+      ];
+    },
+  );
+
+  qbittorrentTorrentingService = this.provide(
+    ServiceV1,
+    'qbittorrentTorrentingService',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        selector: this.qbittorrentWebService.shared.selector,
+        type: 'NodePort',
+        port: [
+          this.metadata.shared.services.qbittorrent.ports['torrenting-tcp'],
+          this.metadata.shared.services.qbittorrent.ports['torrenting-udp'],
+        ],
+      },
+    }),
+  );
+
+  qbittorrentDeployment = this.provide(
+    DeploymentV1,
+    'qbittorrentDeployment',
+    id => {
+      const fsGroup = '1000';
+      return {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          replicas: '1',
+          selector: {
+            matchLabels: this.qbittorrentWebService.shared.selector,
+          },
+          template: {
+            metadata: {
+              labels: this.qbittorrentWebService.shared.selector,
+            },
+            spec: {
+              securityContext: {
+                fsGroup,
+              },
+              container: [
+                {
+                  name: this.metadata.shared.services.qbittorrent.ports.web
+                    .name,
+                  image: 'lscr.io/linuxserver/qbittorrent:latest',
+                  imagePullPolicy: 'Always',
+                  port: [
+                    {
+                      containerPort:
+                        this.metadata.shared.services.qbittorrent.ports.web
+                          .port,
+                      protocol:
+                        this.metadata.shared.services.qbittorrent.ports.web
+                          .protocol,
+                    },
+                    {
+                      containerPort:
+                        this.metadata.shared.services.qbittorrent.ports[
+                          'torrenting-tcp'
+                        ].port,
+                      protocol:
+                        this.metadata.shared.services.qbittorrent.ports[
+                          'torrenting-tcp'
+                        ].protocol,
+                    },
+                    {
+                      containerPort:
+                        this.metadata.shared.services.qbittorrent.ports[
+                          'torrenting-udp'
+                        ].port,
+                      protocol:
+                        this.metadata.shared.services.qbittorrent.ports[
+                          'torrenting-udp'
+                        ].protocol,
+                    },
+                  ],
+                  env: [
+                    {
+                      name: 'PUID',
+                      value: '1000',
+                    },
+                    {
+                      name: 'PGID',
+                      value: '1000',
+                    },
+                    {
+                      name: 'TZ',
+                      value: 'Asia/Seoul',
+                    },
+                    {
+                      name: 'WEBUI_PORT',
+                      value:
+                        this.metadata.shared.services.qbittorrent.ports.web
+                          .targetPort,
+                    },
+                    {
+                      name: 'TORRENTING_PORT',
+                      value:
+                        this.metadata.shared.services.qbittorrent.ports[
+                          'torrenting-tcp'
+                        ].targetPort,
+                    },
+                    {
+                      name: 'DOCKER_MODS',
+                      value: 'ghcr.io/gabe565/linuxserver-mod-vuetorrent',
+                    },
+                  ],
+                  volumeMount: [
+                    {
+                      name: this.sharedFilesPersistentVolumeClaim.element
+                        .metadata.name,
+                      mountPath: '/downloads',
+                      subPath:
+                        this.sharedFilesPersistentVolumeClaim.shared
+                          .torrentDirPath,
+                    },
+                    {
+                      name: this.qbittorrentConfigPersistentVolumeClaim.element
+                        .metadata.name,
+                      mountPath: '/config',
+                    },
+                  ],
+                },
+              ],
+              volume: [
+                {
+                  name: this.sharedFilesPersistentVolumeClaim.element.metadata
+                    .name,
+                  persistentVolumeClaim: {
+                    claimName:
+                      this.sharedFilesPersistentVolumeClaim.element.metadata
+                        .name,
+                  },
+                },
+                {
+                  name: this.qbittorrentConfigPersistentVolumeClaim.element
+                    .metadata.name,
+                  persistentVolumeClaim: {
+                    claimName:
+                      this.qbittorrentConfigPersistentVolumeClaim.element
+                        .metadata.name,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      };
+    },
+  );
+
+  qbittorrentIngress = this.provide(IngressV1, 'qbittorrentIngress', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+      annotations: {
+        'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+        'nginx.ingress.kubernetes.io/rewrite-target': '/',
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authSignin,
+      },
+    },
+    spec: {
+      ingressClassName: 'nginx',
+      rule: [
+        {
+          host: `${this.cloudflareRecordStack.torrentRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          http: {
+            path: [
+              {
+                path: '/',
+                pathType: 'Prefix',
+                backend: {
+                  service: {
+                    name: this.qbittorrentWebService.element.metadata.name,
+                    port: {
+                      number:
+                        this.metadata.shared.services.qbittorrent.ports.web
+                          .port,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }));
+
+  // Jellyfin
+  jellyfinConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'jellyfinConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '10Gi',
+          },
+        },
+      },
+    }),
+  );
+
+  jellyfinRelease = this.provide(Release, 'jellyfinRelease', () => {
+    return {
+      name: this.metadata.shared.helm.jellyfin.name,
+      chart: this.metadata.shared.helm.jellyfin.chart,
+      repository: this.metadata.shared.helm.jellyfin.repository,
+      namespace: this.namespace.element.metadata.name,
+      createNamespace: false,
+      values: [
+        yaml.stringify({
+          image: {
+            pullPolicy: 'Always',
+          },
+          runtimeClassName: 'nvidia',
+          ingress: {
+            enabled: true,
+            className: 'nginx',
+            hosts: [
+              {
+                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                paths: [
+                  {
+                    path: '/',
+                    pathType: 'ImplementationSpecific',
+                  },
+                ],
+              },
+            ],
+          },
+          persistence: {
+            config: {
+              existingClaim:
+                this.jellyfinConfigPersistentVolumeClaim.element.metadata.name,
+            },
+            media: {
+              existingClaim:
+                this.sharedFilesPersistentVolumeClaim.element.metadata.name,
+            },
+          },
+        }),
+      ],
+    };
+  });
 
   constructor(
     // Global
