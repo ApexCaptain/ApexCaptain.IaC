@@ -2,6 +2,8 @@ import Joi from '@hapi/joi';
 
 export const WorkstationSchema = Joi.object({
   common: Joi.object({
+    defaultCalcioIpv4IpPoolsCidrBlock: Joi.string().required(),
+    nordLynxPrivateKey: Joi.string().required(),
     domain: Joi.object({
       iptime: Joi.string().required(),
     }).required(),

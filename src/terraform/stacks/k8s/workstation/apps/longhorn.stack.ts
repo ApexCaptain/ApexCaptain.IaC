@@ -23,8 +23,6 @@ import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { StorageClassV1 } from '@lib/terraform/providers/kubernetes/storage-class-v1';
 import dedent from 'dedent';
 import path from 'path';
-import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
-import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 
 @Injectable()
 export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
@@ -94,7 +92,12 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           defaultSettings: {
             createDefaultDiskLabeledNodes: true,
             defaultReplicaCount: 1,
-            deletingConfirmationFlag: true, // -- true: Allow to delete longhorn chart, false: Prevent to delete longhorn chart
+            /**
+             * @Note
+             *  - true: Allow to delete longhorn chart
+             *  - false: Prevent to delete longhorn chart
+             */
+            deletingConfirmationFlag: false,
           },
           persistence: {
             defaultClass: false,

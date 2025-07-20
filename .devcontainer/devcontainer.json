@@ -29,8 +29,7 @@
         "mhutchie.git-graph",
         "github.vscode-github-actions",
         "bierner.markdown-preview-github-styles",
-        "ms-azuretools.vscode-docker",
-        "anysphere.remote-containers"
+        "ms-azuretools.vscode-docker"
       ]
     }
   },

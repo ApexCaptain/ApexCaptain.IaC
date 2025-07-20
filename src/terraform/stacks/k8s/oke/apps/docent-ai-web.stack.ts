@@ -281,28 +281,6 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
     },
   }));
 
-  // externalEngineService = this.provide(
-  //   ServiceV1,
-  //   'externalEngineService',
-  //   id => [
-  //     {
-  //       metadata: {
-  //         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //         namespace: this.namespace.element.metadata.name,
-  //       },
-  //       spec: {
-  //         type: 'ExternalName',
-  //         externalName: `${this.k8sOkeAppsDocentAiEngineStack.service.element.metadata.name}.${this.k8sOkeAppsDocentAiEngineStack.namespace.element.metadata.name}.svc.cluster.local`,
-  //       },
-  //     },
-  //     {
-  //       servicePort:
-  //         this.k8sOkeAppsDocentAiEngineStack.metadata.shared.services
-  //           .docentAiEngine.ports,
-  //     },
-  //   ],
-  // );
-
   imagePullSecret = this.provide(SecretV1, 'imagePullSecret', id => {
     const server = `${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.ocir.io`;
     const username = `${this.projectStack.dataOciObjectstorageNamespace.element.namespace}/${this.applier.shared.user.element.name}`;

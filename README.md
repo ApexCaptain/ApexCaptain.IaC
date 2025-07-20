@@ -6,7 +6,9 @@ CDK for Terraform project of ApexCaptain
 
 ### 🔧 공통사항
 
-- [ ] **Terraform State 백업**: 20개 복사본 보관으로 자동 백업 구현
+- [x] **Terraform State 백업**: 10개 복사본 보관으로 자동 백업 구현
+- [ ] **Ingress 마이그레이션**: nginx에서 istio로 전환
+- [ ] **Istio Web** : Kiali 활성화
 - [ ] **Istio 멀티 클러스터**: 두 K8s 클러스터 간 통신 연결
 - [ ] **모니터링 마이그레이션**: 대시보드를 Prometheus, Grafana, ELK 스택으로 교체
 

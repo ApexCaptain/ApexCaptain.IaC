@@ -162,26 +162,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               },
             },
           },
-          // services: {
-          //   files: {
-          //     name: 'files',
-          //     ports: {
-          //       'file-browser': {
-          //         name: 'file-browser',
-          //         port: 80,
-          //         targetPort: '8080',
-          //         protocol: 'TCP',
-          //       },
-          //       sftp: {
-          //         nodePort: this.nodePorts.sftp,
-          //         name: 'sftp',
-          //         port: 22,
-          //         targetPort: '22',
-          //         protocol: 'TCP',
-          //       },
-          //     },
-          //   },
-          // },
         }),
       },
     ];

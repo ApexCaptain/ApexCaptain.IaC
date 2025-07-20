@@ -13,6 +13,7 @@ import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 import path from 'path';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { SensitiveFile } from '@lib/terraform/providers/local/sensitive-file';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
@@ -69,9 +70,38 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'enabled',
+      },
     },
   }));
 
+  nordLynxPrivateKeySecret = this.provide(
+    SecretV1,
+    'nordLynxPrivateKeySecret',
+    id => {
+      const key = 'nord-lynx-private-key';
+      return [
+        {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace: this.namespace.element.metadata.name,
+          },
+          data: {
+            [key]:
+              this.globalConfigService.config.terraform.stacks.k8s.workstation
+                .common.nordLynxPrivateKey,
+          },
+          type: 'Opaque',
+        },
+        {
+          key,
+        },
+      ];
+    },
+  );
+
+  // PVCs -- DangeZone, Do not delete
   sharedFilesPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
     'sharedFilesPersistentVolumeClaim',
@@ -92,7 +122,7 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
             accessModes: ['ReadWriteMany'],
             resources: {
               requests: {
-                storage: '2Ti',
+                storage: '3Ti',
               },
             },
           },
@@ -106,6 +136,106 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
         },
       ];
     },
+  );
+
+  fileBrowserConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'fileBrowserConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '200Mi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  qbittorrentConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '200Mi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  qbittorrentIncompleteDownloadsPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentIncompleteDownloadsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '300Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  jellyfinConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'jellyfinConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '10Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
   );
 
   // SFTP
@@ -193,6 +323,7 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       this.config.sftp.userName,
       sftpDataDirName,
     );
+    const sftpHostKeyBackupDirContainerPath = path.join('etc', 'ssh-backup');
 
     return {
       metadata: {
@@ -267,27 +398,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
   });
 
   // File Browser
-  fileBrowserConfigPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'fileBrowserConfigPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '200Mi',
-          },
-        },
-      },
-    }),
-  );
 
   fileBrowserService = this.provide(ServiceV1, 'fileBrowserService', id => {
     const selector = {
@@ -468,28 +578,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
   }));
 
   // Qbittorrent
-  qbittorrentConfigPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'qbittorrentConfigPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '100Mi',
-          },
-        },
-      },
-    }),
-  );
-
   qbittorrentWebService = this.provide(
     ServiceV1,
     'qbittorrentWebService',
@@ -550,13 +638,83 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
           },
           template: {
             metadata: {
-              labels: this.qbittorrentWebService.shared.selector,
+              labels: {
+                ...this.qbittorrentWebService.shared.selector,
+                'sidecar.istio.io/inject': 'false',
+              },
             },
             spec: {
               securityContext: {
                 fsGroup,
               },
+              initContainer: [
+                {
+                  name: 'init-sysctl',
+                  image: 'busybox',
+                  command: [
+                    '/bin/sh',
+                    '-c',
+                    dedent`
+                        sysctl -w net.ipv6.conf.all.disable_ipv6=1 &&
+                        sysctl -w net.ipv4.conf.all.src_valid_mark=1
+                    `,
+                  ],
+                  securityContext: {
+                    privileged: true,
+                  },
+                },
+              ],
               container: [
+                {
+                  name: 'nordlynx',
+                  image: 'ghcr.io/bubuntux/nordlynx:latest',
+                  imagePullPolicy: 'Always',
+                  env: [
+                    {
+                      name: 'TZ',
+                      value: 'Asia/Seoul',
+                    },
+                    {
+                      name: 'NET_LOCAL',
+                      value:
+                        this.globalConfigService.config.terraform.stacks.k8s
+                          .workstation.common.defaultCalcioIpv4IpPoolsCidrBlock,
+                    },
+                    {
+                      name: 'ALLOW_LIST',
+                      value: `${this.qbittorrentWebService.element.metadata.name}.${this.namespace.element.metadata.name}.svc.cluster.local`,
+                    },
+                    {
+                      name: 'DNS',
+                      value: '1.1.1.1,8.8.8.8',
+                    },
+                    {
+                      name: 'PRIVATE_KEY',
+                      valueFrom: {
+                        secretKeyRef: {
+                          name: this.nordLynxPrivateKeySecret.element.metadata
+                            .name,
+                          key: this.nordLynxPrivateKeySecret.shared.key,
+                        },
+                      },
+                    },
+                    {
+                      name: 'QUERY',
+                      value:
+                        'filters\\[servers_groups\\]\\[identifier\\]=legacy_p2p',
+                    },
+                    {
+                      name: 'COUNTRY_CODE',
+                      // Japan
+                      value: 'JP',
+                    },
+                  ],
+                  securityContext: {
+                    capabilities: {
+                      add: ['NET_ADMIN'],
+                    },
+                  },
+                },
                 {
                   name: this.metadata.shared.services.qbittorrent.ports.web
                     .name,
@@ -637,6 +795,12 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
                         .metadata.name,
                       mountPath: '/config',
                     },
+                    {
+                      name: this
+                        .qbittorrentIncompleteDownloadsPersistentVolumeClaim
+                        .element.metadata.name,
+                      mountPath: '/incomplete',
+                    },
                   ],
                 },
               ],
@@ -657,6 +821,15 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
                     claimName:
                       this.qbittorrentConfigPersistentVolumeClaim.element
                         .metadata.name,
+                  },
+                },
+                {
+                  name: this.qbittorrentIncompleteDownloadsPersistentVolumeClaim
+                    .element.metadata.name,
+                  persistentVolumeClaim: {
+                    claimName:
+                      this.qbittorrentIncompleteDownloadsPersistentVolumeClaim
+                        .element.metadata.name,
                   },
                 },
               ],
@@ -711,28 +884,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
   }));
 
   // Jellyfin
-  jellyfinConfigPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'jellyfinConfigPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '10Gi',
-          },
-        },
-      },
-    }),
-  );
-
   jellyfinRelease = this.provide(Release, 'jellyfinRelease', () => {
     return {
       name: this.metadata.shared.helm.jellyfin.name,
