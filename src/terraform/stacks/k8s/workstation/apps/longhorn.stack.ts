@@ -75,18 +75,19 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       values: [
         yaml.stringify({
           ingress: {
-            enabled: true,
-            ingressClassName: 'nginx',
-            host: `${this.cloudflareRecordStack.longhornRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-            annotations: {
-              'nginx.ingress.kubernetes.io/rewrite-target': '/',
-              'nginx.ingress.kubernetes.io/auth-url':
-                this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-                  .authUrl,
-              'nginx.ingress.kubernetes.io/auth-signin':
-                this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-                  .authSignin,
-            },
+            enabled: false,
+            // enabled: true,
+            // ingressClassName: 'nginx',
+            // host: `${this.cloudflareRecordStack.longhornRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            // annotations: {
+            //   'nginx.ingress.kubernetes.io/rewrite-target': '/',
+            //   'nginx.ingress.kubernetes.io/auth-url':
+            //     this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            //       .authUrl,
+            //   'nginx.ingress.kubernetes.io/auth-signin':
+            //     this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            //       .authSignin,
+            // },
           },
           csi: { kubeletRootDir: '/var/snap/microk8s/common/var/lib/kubelet' },
           defaultSettings: {

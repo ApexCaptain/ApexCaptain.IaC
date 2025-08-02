@@ -138,31 +138,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     },
   );
 
-  fileBrowserConfigPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'fileBrowserConfigPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '200Mi',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
-
   qbittorrentConfigPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
     'qbittorrentConfigPersistentVolumeClaim',
@@ -323,8 +298,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       this.config.sftp.userName,
       sftpDataDirName,
     );
-    const sftpHostKeyBackupDirContainerPath = path.join('etc', 'ssh-backup');
-
     return {
       metadata: {
         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -396,186 +369,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       },
     };
   });
-
-  // File Browser
-
-  fileBrowserService = this.provide(ServiceV1, 'fileBrowserService', id => {
-    const selector = {
-      app: 'file-browser',
-    };
-    return [
-      {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace: this.namespace.element.metadata.name,
-        },
-        spec: {
-          selector,
-          type: 'ClusterIP',
-          port: [this.metadata.shared.services['file-browser'].ports.web],
-        },
-      },
-      { selector },
-    ];
-  });
-
-  fileBrowserDeployment = this.provide(
-    DeploymentV1,
-    'fileBrowserDeployment',
-    id => {
-      const fsGroup = '1000';
-      return {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace: this.namespace.element.metadata.name,
-        },
-        spec: {
-          replicas: '1',
-          selector: {
-            matchLabels: this.fileBrowserService.shared.selector,
-          },
-          template: {
-            metadata: {
-              labels: this.fileBrowserService.shared.selector,
-            },
-            spec: {
-              securityContext: {
-                fsGroup,
-              },
-              container: [
-                {
-                  name: this.metadata.shared.services['file-browser'].ports.web
-                    .name,
-                  image: 'filebrowser/filebrowser',
-                  imagePullPolicy: 'Always',
-                  port: [
-                    {
-                      containerPort:
-                        this.metadata.shared.services['file-browser'].ports.web
-                          .port,
-                      protocol:
-                        this.metadata.shared.services['file-browser'].ports.web
-                          .protocol,
-                    },
-                  ],
-                  securityContext: {
-                    runAsUser: fsGroup,
-                    runAsGroup: fsGroup,
-                  },
-                  volumeMount: [
-                    {
-                      name: this.sharedFilesPersistentVolumeClaim.element
-                        .metadata.name,
-                      mountPath: '/srv',
-                      subPath:
-                        this.sharedFilesPersistentVolumeClaim.shared
-                          .dataRootDirPath,
-                    },
-                    {
-                      name: this.fileBrowserConfigPersistentVolumeClaim.element
-                        .metadata.name,
-                      mountPath: '/database',
-                      subPath: 'database',
-                    },
-                    {
-                      name: this.fileBrowserConfigPersistentVolumeClaim.element
-                        .metadata.name,
-                      mountPath: '/config',
-                      subPath: 'config',
-                    },
-                  ],
-                  env: [
-                    {
-                      name: 'FB_NOAUTH',
-                      value: 'true',
-                    },
-                    {
-                      name: 'FB_PORT',
-                      value:
-                        this.metadata.shared.services['file-browser'].ports.web
-                          .targetPort,
-                    },
-                  ],
-                },
-              ],
-              volume: [
-                {
-                  name: this.sharedFilesPersistentVolumeClaim.element.metadata
-                    .name,
-                  persistentVolumeClaim: {
-                    claimName:
-                      this.sharedFilesPersistentVolumeClaim.element.metadata
-                        .name,
-                  },
-                },
-                {
-                  name: this.fileBrowserConfigPersistentVolumeClaim.element
-                    .metadata.name,
-                  persistentVolumeClaim: {
-                    claimName:
-                      this.fileBrowserConfigPersistentVolumeClaim.element
-                        .metadata.name,
-                  },
-                },
-              ],
-            },
-          },
-        },
-      };
-    },
-  );
-
-  filebrowserIngress = this.provide(IngressV1, 'filebrowserIngress', id => ({
-    metadata: {
-      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-      namespace: this.namespace.element.metadata.name,
-      annotations: {
-        'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-        'nginx.ingress.kubernetes.io/rewrite-target': '/',
-
-        'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authUrl,
-        'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authSignin,
-        'nginx.ingress.kubernetes.io/auth-snippet': dedent`
-            if ($request_uri ~ "/share") {
-              return 200;
-            }
-            if ($request_uri ~ "/api/public/dl") {
-              return 200;
-            }
-          `,
-      },
-    },
-    spec: {
-      ingressClassName: 'nginx',
-      rule: [
-        {
-          host: `${this.cloudflareRecordStack.workstationFilesRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-          http: {
-            path: [
-              {
-                path: '/',
-                pathType: 'Prefix',
-                backend: {
-                  service: {
-                    name: this.fileBrowserService.element.metadata.name,
-                    port: {
-                      number:
-                        this.metadata.shared.services['file-browser'].ports.web
-                          .port,
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      ],
-    },
-  }));
 
   // Qbittorrent
   qbittorrentWebService = this.provide(
@@ -840,6 +633,7 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     },
   );
 
+  /*
   qbittorrentIngress = this.provide(IngressV1, 'qbittorrentIngress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -882,6 +676,7 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       ],
     },
   }));
+  */
 
   // Jellyfin
   jellyfinRelease = this.provide(Release, 'jellyfinRelease', () => {
@@ -898,19 +693,20 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
           },
           runtimeClassName: 'nvidia',
           ingress: {
-            enabled: true,
-            className: 'nginx',
-            hosts: [
-              {
-                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-                paths: [
-                  {
-                    path: '/',
-                    pathType: 'ImplementationSpecific',
-                  },
-                ],
-              },
-            ],
+            enabled: false,
+            // enabled: true,
+            // className: 'nginx',
+            // hosts: [
+            //   {
+            //     host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            //     paths: [
+            //       {
+            //         path: '/',
+            //         pathType: 'ImplementationSpecific',
+            //       },
+            //     ],
+            //   },
+            // ],
           },
           persistence: {
             config: {

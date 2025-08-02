@@ -223,8 +223,8 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     }),
   );
 
-  okeFilesRecord = this.provide(DnsRecord, 'okeFilesRecord', () => ({
-    name: 'files-oke',
+  filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
+    name: 'files',
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -235,22 +235,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     proxied: true,
     comment: 'Cloudflare record for OKE Files Browser service',
   }));
-
-  workstationFilesRecord = this.provide(
-    DnsRecord,
-    'workstationFilesRecord',
-    () => ({
-      name: 'files-workstation',
-      ttl: 1,
-      type: 'CNAME',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-          .domain.iptime,
-      proxied: true,
-      comment: 'Cloudflare record for Workstation Files Browser service',
-    }),
-  );
 
   longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
     name: 'longhorn',
