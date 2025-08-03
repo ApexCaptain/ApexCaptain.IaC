@@ -1,4 +1,7 @@
-import { Manifest } from '@lib/terraform/providers/kubernetes/manifest';
+import {
+  Manifest,
+  ManifestConfig,
+} from '@lib/terraform/providers/kubernetes/manifest';
 import { Construct } from 'constructs';
 
 export class IstioGateway extends Manifest {
@@ -6,35 +9,38 @@ export class IstioGateway extends Manifest {
     scope: Construct,
     id: string,
     props: {
-      metadata: {
-        name: string;
-        namespace: string;
-      };
-      spec: {
-        selector: {
-          istio: string;
+      manifest: {
+        metadata: {
+          name: string;
+          namespace: string;
         };
-        servers: {
-          port: {
-            number: number;
-            name: string;
-            protocol: string;
+        spec: {
+          selector: {
+            istio: string;
           };
-          hosts: string[];
-          tls?: {
-            mode: string;
-            credentialName: string;
-          };
-        }[];
+          servers: {
+            port: {
+              number: number;
+              name: string;
+              protocol: string;
+            };
+            hosts: string[];
+            tls?: {
+              mode: string;
+              credentialName?: string;
+            };
+          }[];
+        };
       };
-    },
+    } & ManifestConfig,
   ) {
     super(scope, id, {
+      ...props,
       manifest: {
         apiVersion: 'networking.istio.io/v1alpha3',
         kind: 'Gateway',
-        metadata: props.metadata,
-        spec: props.spec,
+        metadata: props.manifest.metadata,
+        spec: props.manifest.spec,
       },
     });
   }

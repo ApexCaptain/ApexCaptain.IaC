@@ -23,6 +23,7 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -155,47 +156,46 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     }),
   );
 
-  // ingress = this.provide(IngressV1, 'ingress', id => ({
-  //   metadata: {
-  //     name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-  //     namespace: this.namespace.element.metadata.name,
-  //     annotations: {
-  //       'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
-  //       'nginx.ingress.kubernetes.io/rewrite-target': '/',
-
-  //       'nginx.ingress.kubernetes.io/auth-url':
-  //         this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-  //           .authUrl,
-  //       'nginx.ingress.kubernetes.io/auth-signin':
-  //         this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-  //           .authSignin,
-  //     },
-  //   },
-  //   spec: {
-  //     ingressClassName: 'nginx',
-  //     rule: [
-  //       {
-  //         host: `${this.cloudflareRecordStack.workstationDashboardRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-  //         http: {
-  //           path: [
-  //             {
-  //               path: '/',
-  //               pathType: 'Prefix',
-  //               backend: {
-  //                 service: {
-  //                   name: this.service.element.metadata.name,
-  //                   port: {
-  //                     number: this.service.shared.servicePort,
-  //                   },
-  //                 },
-  //               },
-  //             },
-  //           ],
-  //         },
-  //       },
-  //     ],
-  //   },
-  // }));
+  ingress = this.provide(IngressV1, 'ingress', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+      annotations: {
+        'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
+        'nginx.ingress.kubernetes.io/rewrite-target': '/',
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin':
+          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+            .authSignin,
+      },
+    },
+    spec: {
+      ingressClassName: 'nginx',
+      rule: [
+        {
+          host: `${this.cloudflareRecordStack.workstationDashboardRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          http: {
+            path: [
+              {
+                path: '/',
+                pathType: 'Prefix',
+                backend: {
+                  service: {
+                    name: this.service.element.metadata.name,
+                    port: {
+                      number: this.service.shared.servicePort,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }));
 
   constructor(
     // Global
@@ -207,6 +207,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,

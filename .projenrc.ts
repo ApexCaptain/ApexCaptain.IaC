@@ -537,6 +537,10 @@ void (async () => {
               ).toString(),
             },
             apps: {
+              metallb: {
+                loadbalancerIpRange:
+                  process.env.WORKSTATION_METALLB_LOADBALANCER_IP_RANGE!!,
+              },
               longhorn: {
                 nodes: [
                   {

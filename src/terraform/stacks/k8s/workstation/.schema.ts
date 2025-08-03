@@ -9,6 +9,9 @@ export const WorkstationSchema = Joi.object({
     }).required(),
   }).required(),
   apps: Joi.object({
+    metallb: Joi.object({
+      loadbalancerIpRange: Joi.string().required(),
+    }).required(),
     longhorn: Joi.object({
       nodes: Joi.array()
         .items(

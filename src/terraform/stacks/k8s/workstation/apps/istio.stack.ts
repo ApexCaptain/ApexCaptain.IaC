@@ -11,6 +11,11 @@ import { K8S_Workstation_System_Stack } from '../system.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import yaml from 'yaml';
+import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { CertManagerCertificate, IstioGateway } from '@/common';
+import _ from 'lodash';
+import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
+import { Cloudflare_Zone_Stack } from '@/terraform/stacks';
 
 @Injectable()
 export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
@@ -80,11 +85,16 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationAppsMetallbStack: K8S_Workstation_Apps_Metallb_Stack,
+    private readonly k8sWorkstationAppsCertManagerStack: K8S_Workstation_Apps_CertManager_Stack,
+    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Istio_Stack.name,
       'Istio stack for workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsMetallbStack);
+    this.addDependency(this.k8sWorkstationAppsCertManagerStack);
   }
 }

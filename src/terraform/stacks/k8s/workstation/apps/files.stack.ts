@@ -633,7 +633,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
     },
   );
 
-  /*
   qbittorrentIngress = this.provide(IngressV1, 'qbittorrentIngress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -676,7 +675,6 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
       ],
     },
   }));
-  */
 
   // Jellyfin
   jellyfinRelease = this.provide(Release, 'jellyfinRelease', () => {
@@ -693,20 +691,19 @@ export class K8S_Workstation_Apps_Files_Stack extends AbstractStack {
           },
           runtimeClassName: 'nvidia',
           ingress: {
-            enabled: false,
-            // enabled: true,
-            // className: 'nginx',
-            // hosts: [
-            //   {
-            //     host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-            //     paths: [
-            //       {
-            //         path: '/',
-            //         pathType: 'ImplementationSpecific',
-            //       },
-            //     ],
-            //   },
-            // ],
+            enabled: true,
+            className: 'nginx',
+            hosts: [
+              {
+                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                paths: [
+                  {
+                    path: '/',
+                    pathType: 'ImplementationSpecific',
+                  },
+                ],
+              },
+            ],
           },
           persistence: {
             config: {

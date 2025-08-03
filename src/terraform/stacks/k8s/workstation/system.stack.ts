@@ -75,6 +75,27 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
         dashboard: createK8sApplicationMetadata({
           namespace: 'dashboard',
         }),
+        certManager: createK8sApplicationMetadata({
+          namespace: 'cert-manager',
+          helm: {
+            certManager: {
+              name: 'cert-manager',
+              chart: 'cert-manager',
+              repository: 'https://charts.jetstack.io',
+            },
+          },
+        }),
+
+        metallb: createK8sApplicationMetadata({
+          namespace: 'metallb-system',
+          helm: {
+            metallb: {
+              name: 'metallb',
+              chart: 'metallb',
+              repository: 'https://metallb.github.io/metallb',
+            },
+          },
+        }),
 
         istio: createK8sApplicationMetadata({
           namespace: 'istio-system',
@@ -88,6 +109,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               name: 'istio-base',
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+          },
+        }),
+
+        ingressController: createK8sApplicationMetadata({
+          namespace: 'ingress-controller',
+          helm: {
+            ingressController: {
+              name: 'ingress-controller',
+              chart: 'ingress-nginx',
+              repository: 'https://kubernetes.github.io/ingress-nginx',
             },
           },
         }),
