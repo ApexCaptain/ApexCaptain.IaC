@@ -10,7 +10,6 @@ import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { CertManagerClusterIssuer, CertManagerCertificate } from '@/common';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import _ from 'lodash';
 import yaml from 'yaml';
@@ -41,7 +40,7 @@ export class K8S_Workstation_Apps_CertManager_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.certManager,
   ]);
@@ -88,86 +87,6 @@ export class K8S_Workstation_Apps_CertManager_Stack extends AbstractStack {
     };
   });
 
-  letsEncryptProdClusterIssuer = this.provide(
-    CertManagerClusterIssuer,
-    'letsEncryptProdClusterIssuer',
-    id => {
-      const name = `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`;
-      return [
-        {
-          manifest: {
-            metadata: {
-              name,
-            },
-            spec: {
-              acme: {
-                server: 'https://acme-v02.api.letsencrypt.org/directory',
-                email:
-                  this.globalConfigService.config.terraform.config.providers
-                    .cloudflare.ApexCaptain.email,
-                privateKeySecretRef: {
-                  name: 'letsencrypt-prod',
-                },
-                solvers: [
-                  {
-                    dns01: {
-                      cloudflare: {
-                        email:
-                          this.globalConfigService.config.terraform.config
-                            .providers.cloudflare.ApexCaptain.email,
-                        apiTokenSecretRef: {
-                          name: this.cloudflareApiTokenSecret.element.metadata
-                            .name,
-                          key: 'api-token',
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          dependsOn: [
-            this.certManagerRelease.element,
-            this.cloudflareApiTokenSecret.element,
-          ],
-        },
-        { name },
-      ];
-    },
-  );
-
-  wildcardCertificate = this.provide(
-    CertManagerCertificate,
-    'wildcardCertificate',
-    id => {
-      const name = `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`;
-      return [
-        {
-          manifest: {
-            metadata: {
-              name,
-              namespace: this.namespace.element.metadata.name,
-            },
-            spec: {
-              secretName: name,
-              issuerRef: {
-                name: this.letsEncryptProdClusterIssuer.shared.name,
-                kind: 'ClusterIssuer',
-              },
-              dnsNames: [
-                `*.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-                this.cloudflareZoneStack.dataAyteneve93Zone.element.name,
-              ],
-            },
-          },
-          dependsOn: [this.letsEncryptProdClusterIssuer.element],
-        },
-        { name },
-      ];
-    },
-  );
-
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
@@ -178,7 +97,6 @@ export class K8S_Workstation_Apps_CertManager_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

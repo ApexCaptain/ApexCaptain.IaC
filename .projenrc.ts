@@ -570,9 +570,9 @@ void (async () => {
                   },
                 ],
               },
-              files: {
+              nas: {
                 sftp: {
-                  userName: process.env.WORKSTATION_FILE_APP_SFTP_USER_NAME!!,
+                  userName: process.env.WORKSTATION_NAS_APP_SFTP_USER_NAME!!,
                 },
               },
             },

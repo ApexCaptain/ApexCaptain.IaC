@@ -48,24 +48,16 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     ],
   );
 
-  nodePorts = (() => {
-    const minNodePort = 30000;
-    const maxNodePort = 32767;
-    const nodePorts = {
-      sftp: 30022,
-      qbittorrent: 30881,
+  metallbPorts = (() => {
+    const metallbPorts = {
+      nasSftp: 22,
     };
 
-    const ports = Object.values(nodePorts);
+    const ports = Object.values(metallbPorts);
     if (ports.length != new Set(ports).size) {
-      throw new Error('Node ports must be unique');
+      throw new Error('Metallb ports must be unique');
     }
-    if (ports.some(port => port < minNodePort || port > maxNodePort)) {
-      throw new Error(
-        `Node ports must be between ${minNodePort} and ${maxNodePort}`,
-      );
-    }
-    return nodePorts;
+    return metallbPorts;
   })();
 
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
@@ -110,6 +102,11 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
+            // eastWestGateway: {
+            //   name: 'east-west-gateway',
+            //   chart: 'gateway',
+            //   repository: 'https://istio-release.storage.googleapis.com/charts',
+            // },
           },
         }),
 
@@ -135,8 +132,8 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
           },
         }),
 
-        files: createK8sApplicationMetadata({
-          namespace: 'files',
+        nas: createK8sApplicationMetadata({
+          namespace: 'nas',
           helm: {
             jellyfin: {
               name: 'jellyfin',
@@ -149,8 +146,8 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               name: 'sftp',
               ports: {
                 sftp: {
+                  portBasedIngressPort: this.metallbPorts.nasSftp,
                   name: 'sftp',
-                  nodePort: this.nodePorts.sftp,
                   port: 22,
                   targetPort: '22',
                   protocol: 'TCP',
@@ -168,14 +165,12 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
                 },
                 'torrenting-tcp': {
                   name: 'torrenting-tcp',
-                  nodePort: this.nodePorts.qbittorrent,
                   port: 6881,
                   targetPort: '6881',
                   protocol: 'TCP',
                 },
                 'torrenting-udp': {
                   name: 'torrenting-udp',
-                  nodePort: this.nodePorts.qbittorrent,
                   port: 6881,
                   targetPort: '6881',
                   protocol: 'UDP',

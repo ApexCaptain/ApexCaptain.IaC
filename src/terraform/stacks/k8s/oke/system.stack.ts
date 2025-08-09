@@ -78,6 +78,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     return [
       {},
       {
+        certManager: createK8sApplicationMetadata({
+          namespace: 'cert-manager',
+          helm: {
+            certManager: {
+              name: 'cert-manager',
+              chart: 'cert-manager',
+              repository: 'https://charts.jetstack.io',
+            },
+          },
+        }),
+
         rolloutTrigger: createK8sApplicationMetadata({
           namespace: 'rollout-trigger',
           services: {

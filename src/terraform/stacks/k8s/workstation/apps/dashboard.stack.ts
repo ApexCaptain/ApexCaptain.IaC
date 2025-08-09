@@ -24,6 +24,7 @@ import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stac
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -43,7 +44,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.dashboard,
   ]);
@@ -211,6 +212,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -218,5 +220,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       'Dashboard stack for workstation k8s',
     );
     this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

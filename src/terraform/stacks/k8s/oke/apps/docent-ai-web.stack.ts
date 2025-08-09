@@ -254,7 +254,7 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
     return [{}, { user, authToken, privateKey, apiKey }];
   });
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.docentAiWeb,
   ]);

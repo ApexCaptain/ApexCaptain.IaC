@@ -31,7 +31,7 @@ export const WorkstationSchema = Joi.object({
         )
         .required(),
     }).required(),
-    files: Joi.object({
+    nas: Joi.object({
       sftp: Joi.object({
         userName: Joi.string().required(),
       }).required(),

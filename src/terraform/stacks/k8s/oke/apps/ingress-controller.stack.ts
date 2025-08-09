@@ -14,6 +14,8 @@ import _ from 'lodash';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Oke_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
+import { K8S_Oke_Apps_CertManager_Stack } from './cert-manager.stack';
 
 @Injectable()
 export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
@@ -48,7 +50,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.ingressController,
   ]);
@@ -90,6 +92,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
           'annotations-risk-level': 'Critical',
           'use-forwarded-headers': 'true',
           'compute-full-forwarded-for': 'true',
+          'ssl-default-certificate': `${this.k8sOkeAppsCertManagerStack.namespace.element.metadata.name}/${this.k8sOkeAppsCertManagerCRDStack.wildcardCertificate.shared.name}`,
         },
       },
       tcp: {},
@@ -141,11 +144,15 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
+    private readonly k8sOkeAppsCertManagerStack: K8S_Oke_Apps_CertManager_Stack,
+    private readonly k8sOkeAppsCertManagerCRDStack: K8S_Oke_Apps_CertManager_CRD_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_IngressController_Stack.name,
       'Ingress Controller for OKE k8s',
     );
+    this.addDependency(this.k8sOkeAppsCertManagerStack);
+    this.addDependency(this.k8sOkeAppsCertManagerCRDStack);
   }
 }

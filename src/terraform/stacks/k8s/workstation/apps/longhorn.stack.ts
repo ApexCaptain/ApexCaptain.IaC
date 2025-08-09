@@ -23,6 +23,7 @@ import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { StorageClassV1 } from '@lib/terraform/providers/kubernetes/storage-class-v1';
 import dedent from 'dedent';
 import path from 'path';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
@@ -53,7 +54,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.longhorn,
   ]);
@@ -213,12 +214,14 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Longhorn_Stack.name,
       'Longhorn stack for workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
     this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

@@ -41,7 +41,7 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.istio,
   ]);
@@ -77,6 +77,26 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
       dependsOn: [this.istioBaseRelease.element],
     };
   });
+
+  // istioEastWestGatewayRelease = this.provide(
+  //   Release,
+  //   'istioEastWestGatewayRelease',
+  //   () => {
+  //     return {
+  //       name: this.metadata.shared.helm.eastWestGateway.name,
+  //       chart: this.metadata.shared.helm.eastWestGateway.chart,
+  //       repository: this.metadata.shared.helm.eastWestGateway.repository,
+  //       namespace: this.namespace.element.metadata.name,
+  //       createNamespace: false,
+  //       dependsOn: [this.istiodRelease.element],
+  //       values: [
+  //         yaml.stringify({
+  //           labels: { istio: 'eastwestgateway' },
+  //         }),
+  //       ],
+  //     };
+  //   },
+  // );
 
   constructor(
     // Terraform

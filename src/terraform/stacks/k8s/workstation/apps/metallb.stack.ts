@@ -11,7 +11,6 @@ import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { MetallbIpAddressPool, MetallbL2Advertisement } from '@/common';
 import _ from 'lodash';
 
 @Injectable()
@@ -42,7 +41,7 @@ export class K8S_Workstation_Apps_Metallb_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.metallb,
   ]);
@@ -60,46 +59,11 @@ export class K8S_Workstation_Apps_Metallb_Stack extends AbstractStack {
       repository: this.metadata.shared.helm.metallb.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
+      wait: true,
+      waitForJobs: true,
+      dependsOn: [this.namespace.element],
     };
   });
-
-  ipAddressPool = this.provide(MetallbIpAddressPool, 'ipAddressPool', id => {
-    const name = `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`;
-    return [
-      {
-        manifest: {
-          metadata: {
-            name,
-            namespace: this.namespace.element.metadata.name,
-          },
-          spec: {
-            addresses: [this.config.loadbalancerIpRange],
-          },
-        },
-        dependsOn: [this.metallbRelease.element],
-      },
-      {
-        name,
-      },
-    ];
-  });
-
-  l2Advertisement = this.provide(
-    MetallbL2Advertisement,
-    'l2Advertisement',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace: this.namespace.element.metadata.name,
-        },
-        spec: {
-          ipAddressPools: [this.ipAddressPool.shared.name],
-        },
-      },
-      dependsOn: [this.ipAddressPool.element],
-    }),
-  );
 
   constructor(
     // Global

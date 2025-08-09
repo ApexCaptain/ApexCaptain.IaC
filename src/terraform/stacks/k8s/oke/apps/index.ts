@@ -1,3 +1,5 @@
+export * from './cert-manager.stack';
+export * from './cert-manager.crd.stack';
 export * from './ingress-controller.stack';
 export * from './dashboard.stack';
 export * from './oauth2-proxy.stack';

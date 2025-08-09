@@ -90,37 +90,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for OKE SFTP service',
   }));
 
-  workstationSftpRecord = this.provide(
-    DnsRecord,
-    'workstationSftpRecord',
-    () => ({
-      name: 'sftp-workstation',
-      ttl: 1,
-      type: 'CNAME',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-          .domain.iptime,
-      proxied: false,
-      comment: 'Cloudflare record for Workstation SFTP service',
-    }),
-  );
-
-  // For Https Ingress Services
-
-  // argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
-  //   name: 'argocd',
-  //   ttl: 1,
-  //   type: 'A',
-  //   zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-  //   content:
-  //     this.k8sOkeNetworkStack
-  //       .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-  //       .ipAddress,
-  //   proxied: true,
-  //   comment: 'Cloudflare record for Argo CD service',
-  // }));
-
   vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
     name: 'vault',
     ttl: 1,

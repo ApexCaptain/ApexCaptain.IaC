@@ -238,7 +238,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     }),
   );
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.nfs,
   ]);

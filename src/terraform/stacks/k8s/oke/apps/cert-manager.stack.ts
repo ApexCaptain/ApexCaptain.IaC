@@ -1,20 +1,23 @@
-import { AbstractStack } from '@/common/abstract/abstract.stack';
+import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
-import { Release } from '@lib/terraform/providers/helm/release';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
 import yaml from 'yaml';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
+import _ from 'lodash';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
-export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
+export class K8S_Oke_Apps_CertManager_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -48,7 +51,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
 
   metadata = this.provide(Resource, 'metadata', () => [
     {},
-    this.k8sOkeSystemStack.applicationMetadata.shared.istio,
+    this.k8sOkeSystemStack.applicationMetadata.shared.certManager,
   ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
@@ -57,33 +60,46 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     },
   }));
 
-  istioBaseRelease = this.provide(Release, 'istioBaseRelease', () => {
+  cloudflareApiTokenSecret = this.provide(
+    SecretV1,
+    'cloudflareApiTokenSecret',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      data: {
+        'api-token':
+          this.globalConfigService.config.terraform.config.providers.cloudflare
+            .ApexCaptain.apiToken,
+      },
+      type: 'Opaque',
+    }),
+  );
+
+  certManagerRelease = this.provide(Release, 'certManagerRelease', () => {
     return {
-      name: this.metadata.shared.helm.base.name,
-      chart: this.metadata.shared.helm.base.chart,
-      repository: this.metadata.shared.helm.base.repository,
+      name: this.metadata.shared.helm.certManager.name,
+      chart: this.metadata.shared.helm.certManager.chart,
+      repository: this.metadata.shared.helm.certManager.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
       values: [
         yaml.stringify({
-          defaultRevision: 'default',
+          crds: {
+            enabled: true,
+            keep: false,
+          },
+          enableCertificateOwnerRef: true,
         }),
       ],
     };
   });
 
-  istiodRelease = this.provide(Release, 'istiodRelease', () => {
-    return {
-      name: this.metadata.shared.helm.istiod.name,
-      chart: this.metadata.shared.helm.istiod.chart,
-      repository: this.metadata.shared.helm.istiod.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      dependsOn: [this.istioBaseRelease.element],
-    };
-  });
-
   constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
@@ -94,8 +110,8 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Oke_Apps_Istio_Stack.name,
-      'Istio stack for OKE k8s',
+      K8S_Oke_Apps_CertManager_Stack.name,
+      'Cert Manager for OKE k8s',
     );
   }
 }

@@ -9,13 +9,13 @@ import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { CertManagerCertificate, K8sApplicationMetadata } from '@/common';
+import { K8sApplicationMetadata } from '@/common';
 import yaml from 'yaml';
 import { Release } from '@lib/terraform/providers/helm/release';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { K8S_Workstation_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack {
@@ -41,7 +41,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.ingressController,
   ]);
@@ -65,7 +65,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         config: {
           'use-forwarded-headers': 'true',
           'compute-full-forwarded-for': 'true',
-          'ssl-default-certificate': `${this.k8sWorkstationAppsCertManagerStack.namespace.element.metadata.name}/${this.k8sWorkstationAppsCertManagerStack.wildcardCertificate.shared.name}`,
+          'ssl-default-certificate': `${this.k8sWorkstationAppsCertManagerStack.namespace.element.metadata.name}/${this.k8sWorkstationAppsCertManagerCRDStack.wildcardCertificate.shared.name}`,
         },
       },
       tcp: {},
@@ -116,6 +116,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sWorkstationAppsMetallbStack: K8S_Workstation_Apps_Metallb_Stack,
     private readonly k8sWorkstationAppsCertManagerStack: K8S_Workstation_Apps_CertManager_Stack,
+    private readonly k8sWorkstationAppsCertManagerCRDStack: K8S_Workstation_Apps_CertManager_CRD_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -123,5 +124,6 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
       'Ingress Controller for Workstation k8s',
     );
     this.addDependency(this.k8sWorkstationAppsMetallbStack);
+    this.addDependency(this.k8sWorkstationAppsCertManagerCRDStack);
   }
 }

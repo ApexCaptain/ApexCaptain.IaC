@@ -106,7 +106,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
   }));
 
   // Kubernetes
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.vault,
   ]);
