@@ -4,3 +4,4 @@ export * from './functions';
 export * from './types';
 export * from './crd';
 export * from './resource';
+export * from './templates';

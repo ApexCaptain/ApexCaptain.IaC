@@ -131,6 +131,18 @@ export class K8S_Oke_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        monitoring: createK8sApplicationMetadata({
+          namespace: 'monitoring',
+          helm: {
+            kubePrometheusStack: {
+              name: 'kube-prometheus-stack',
+              chart: 'kube-prometheus-stack',
+              repository: 'https://prometheus-community.github.io/helm-charts',
+            },
+          },
+        }),
+
         nfs: createK8sApplicationMetadata({
           namespace: 'nfs',
           helm: {

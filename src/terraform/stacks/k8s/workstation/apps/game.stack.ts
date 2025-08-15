@@ -1,23 +1,23 @@
-import { AbstractStack } from '@/common/abstract/abstract.stack';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import _ from 'lodash';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_System_Stack } from '../system.stack';
-import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
-import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 
 @Injectable()
-export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
+export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
   readonly config =
-    this.globalConfigService.config.terraform.stacks.k8s.workstation.apps.nas;
+    this.globalConfigService.config.terraform.stacks.k8s.workstation.apps.game;
 
   terraform = {
     backend: this.backend(LocalBackend, () =>
@@ -35,7 +35,7 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
 
   metadata = this.provide(Resource, 'metadata', () => [
     {},
-    this.k8sWorkstationSystemStack.applicationMetadata.shared.nas,
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.game,
   ]);
 
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
@@ -47,10 +47,10 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
     },
   }));
 
-  // Qbittorrent
-  qbittorrentConfigPersistentVolumeClaim = this.provide(
+  // 7dtd
+  sdtdSavesPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
-    'qbittorrentConfigPersistentVolumeClaim',
+    'sdtdSavesPersistentVolumeClaim',
     id => ({
       metadata: {
         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -63,7 +63,7 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
         accessModes: ['ReadWriteMany'],
         resources: {
           requests: {
-            storage: '200Mi',
+            storage: '20Gi',
           },
         },
       },
@@ -73,9 +73,9 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
     }),
   );
 
-  qbittorrentCompleteDownloadsPersistentVolumeClaim = this.provide(
+  sdtdBackupsPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
-    'qbittorrentCompleteDownloadsPersistentVolumeClaim',
+    'sdtdBackupsPersistentVolumeClaim',
     id => ({
       metadata: {
         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -88,7 +88,7 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
         accessModes: ['ReadWriteMany'],
         resources: {
           requests: {
-            storage: '1Ti',
+            storage: '20Gi',
           },
         },
       },
@@ -98,9 +98,9 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
     }),
   );
 
-  qbittorrentIncompleteDownloadsPersistentVolumeClaim = this.provide(
+  sdtdLgsmConfigPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
-    'qbittorrentIncompleteDownloadsPersistentVolumeClaim',
+    'sdtdLgsmConfigPersistentVolumeClaim',
     id => ({
       metadata: {
         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -113,7 +113,7 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
         accessModes: ['ReadWriteMany'],
         resources: {
           requests: {
-            storage: '300Gi',
+            storage: '20Gi',
           },
         },
       },
@@ -123,10 +123,34 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
     }),
   );
 
-  // Jellyfin
-  jellyfinConfigPersistentVolumeClaim = this.provide(
+  sdtdLogsPersistentVolumeClaim = this.provide(
     PersistentVolumeClaimV1,
-    'jellyfinConfigPersistentVolumeClaim',
+    'sdtdLogsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '5Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  sdtdServerConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sdtdServerConfigPersistentVolumeClaim',
     id => ({
       metadata: {
         name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -139,58 +163,7 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
         accessModes: ['ReadWriteMany'],
         resources: {
           requests: {
-            storage: '10Gi',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
-
-  jellyfinMediaPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'jellyfinMediaPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteMany'],
-        resources: {
-          requests: {
-            storage: '2Ti',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
-
-  // SFTP
-  sftpExtraDataPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'sftpExtraDataPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClassName:
-          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteMany'],
-        resources: {
-          requests: {
-            storage: '300Gi',
+            storage: '20Gi',
           },
         },
       },
@@ -215,8 +188,8 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Workstation_Apps_Nas_Stack.name,
-      'Nas stack for workstation k8s',
+      K8S_Workstation_Apps_Game_Stack.name,
+      'Game stack for workstation k8s',
     );
     this.addDependency(this.k8sWorkstationAppsIstioStack);
   }

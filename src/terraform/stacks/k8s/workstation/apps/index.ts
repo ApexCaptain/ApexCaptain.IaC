@@ -4,6 +4,11 @@ export * from './dashboard.stack';
 // istio
 export * from './istio.stack';
 
+// game
+export * from './game.7dtd.stack';
+export * from './game.sftp.stack';
+export * from './game.stack';
+
 // longhorn
 export * from './longhorn.stack';
 
@@ -23,3 +28,6 @@ export * from './cert-manager.crd.stack';
 
 // ingress-controller
 export * from './ingress-controller.stack';
+
+// monitoring
+export * from './monitoring.stack';

@@ -3,7 +3,7 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 
 const secretsDir = path.join(process.cwd(), '.secrets');
-const tfStateSrcDir = path.join(secretsDir, 'terraform copy');
+const tfStateSrcDir = path.join(secretsDir, 'terraform');
 const tfStateBackupDir = path.join(secretsDir, 'backups', 'terraform');
 
 // 백업 디렉토리가 없으면 생성

@@ -241,6 +241,47 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Qbittorrent service',
   }));
 
+  grafanaWorkstationRecord = this.provide(
+    DnsRecord,
+    'grafanaWorkstationRecord',
+    () => ({
+      name: 'grafana-workstation',
+      ttl: 1,
+      type: 'CNAME',
+      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+      content:
+        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+          .domain.iptime,
+      proxied: true,
+      comment: 'Cloudflare record for Grafana Workstation service',
+    }),
+  );
+
+  grafanaOkeRecord = this.provide(DnsRecord, 'grafanaOkeRecord', () => ({
+    name: 'grafana-oke',
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Grafana OKE service',
+  }));
+
+  sdtdRecord = this.provide(DnsRecord, 'sdtdRecord', () => ({
+    name: '7dtd',
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for 7DTD service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

@@ -239,6 +239,7 @@ const project = new typescript.TypeScriptAppProject({
     'dedent',
     'moment',
     'moment-timezone',
+    'timezone-enum',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -455,6 +456,14 @@ void (async () => {
         k8s: {
           oke: {
             apps: {
+              monitoring: {
+                grafana: {
+                  adminUser:
+                    process.env.OKE_MONITORING_APP_GRAFANA_ADMIN_USER!!,
+                  adminPassword:
+                    process.env.OKE_MONITORING_APP_GRAFANA_ADMIN_PASSWORD!!,
+                },
+              },
               nfs: {
                 sftp: {
                   userName: process.env.OKE_NFS_APP_SFTP_USER_NAME!!,
@@ -570,9 +579,21 @@ void (async () => {
                   },
                 ],
               },
+              game: {
+                sftp: {
+                  userName: process.env.WORKSTATION_APPS_GAME_SFTP_USER_NAME!!,
+                },
+                sdtd: {
+                  settings: {
+                    serverPassword:
+                      process.env
+                        .WORKSTATION_APPS_GAME_7DTD_SETTINGS_SERVER_PASSWORD!!,
+                  },
+                },
+              },
               nas: {
                 sftp: {
-                  userName: process.env.WORKSTATION_NAS_APP_SFTP_USER_NAME!!,
+                  userName: process.env.WORKSTATION_APPS_NAS_SFTP_USER_NAME!!,
                 },
               },
             },

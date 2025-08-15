@@ -31,6 +31,16 @@ export const WorkstationSchema = Joi.object({
         )
         .required(),
     }).required(),
+    game: Joi.object({
+      sftp: Joi.object({
+        userName: Joi.string().required(),
+      }).required(),
+      sdtd: Joi.object({
+        settings: Joi.object({
+          serverPassword: Joi.string().required(),
+        }).required(),
+      }).required(),
+    }).required(),
     nas: Joi.object({
       sftp: Joi.object({
         userName: Joi.string().required(),

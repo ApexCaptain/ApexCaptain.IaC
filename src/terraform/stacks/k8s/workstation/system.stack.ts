@@ -49,14 +49,30 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
   );
 
   metallbPorts = (() => {
+    const metallbMinPortNumber = 8000;
+    const metallbMaxPortNumber = 30000;
+
     const metallbPorts = {
-      nasSftp: 22,
+      nasSftp: 10022,
+
+      game7dtdGamePort1: 26900,
+      game7dtdGamePort2: 26901,
+      game7dtdGamePort3: 26902,
+
+      gameSftp: 10023,
     };
 
     const ports = Object.values(metallbPorts);
     if (ports.length != new Set(ports).size) {
       throw new Error('Metallb ports must be unique');
     }
+    Object.entries(metallbPorts).forEach(([key, value]) => {
+      if (value < metallbMinPortNumber || value > metallbMaxPortNumber) {
+        throw new Error(
+          `Metallb port ${value} of ${key} must be in range [${metallbMinPortNumber}, ${metallbMaxPortNumber}]`,
+        );
+      }
+    });
     return metallbPorts;
   })();
 
@@ -102,11 +118,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
-            // eastWestGateway: {
-            //   name: 'east-west-gateway',
-            //   chart: 'gateway',
-            //   repository: 'https://istio-release.storage.googleapis.com/charts',
-            // },
           },
         }),
 
@@ -128,6 +139,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               name: 'longhorn',
               chart: 'longhorn',
               repository: 'https://charts.longhorn.io',
+            },
+          },
+        }),
+
+        monitoring: createK8sApplicationMetadata({
+          namespace: 'monitoring',
+          helm: {
+            kubePrometheusStack: {
+              name: 'kube-prometheus-stack',
+              chart: 'kube-prometheus-stack',
+              repository: 'https://prometheus-community.github.io/helm-charts',
             },
           },
         }),
@@ -174,6 +196,62 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
                   port: 6881,
                   targetPort: '6881',
                   protocol: 'UDP',
+                },
+              },
+            },
+          },
+        }),
+        game: createK8sApplicationMetadata({
+          namespace: 'game',
+          services: {
+            '7dtd': {
+              name: 'sdtd',
+              ports: {
+                dashboard: {
+                  name: 'dashboard',
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+                tcpGamePort1: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort1,
+                  name: 'tcp-game-port-1',
+                  port: 26900,
+                  targetPort: '26900',
+                  protocol: 'TCP',
+                },
+                udpGamePort1: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort1,
+                  name: 'udp-game-port-1',
+                  port: 26900,
+                  targetPort: '26900',
+                  protocol: 'UDP',
+                },
+                udpGamePort2: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort2,
+                  name: 'udp-game-port-2',
+                  port: 26901,
+                  targetPort: '26901',
+                  protocol: 'UDP',
+                },
+                udpGamePort3: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort3,
+                  name: 'udp-game-port-3',
+                  port: 26902,
+                  targetPort: '26902',
+                  protocol: 'UDP',
+                },
+              },
+            },
+            sftp: {
+              name: 'sftp',
+              ports: {
+                sftp: {
+                  portBasedIngressPort: this.metallbPorts.gameSftp,
+                  name: 'sftp',
+                  port: 22,
+                  targetPort: '22',
+                  protocol: 'TCP',
                 },
               },
             },

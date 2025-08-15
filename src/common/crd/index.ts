@@ -1,6 +1,8 @@
 // Istio
 export * from './istio.virtualService.crd';
 export * from './istio.gateway.crd';
+export * from './istio.serviceEntry.crd';
+export * from './istio.destinationRule.crd';
 
 // MetalLB
 export * from './metallb.ipAddressPool.crd';

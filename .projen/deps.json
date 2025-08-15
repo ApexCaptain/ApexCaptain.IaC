@@ -175,6 +175,10 @@
       "type": "runtime"
     },
     {
+      "name": "timezone-enum",
+      "type": "runtime"
+    },
+    {
       "name": "yaml",
       "type": "runtime"
     }

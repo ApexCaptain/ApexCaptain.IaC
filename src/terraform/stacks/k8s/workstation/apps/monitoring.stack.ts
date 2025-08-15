@@ -1,0 +1,148 @@
+import { AbstractStack } from '@/common';
+import { TerraformAppService } from '@/terraform/terraform.app.service';
+import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { Release } from '@lib/terraform/providers/helm/release';
+import Timezone from 'timezone-enum';
+import yaml from 'yaml';
+import {
+  Cloudflare_Record_Stack,
+  Cloudflare_Zone_Stack,
+} from '@/terraform/stacks/cloudflare';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
+
+@Injectable()
+export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
+  terraform = {
+    backend: this.backend(LocalBackend, () =>
+      this.terraformConfigService.backends.localBackend.secrets({
+        stackName: this.id,
+      }),
+    ),
+    providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
+      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
+        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      ),
+      helm: this.provide(HelmProvider, 'helmProvider', () => ({
+        kubernetes: {
+          configPath:
+            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
+              .configPath,
+          insecure: true,
+        },
+      })),
+    },
+  };
+
+  metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.monitoring,
+  ]);
+
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
+    metadata: {
+      name: this.metadata.shared.namespace,
+    },
+  }));
+
+  // https://grafana-workstation.ayteneve93.com
+  kubePrometheusStackRelease = this.provide(
+    Release,
+    'kubePrometheusStackRelease',
+    () => {
+      return {
+        name: this.metadata.shared.helm.kubePrometheusStack.name,
+        chart: this.metadata.shared.helm.kubePrometheusStack.chart,
+        repository: this.metadata.shared.helm.kubePrometheusStack.repository,
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        values: [
+          yaml.stringify({
+            // Grafana: 임시. 추후 OKE 스택으로 통합 예정.
+            grafana: {
+              defaultDashboardsTimezone: Timezone['Asia/Seoul'],
+              adminUser:
+                this.globalConfigService.config.terraform.stacks.k8s.oke.apps
+                  .monitoring.grafana.adminUser,
+              adminPassword:
+                this.globalConfigService.config.terraform.stacks.k8s.oke.apps
+                  .monitoring.grafana.adminPassword,
+              ingress: {
+                enabled: true,
+                ingressClassName: 'nginx',
+                annotations: {
+                  'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+                  'nginx.ingress.kubernetes.io/rewrite-target': '/',
+                  'nginx.ingress.kubernetes.io/auth-url':
+                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
+                      .shared.authUrl,
+                  'nginx.ingress.kubernetes.io/auth-signin':
+                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
+                      .shared.authSignin,
+                },
+                hosts: [
+                  `${this.cloudflareRecordStack.grafanaWorkstationRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                ],
+              },
+              dashboards: {
+                'node-exporter': {
+                  'node-exporter-full': {
+                    gnetId: 1860,
+                    revision: 36,
+                    datasource: 'Prometheus',
+                  },
+                },
+              },
+              dashboardProviders: {
+                'dashboardproviders.yaml': {
+                  apiVersion: 1,
+                  providers: [
+                    {
+                      name: 'node-exporter',
+                      folder: 'Node Exporter',
+                      type: 'file',
+                      options: {
+                        path: '/var/lib/grafana/dashboards/node-exporter',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          }),
+        ],
+      };
+    },
+  );
+
+  constructor(
+    // Terraform
+    private readonly terraformAppService: TerraformAppService,
+    private readonly terraformConfigService: TerraformConfigService,
+
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
+    // Stacks
+    private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
+    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+  ) {
+    super(
+      terraformAppService.cdktfApp,
+      K8S_Workstation_Apps_Monitoring_Stack.name,
+      'Monitoring stack for workstation k8s',
+    );
+    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
+  }
+}
