@@ -12,10 +12,7 @@ import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { LocalBackend } from 'cdktf';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import yaml from 'yaml';
-import {
-  Cloudflare_Zone_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
@@ -23,8 +20,7 @@ import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { StorageClassV1 } from '@lib/terraform/providers/kubernetes/storage-class-v1';
 import dedent from 'dedent';
 import path from 'path';
-import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
-import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
@@ -55,7 +51,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.longhorn,
   ]);
@@ -79,7 +75,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           ingress: {
             enabled: true,
             ingressClassName: 'nginx',
-            host: `${this.cloudflareRecordStack.longhornRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            host: `${this.cloudflareRecordStack.longhornRecord.element.name}`,
             annotations: {
               'nginx.ingress.kubernetes.io/rewrite-target': '/',
               'nginx.ingress.kubernetes.io/auth-url':
@@ -94,7 +90,12 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           defaultSettings: {
             createDefaultDiskLabeledNodes: true,
             defaultReplicaCount: 1,
-            deletingConfirmationFlag: true, // -- true: Allow to delete longhorn chart, false: Prevent to delete longhorn chart
+            /**
+             * @Note
+             *  - true: Allow to delete longhorn chart
+             *  - false: Prevent to delete longhorn chart
+             */
+            deletingConfirmationFlag: false,
           },
           persistence: {
             defaultClass: false,
@@ -207,15 +208,16 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Longhorn_Stack.name,
       'Longhorn stack for workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
     this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

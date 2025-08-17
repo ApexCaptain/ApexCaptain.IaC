@@ -11,6 +11,7 @@ import { K8S_Workstation_System_Stack } from '../system.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import yaml from 'yaml';
+import _ from 'lodash';
 
 @Injectable()
 export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
@@ -36,7 +37,7 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.istio,
   ]);

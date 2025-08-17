@@ -78,6 +78,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     return [
       {},
       {
+        certManager: createK8sApplicationMetadata({
+          namespace: 'cert-manager',
+          helm: {
+            certManager: {
+              name: 'cert-manager',
+              chart: 'cert-manager',
+              repository: 'https://charts.jetstack.io',
+            },
+          },
+        }),
+
         rolloutTrigger: createK8sApplicationMetadata({
           namespace: 'rollout-trigger',
           services: {
@@ -120,6 +131,18 @@ export class K8S_Oke_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        monitoring: createK8sApplicationMetadata({
+          namespace: 'monitoring',
+          helm: {
+            kubePrometheusStack: {
+              name: 'kube-prometheus-stack',
+              chart: 'kube-prometheus-stack',
+              repository: 'https://prometheus-community.github.io/helm-charts',
+            },
+          },
+        }),
+
         nfs: createK8sApplicationMetadata({
           namespace: 'nfs',
           helm: {

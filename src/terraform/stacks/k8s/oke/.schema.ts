@@ -2,6 +2,12 @@ import Joi from '@hapi/joi';
 
 export const OkeSchema = Joi.object({
   apps: Joi.object({
+    monitoring: Joi.object({
+      grafana: Joi.object({
+        adminUser: Joi.string().required(),
+        adminPassword: Joi.string().required(),
+      }).required(),
+    }).required(),
     nfs: Joi.object({
       sftp: Joi.object({
         userName: Joi.string().required(),

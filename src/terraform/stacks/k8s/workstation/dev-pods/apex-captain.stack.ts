@@ -29,7 +29,7 @@ export class K8S_Workstation_DevPods_ApexCaptain_Stack extends AbstractStack {
     },
   };
 
-  // private readonly metadata = this.provide(Resource, 'metadata', () => [
+  // metadata = this.provide(Resource, 'metadata', () => [
   //   {},
   //   this.k8sWorkstationSystemStack.devPodsMetadata.shared.ApexCaptain,
   // ]);

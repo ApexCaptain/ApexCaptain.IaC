@@ -48,24 +48,32 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     ],
   );
 
-  nodePorts = (() => {
-    const minNodePort = 30000;
-    const maxNodePort = 32767;
-    const nodePorts = {
-      sftp: 30022,
-      qbittorrent: 30881,
+  metallbPorts = (() => {
+    const metallbMinPortNumber = 8000;
+    const metallbMaxPortNumber = 30000;
+
+    const metallbPorts = {
+      nasSftp: 10022,
+
+      game7dtdGamePort1: 26900,
+      game7dtdGamePort2: 26901,
+      game7dtdGamePort3: 26902,
+
+      gameSftp: 10023,
     };
 
-    const ports = Object.values(nodePorts);
+    const ports = Object.values(metallbPorts);
     if (ports.length != new Set(ports).size) {
-      throw new Error('Node ports must be unique');
+      throw new Error('Metallb ports must be unique');
     }
-    if (ports.some(port => port < minNodePort || port > maxNodePort)) {
-      throw new Error(
-        `Node ports must be between ${minNodePort} and ${maxNodePort}`,
-      );
-    }
-    return nodePorts;
+    Object.entries(metallbPorts).forEach(([key, value]) => {
+      if (value < metallbMinPortNumber || value > metallbMaxPortNumber) {
+        throw new Error(
+          `Metallb port ${value} of ${key} must be in range [${metallbMinPortNumber}, ${metallbMaxPortNumber}]`,
+        );
+      }
+    });
+    return metallbPorts;
   })();
 
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
@@ -74,6 +82,27 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       {
         dashboard: createK8sApplicationMetadata({
           namespace: 'dashboard',
+        }),
+        certManager: createK8sApplicationMetadata({
+          namespace: 'cert-manager',
+          helm: {
+            certManager: {
+              name: 'cert-manager',
+              chart: 'cert-manager',
+              repository: 'https://charts.jetstack.io',
+            },
+          },
+        }),
+
+        metallb: createK8sApplicationMetadata({
+          namespace: 'metallb-system',
+          helm: {
+            metallb: {
+              name: 'metallb',
+              chart: 'metallb',
+              repository: 'https://metallb.github.io/metallb',
+            },
+          },
         }),
 
         istio: createK8sApplicationMetadata({
@@ -92,6 +121,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
           },
         }),
 
+        ingressController: createK8sApplicationMetadata({
+          namespace: 'ingress-controller',
+          helm: {
+            ingressController: {
+              name: 'ingress-controller',
+              chart: 'ingress-nginx',
+              repository: 'https://kubernetes.github.io/ingress-nginx',
+            },
+          },
+        }),
+
         longhorn: createK8sApplicationMetadata({
           namespace: 'longhorn-system',
           helm: {
@@ -103,8 +143,19 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
           },
         }),
 
-        files: createK8sApplicationMetadata({
-          namespace: 'files',
+        monitoring: createK8sApplicationMetadata({
+          namespace: 'monitoring',
+          helm: {
+            kubePrometheusStack: {
+              name: 'kube-prometheus-stack',
+              chart: 'kube-prometheus-stack',
+              repository: 'https://prometheus-community.github.io/helm-charts',
+            },
+          },
+        }),
+
+        nas: createK8sApplicationMetadata({
+          namespace: 'nas',
           helm: {
             jellyfin: {
               name: 'jellyfin',
@@ -113,23 +164,12 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
           services: {
-            'file-browser': {
-              name: 'file-browser',
-              ports: {
-                web: {
-                  name: 'web',
-                  port: 80,
-                  targetPort: '8080',
-                  protocol: 'TCP',
-                },
-              },
-            },
             sftp: {
               name: 'sftp',
               ports: {
                 sftp: {
+                  portBasedIngressPort: this.metallbPorts.nasSftp,
                   name: 'sftp',
-                  nodePort: this.nodePorts.sftp,
                   port: 22,
                   targetPort: '22',
                   protocol: 'TCP',
@@ -147,14 +187,12 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
                 },
                 'torrenting-tcp': {
                   name: 'torrenting-tcp',
-                  nodePort: this.nodePorts.qbittorrent,
                   port: 6881,
                   targetPort: '6881',
                   protocol: 'TCP',
                 },
                 'torrenting-udp': {
                   name: 'torrenting-udp',
-                  nodePort: this.nodePorts.qbittorrent,
                   port: 6881,
                   targetPort: '6881',
                   protocol: 'UDP',
@@ -162,26 +200,62 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               },
             },
           },
-          // services: {
-          //   files: {
-          //     name: 'files',
-          //     ports: {
-          //       'file-browser': {
-          //         name: 'file-browser',
-          //         port: 80,
-          //         targetPort: '8080',
-          //         protocol: 'TCP',
-          //       },
-          //       sftp: {
-          //         nodePort: this.nodePorts.sftp,
-          //         name: 'sftp',
-          //         port: 22,
-          //         targetPort: '22',
-          //         protocol: 'TCP',
-          //       },
-          //     },
-          //   },
-          // },
+        }),
+        game: createK8sApplicationMetadata({
+          namespace: 'game',
+          services: {
+            '7dtd': {
+              name: 'sdtd',
+              ports: {
+                dashboard: {
+                  name: 'dashboard',
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+                tcpGamePort1: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort1,
+                  name: 'tcp-game-port-1',
+                  port: 26900,
+                  targetPort: '26900',
+                  protocol: 'TCP',
+                },
+                udpGamePort1: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort1,
+                  name: 'udp-game-port-1',
+                  port: 26900,
+                  targetPort: '26900',
+                  protocol: 'UDP',
+                },
+                udpGamePort2: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort2,
+                  name: 'udp-game-port-2',
+                  port: 26901,
+                  targetPort: '26901',
+                  protocol: 'UDP',
+                },
+                udpGamePort3: {
+                  portBasedIngressPort: this.metallbPorts.game7dtdGamePort3,
+                  name: 'udp-game-port-3',
+                  port: 26902,
+                  targetPort: '26902',
+                  protocol: 'UDP',
+                },
+              },
+            },
+            sftp: {
+              name: 'sftp',
+              ports: {
+                sftp: {
+                  portBasedIngressPort: this.metallbPorts.gameSftp,
+                  name: 'sftp',
+                  port: 22,
+                  targetPort: '22',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
         }),
       },
     ];

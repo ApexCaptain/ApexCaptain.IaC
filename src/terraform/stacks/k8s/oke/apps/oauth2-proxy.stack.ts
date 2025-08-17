@@ -59,7 +59,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     {
       ...this.k8sOkeSystemStack.applicationMetadata.shared.oauth2Proxy,
@@ -148,7 +148,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     () => {
       const rootDomain =
         this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
-      const host = `${this.cloudflareRecordStack.oauth2ProxyAdminRecord.element.name}.${rootDomain}`;
+      const host = `${this.cloudflareRecordStack.oauth2ProxyAdminRecord.element.name}`;
 
       return [
         {
@@ -212,7 +212,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     () => {
       const rootDomain =
         this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
-      const host = `${this.cloudflareRecordStack.oauth2ProxyContributorRecord.element.name}.${rootDomain}`;
+      const host = `${this.cloudflareRecordStack.oauth2ProxyContributorRecord.element.name}`;
 
       return [
         {

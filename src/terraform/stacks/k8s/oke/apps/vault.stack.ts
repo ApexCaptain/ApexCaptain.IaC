@@ -11,10 +11,7 @@ import { Fn, LocalBackend } from 'cdktf';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import yaml from 'yaml';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
-import {
-  Cloudflare_Zone_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { Release } from '@lib/terraform/providers/helm/release';
@@ -106,7 +103,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
   }));
 
   // Kubernetes
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.vault,
   ]);
@@ -121,7 +118,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     const initialVaultPodName = 'vault-0';
     const containerName = 'vault';
     const internalDataPath = '/vault/data';
-    const host = `${this.cloudflareRecordStack.vaultRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`;
+    const host = `${this.cloudflareRecordStack.vaultRecord.element.name}`;
 
     return [
       {
@@ -350,7 +347,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,

@@ -176,7 +176,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
   //   },
   // );
 
-  // private readonly metadata = this.provide(Resource, 'metadata', () => [
+  // metadata = this.provide(Resource, 'metadata', () => [
   //   {},
   //   this.k8sOkeSystemStack.applicationMetadata.shared.argoCd,
   // ]);
@@ -234,7 +234,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
   //     values: [
   //       yaml.stringify({
   //         global: {
-  //           domain: `${this.cloudflareRecordStack.argoCdRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+  //           domain: `${this.cloudflareRecordStack.argoCdRecord.element.name}`,
   //         },
   //         server: {
   //           ingress: {
@@ -307,7 +307,6 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

@@ -17,6 +17,11 @@ import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { DataOciObjectstorageNamespace } from '@lib/terraform/providers/oci/data-oci-objectstorage-namespace';
 import _ from 'lodash';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { SelfSignedCert } from '@lib/terraform/providers/tls/self-signed-cert';
+import { CertRequest } from '@lib/terraform/providers/tls/cert-request';
+import { LocallySignedCert } from '@lib/terraform/providers/tls/locally-signed-cert';
 
 @Injectable()
 export class Project_Stack extends AbstractStack {
@@ -34,6 +39,7 @@ export class Project_Stack extends AbstractStack {
       oci: this.provide(OciProvider, 'ociProvider', () =>
         this.terraformConfigService.providers.oci.ApexCaptain(),
       ),
+      tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
     },
   };
 
@@ -44,6 +50,92 @@ export class Project_Stack extends AbstractStack {
       name: 'ApexCaptain.IaC',
     }),
   );
+
+  // Shared Istio CA (Root + Intermediate) for multi-cluster mTLS
+  // @ToDo 추후 필요시 사용 예정
+  /*
+  istioRootCa = this.provide(Resource, 'istioRootCa', idPrefix => {
+    const rootKey = this.provide(PrivateKey, `${idPrefix}-rootKey`, () => ({
+      algorithm: 'RSA',
+      rsaBits: 4096,
+    }));
+
+    const rootCert = this.provide(
+      SelfSignedCert,
+      `${idPrefix}-rootCert`,
+      () => ({
+        privateKeyPem: rootKey.element.privateKeyPem,
+        isCaCertificate: true,
+        validityPeriodHours: 24 * 3650,
+        subject: [{ commonName: 'Istio Root CA', organization: 'Istio' }],
+        allowedUses: [
+          'cert_signing',
+          'crl_signing',
+          'key_encipherment',
+          'digital_signature',
+        ],
+      }),
+    );
+
+    return [{}, { rootKey, rootCert }];
+  });
+
+  istioIntermediateCa = this.provide(
+    Resource,
+    'istioIntermediateCa',
+    idPrefix => {
+      const caKey = this.provide(PrivateKey, `${idPrefix}-caKey`, () => ({
+        algorithm: 'RSA',
+        rsaBits: 4096,
+      }));
+
+      const caCsr = this.provide(CertRequest, `${idPrefix}-caCsr`, () => ({
+        privateKeyPem: caKey.element.privateKeyPem,
+        subject: [{ commonName: 'Istio CA', organization: 'Istio' }],
+        ipAddresses: [],
+        dnsNames: [],
+      }));
+
+      const caCert = this.provide(
+        LocallySignedCert,
+        `${idPrefix}-caCert`,
+        () => ({
+          certRequestPem: caCsr.element.certRequestPem,
+          caPrivateKeyPem:
+            this.istioRootCa.shared.rootKey.element.privateKeyPem,
+          caCertPem: this.istioRootCa.shared.rootCert.element.certPem,
+          isCaCertificate: true,
+          validityPeriodHours: 24 * 365 * 10, // 10 years
+          allowedUses: [
+            'cert_signing',
+            'crl_signing',
+            'key_encipherment',
+            'digital_signature',
+          ],
+        }),
+      );
+
+      return [{}, { caKey, caCsr, caCert }];
+    },
+  );
+
+  istioCaBundle = this.provide(Resource, 'istioCaBundle', () => {
+    const caCertPem = this.istioIntermediateCa.shared.caCert.element.certPem;
+    const caKeyPem =
+      this.istioIntermediateCa.shared.caKey.element.privateKeyPem;
+    const rootCertPem = this.istioRootCa.shared.rootCert.element.certPem;
+    const certChainPem = `${caCertPem}\n${rootCertPem}`;
+
+    return [
+      {},
+      {
+        caCertPem,
+        caKeyPem,
+        rootCertPem,
+        certChainPem,
+      },
+    ];
+  });
 
   iacGithubRepositoryActionArgs = this.provide(
     Resource,
@@ -80,6 +172,7 @@ export class Project_Stack extends AbstractStack {
       return {};
     },
   );
+  */
 
   dataRootOciTenancy = this.provide(
     DataOciIdentityTenancy,

@@ -6,7 +6,6 @@ import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
@@ -23,6 +22,7 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
@@ -42,7 +42,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     },
   };
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.dashboard,
   ]);
@@ -162,7 +162,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       annotations: {
         'nginx.ingress.kubernetes.io/backend-protocol': 'HTTPS',
         'nginx.ingress.kubernetes.io/rewrite-target': '/',
-
         'nginx.ingress.kubernetes.io/auth-url':
           this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
             .authUrl,
@@ -175,7 +174,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.workstationDashboardRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.workstationDashboardRecord.element.name}`,
           http: {
             path: [
               {
@@ -207,9 +206,9 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -217,5 +216,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       'Dashboard stack for workstation k8s',
     );
     this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

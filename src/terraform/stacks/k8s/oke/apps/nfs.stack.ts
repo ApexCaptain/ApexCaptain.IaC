@@ -25,7 +25,6 @@ import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1'
 import { Release } from '@lib/terraform/providers/helm/release';
 import path from 'path';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
@@ -238,7 +237,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     }),
   );
 
-  private readonly metadata = this.provide(Resource, 'metadata', () => [
+  metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sOkeSystemStack.applicationMetadata.shared.nfs,
   ]);
@@ -520,7 +519,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.okeFilesRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.filesRecord.element.name}`,
           http: {
             path: [
               {
@@ -589,7 +588,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(

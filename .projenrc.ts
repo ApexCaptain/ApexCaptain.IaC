@@ -239,6 +239,7 @@ const project = new typescript.TypeScriptAppProject({
     'dedent',
     'moment',
     'moment-timezone',
+    'timezone-enum',
   ],
   devDeps: [
     '@nestjs/cli',
@@ -264,7 +265,7 @@ void (async () => {
   // Set Package Scripts
   project.addScripts({
     // Projen
-    postprojen: 'cdktf get',
+    postprojen: 'cdktf get && yarn tf@backup',
 
     // Terraform
     'tf@build': 'cdktf synth',
@@ -274,7 +275,8 @@ void (async () => {
     'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
-    'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init'`,
+    'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
+    'tf@backup': 'ts-node ./scripts/backup-tfstate.script.ts',
 
     // Terminal
     terminal: 'ts-node ./scripts/terminal-v2.script.ts',
@@ -371,17 +373,9 @@ void (async () => {
           source: 'integrations/github',
         },
         {
-          /**
-           * @note
-           * - 임시로 cloudflare 5.1.0 버전 사용
-           * - 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
-           * - 5.6.0으로 업데이트 이후 deploy시마다 리소스 업데이트가 뜨는데, 추후 확인 필요
-           * @see: https://github.com/cloudflare/terraform-provider-cloudflare/releases
-           */
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
-          // version: '5.1.0',
         },
         {
           // https://registry.terraform.io/providers/oracle/oci/latest
@@ -453,6 +447,14 @@ void (async () => {
         k8s: {
           oke: {
             apps: {
+              monitoring: {
+                grafana: {
+                  adminUser:
+                    process.env.OKE_MONITORING_APP_GRAFANA_ADMIN_USER!!,
+                  adminPassword:
+                    process.env.OKE_MONITORING_APP_GRAFANA_ADMIN_PASSWORD!!,
+                },
+              },
               nfs: {
                 sftp: {
                   userName: process.env.OKE_NFS_APP_SFTP_USER_NAME!!,
@@ -524,11 +526,21 @@ void (async () => {
           },
           workstation: {
             common: {
+              defaultCalcioIpv4IpPoolsCidrBlock:
+                process.env
+                  .WORKSTATION_COMMON_DEFAULT_CALCIO_IPV4_IP_POOLS_CIDR_BLOCK!!,
               domain: {
                 iptime: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
               },
+              nordLynxPrivateKey: execSync(
+                `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
+              ).toString(),
             },
             apps: {
+              metallb: {
+                loadbalancerIpRange:
+                  process.env.WORKSTATION_METALLB_LOADBALANCER_IP_RANGE!!,
+              },
               longhorn: {
                 nodes: [
                   {
@@ -558,9 +570,21 @@ void (async () => {
                   },
                 ],
               },
-              files: {
+              game: {
                 sftp: {
-                  userName: process.env.WORKSTATION_FILE_APP_SFTP_USER_NAME!!,
+                  userName: process.env.WORKSTATION_APPS_GAME_SFTP_USER_NAME!!,
+                },
+                sdtd: {
+                  settings: {
+                    serverPassword:
+                      process.env
+                        .WORKSTATION_APPS_GAME_7DTD_SETTINGS_SERVER_PASSWORD!!,
+                  },
+                },
+              },
+              nas: {
+                sftp: {
+                  userName: process.env.WORKSTATION_APPS_NAS_SFTP_USER_NAME!!,
                 },
               },
             },

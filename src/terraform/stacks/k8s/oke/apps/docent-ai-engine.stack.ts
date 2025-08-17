@@ -1,5 +1,4 @@
 import { AbstractStack, createOciPolicyStatement } from '@/common';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { Injectable } from '@nestjs/common';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
@@ -427,7 +426,7 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
         ingressClassName: 'nginx',
         rule: [
           {
-            host: `${this.cloudflareRecordStack.docentEngineRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            host: `${this.cloudflareRecordStack.docentEngineRecord.element.name}`,
             http: {
               path: [
                 {
@@ -464,7 +463,6 @@ export class K8S_Oke_Apps_DocentAiEngine_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,

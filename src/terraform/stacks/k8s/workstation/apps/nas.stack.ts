@@ -1,0 +1,223 @@
+import { AbstractStack } from '@/common/abstract/abstract.stack';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { TerraformAppService } from '@/terraform/terraform.app.service';
+import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import _ from 'lodash';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
+import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+
+@Injectable()
+export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
+  readonly config =
+    this.globalConfigService.config.terraform.stacks.k8s.workstation.apps.nas;
+
+  terraform = {
+    backend: this.backend(LocalBackend, () =>
+      this.terraformConfigService.backends.localBackend.secrets({
+        stackName: this.id,
+      }),
+    ),
+    providers: {
+      null: this.provide(NullProvider, 'nullProvider', () => ({})),
+      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
+        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      ),
+    },
+  };
+
+  metadata = this.provide(Resource, 'metadata', () => [
+    {},
+    this.k8sWorkstationSystemStack.applicationMetadata.shared.nas,
+  ]);
+
+  namespace = this.provide(NamespaceV1, 'namespace', () => ({
+    metadata: {
+      name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'enabled',
+      },
+    },
+  }));
+
+  // Qbittorrent
+  qbittorrentConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '200Mi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  qbittorrentCompleteDownloadsPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentCompleteDownloadsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '1Ti',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  qbittorrentIncompleteDownloadsPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'qbittorrentIncompleteDownloadsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '300Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  // Jellyfin
+  jellyfinConfigPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'jellyfinConfigPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '10Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  jellyfinMediaPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'jellyfinMediaPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '2Ti',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  // SFTP
+  sftpExtraDataPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sftpExtraDataPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornHddStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '300Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
+    // Terraform
+    private readonly terraformAppService: TerraformAppService,
+    private readonly terraformConfigService: TerraformConfigService,
+
+    // Stacks
+    private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
+    private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
+  ) {
+    super(
+      terraformAppService.cdktfApp,
+      K8S_Workstation_Apps_Nas_Stack.name,
+      'Nas stack for workstation k8s',
+    );
+    this.addDependency(this.k8sWorkstationAppsIstioStack);
+  }
+}
