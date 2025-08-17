@@ -19,6 +19,7 @@ import _ from 'lodash';
 import path from 'path';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import dedent from 'dedent';
 
 @Injectable()
 export class K8S_Workstation_Apps_Game_Sftp_Stack extends AbstractStack {
@@ -219,7 +220,52 @@ export class K8S_Workstation_Apps_Game_Sftp_Stack extends AbstractStack {
                       'server-config',
                     ),
                   },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdServerSideModsPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: path.join(
+                      sftpDataDirContainerPath,
+                      '7dtd',
+                      'server-side-mods',
+                    ),
+                  },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: path.join(
+                      sftpDataDirContainerPath,
+                      '7dtd',
+                      'both-sides-mods',
+                    ),
+                  },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdBothSideModsFbDbPersistentVolumeClaim.element
+                      .metadata.name,
+                    mountPath: path.join(
+                      sftpDataDirContainerPath,
+                      '7dtd',
+                      'both-sides-mods-file-browser-database',
+                    ),
+                  },
                 ],
+                lifecycle: {
+                  postStart: [
+                    {
+                      exec: {
+                        command: [
+                          'sh',
+                          '-c',
+                          dedent`
+                            find ${sftpDataDirContainerPath} -type d -name 'lost+found' -exec rm -rf {} +
+                          `,
+                        ],
+                      },
+                    },
+                  ],
+                },
               },
             ],
             volume: [
@@ -274,6 +320,38 @@ export class K8S_Workstation_Apps_Game_Sftp_Stack extends AbstractStack {
                     this.k8sWorkstationAppsGameStack
                       .sdtdServerConfigPersistentVolumeClaim.element.metadata
                       .name,
+                },
+              },
+              {
+                name: this.k8sWorkstationAppsGameStack
+                  .sdtdServerSideModsPersistentVolumeClaim.element.metadata
+                  .name,
+                persistentVolumeClaim: {
+                  claimName:
+                    this.k8sWorkstationAppsGameStack
+                      .sdtdServerSideModsPersistentVolumeClaim.element.metadata
+                      .name,
+                },
+              },
+              {
+                name: this.k8sWorkstationAppsGameStack
+                  .sdtdBothSidesModsPersistentVolumeClaim.element.metadata.name,
+                persistentVolumeClaim: {
+                  claimName:
+                    this.k8sWorkstationAppsGameStack
+                      .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
+                      .name,
+                },
+              },
+              {
+                name: this.k8sWorkstationAppsGameStack
+                  .sdtdBothSideModsFbDbPersistentVolumeClaim.element.metadata
+                  .name,
+                persistentVolumeClaim: {
+                  claimName:
+                    this.k8sWorkstationAppsGameStack
+                      .sdtdBothSideModsFbDbPersistentVolumeClaim.element
+                      .metadata.name,
                 },
               },
             ],

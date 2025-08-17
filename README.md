@@ -10,7 +10,7 @@
   - Oracle Cloud OKE 클러스터 (클라우드)
   - On-premise Workstation 클러스터 (kubeadm 기반)
 - **GitOps 기반 배포 파이프라인** 구현
-- **개인 미디어 서버 인프라** 자동화
+- **개인 미디어 서버 인프라**
 - **보안 및 모니터링** 체계 구축
 
 ---

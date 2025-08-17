@@ -243,6 +243,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
                 },
               },
             },
+            '7dtd-both-sides-mods-file-browser': {
+              name: 'sdtd-both-sides-mods-file-browser',
+              ports: {
+                web: {
+                  name: 'web',
+                  port: 80,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+              },
+            },
             sftp: {
               name: 'sftp',
               ports: {

@@ -1,9 +1,6 @@
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import {
-  Cloudflare_Record_Stack,
-  Cloudflare_Zone_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
@@ -100,7 +97,7 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
                       .shared.authSignin,
                 },
                 hosts: [
-                  `${this.cloudflareRecordStack.grafanaOkeRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                  `${this.cloudflareRecordStack.grafanaOkeRecord.element.name}`,
                 ],
               },
               dashboards: {
@@ -147,7 +144,6 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(

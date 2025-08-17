@@ -8,7 +8,6 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DnsRecord } from '@lib/terraform/providers/cloudflare/dns-record';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { K8S_Oke_Network_Stack } from '../k8s/oke/network.stack';
-import { PageRule } from '@lib/terraform/providers/cloudflare/page-rule';
 
 @Injectable()
 export class Cloudflare_Record_Stack extends AbstractStack {
@@ -26,7 +25,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   };
 
   keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
-    name: 'keycloak',
+    name: `keycloak.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -39,7 +38,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   keycloakAdminRecord = this.provide(DnsRecord, 'keycloakAdminRecord', () => ({
-    name: 'keycloak-admin',
+    name: `keycloak-admin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -52,7 +51,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   docentRecord = this.provide(DnsRecord, 'docentRecord', () => ({
-    name: 'docent',
+    name: `docent.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -65,7 +64,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   docentEngineRecord = this.provide(DnsRecord, 'docentEngineRecord', () => ({
-    name: 'docent-engine',
+    name: `docent-engine.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -78,7 +77,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   okeSftpRecord = this.provide(DnsRecord, 'okeSftpRecord', () => ({
-    name: 'sftp-oke',
+    name: `sftp-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -91,7 +90,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
-    name: 'vault',
+    name: `vault.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -104,7 +103,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   dbRecord = this.provide(DnsRecord, 'dbRecord', () => ({
-    name: 'db',
+    name: `db.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -117,7 +116,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   redisRecord = this.provide(DnsRecord, 'redisRecord', () => ({
-    name: 'redis',
+    name: `redis.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -133,7 +132,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     DnsRecord,
     'workstationDashboardRecord',
     () => ({
-      name: 'dashboard-workstation',
+      name: `dashboard-workstation.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
       ttl: 1,
       type: 'CNAME',
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -146,7 +145,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   );
 
   okeDashboardRecord = this.provide(DnsRecord, 'okeDashboardRecord', () => ({
-    name: 'dashboard-oke',
+    name: `dashboard-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -162,7 +161,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     DnsRecord,
     'oauth2ProxyAdminRecord',
     () => ({
-      name: 'oauth2-proxy-admin',
+      name: `oauth2-proxy-admin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
       ttl: 1,
       type: 'A',
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -179,7 +178,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     DnsRecord,
     'oauth2ProxyContributorRecord',
     () => ({
-      name: 'oauth2-proxy-contributor',
+      name: `oauth2-proxy-contributor.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
       ttl: 1,
       type: 'A',
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -193,7 +192,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   );
 
   filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
-    name: 'files',
+    name: `files.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -206,7 +205,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
-    name: 'longhorn',
+    name: `longhorn.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'CNAME',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -218,7 +217,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   jellyfinRecord = this.provide(DnsRecord, 'jellyfinRecord', () => ({
-    name: 'jellyfin',
+    name: `jellyfin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'CNAME',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -230,7 +229,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   torrentRecord = this.provide(DnsRecord, 'qbittorrentRecord', () => ({
-    name: 'torrent',
+    name: `torrent.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'CNAME',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -245,7 +244,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     DnsRecord,
     'grafanaWorkstationRecord',
     () => ({
-      name: 'grafana-workstation',
+      name: `grafana-workstation.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
       ttl: 1,
       type: 'CNAME',
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -258,7 +257,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   );
 
   grafanaOkeRecord = this.provide(DnsRecord, 'grafanaOkeRecord', () => ({
-    name: 'grafana-oke',
+    name: `grafana-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'A',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -271,7 +270,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
   }));
 
   sdtdRecord = this.provide(DnsRecord, 'sdtdRecord', () => ({
-    name: '7dtd',
+    name: `7dtd.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
     type: 'CNAME',
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
@@ -280,6 +279,18 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .domain.iptime,
     proxied: true,
     comment: 'Cloudflare record for 7DTD service',
+  }));
+
+  sdtdModsRecord = this.provide(DnsRecord, 'sdtdModsRecord', () => ({
+    name: `7dtd-mods.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for 7DTD Both Sides Mods File Browser service',
   }));
 
   constructor(

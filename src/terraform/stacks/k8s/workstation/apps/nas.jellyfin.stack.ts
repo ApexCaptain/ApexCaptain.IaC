@@ -1,8 +1,5 @@
 import { AbstractStack } from '@/common';
-import {
-  Cloudflare_Zone_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
@@ -55,7 +52,7 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
             className: 'nginx',
             hosts: [
               {
-                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}`,
                 paths: [
                   {
                     path: '/',
@@ -89,7 +86,6 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {

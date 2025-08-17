@@ -12,10 +12,7 @@ import { K8S_Workstation_System_Stack } from '../system.stack';
 import { Release } from '@lib/terraform/providers/helm/release';
 import Timezone from 'timezone-enum';
 import yaml from 'yaml';
-import {
-  Cloudflare_Record_Stack,
-  Cloudflare_Zone_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 
@@ -90,7 +87,7 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
                       .shared.authSignin,
                 },
                 hosts: [
-                  `${this.cloudflareRecordStack.grafanaWorkstationRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                  `${this.cloudflareRecordStack.grafanaWorkstationRecord.element.name}`,
                 ],
               },
               dashboards: {
@@ -135,7 +132,6 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(

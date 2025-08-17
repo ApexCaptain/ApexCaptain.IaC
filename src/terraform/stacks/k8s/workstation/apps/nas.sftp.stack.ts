@@ -19,6 +19,7 @@ import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
 import { K8S_Workstation_Apps_Nas_Stack } from './nas.stack';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import dedent from 'dedent';
 
 @Injectable()
 export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
@@ -231,6 +232,21 @@ export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
                     ),
                   },
                 ],
+                lifecycle: {
+                  postStart: [
+                    {
+                      exec: {
+                        command: [
+                          'sh',
+                          '-c',
+                          dedent`
+                            find ${sftpDataDirContainerPath} -type d -name 'lost+found' -exec rm -rf {} +
+                          `,
+                        ],
+                      },
+                    },
+                  ],
+                },
               },
             ],
             volume: [

@@ -373,18 +373,9 @@ void (async () => {
           source: 'integrations/github',
         },
         {
-          /**
-           * @note
-           * - 임시로 cloudflare 5.1.0 버전 사용
-           * - 2025-04-09에 나온 5.3.0 버전에 이슈가 있는듯, 5월 말쯤 새 버전 나오면 다시 확인
-           * - 5.6.0으로 업데이트 이후 deploy시마다 리소스 업데이트가 뜨는데, 추후 확인 필요
-           * @see: https://github.com/cloudflare/terraform-provider-cloudflare/releases
-           * @ToDo: (예상)리소스 선언 구조가 더 세분화 된 것으로 보임. 급한 건 아니나, 추후 수정 대응
-           */
           // https://registry.terraform.io/providers/cloudflare/cloudflare/latest
           name: 'cloudflare',
           source: 'cloudflare/cloudflare',
-          // version: '5.1.0',
         },
         {
           // https://registry.terraform.io/providers/oracle/oci/latest

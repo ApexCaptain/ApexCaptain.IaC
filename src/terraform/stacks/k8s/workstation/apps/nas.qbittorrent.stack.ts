@@ -12,10 +12,7 @@ import dedent from 'dedent';
 import _ from 'lodash';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import {
-  Cloudflare_Zone_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
 
 @Injectable()
@@ -325,7 +322,7 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.torrentRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.torrentRecord.element.name}`,
           http: {
             path: [
               {
@@ -359,7 +356,6 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {

@@ -6,7 +6,6 @@ import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { Project_Stack } from '@/terraform/stacks/project.stack';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -372,7 +371,7 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.docentRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.docentRecord.element.name}`,
           http: {
             path: [
               {
@@ -408,7 +407,6 @@ export class K8S_Oke_Apps_DocentAiWeb_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
     private readonly k8sOkeAppsDocentAiEngineStack: K8S_Oke_Apps_DocentAiEngine_Stack,

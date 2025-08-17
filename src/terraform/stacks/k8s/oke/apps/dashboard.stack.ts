@@ -9,10 +9,7 @@ import { Fn, LocalBackend } from 'cdktf';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
-import {
-  Cloudflare_Record_Stack,
-  Cloudflare_Zone_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
@@ -185,7 +182,7 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.okeDashboardRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+          host: `${this.cloudflareRecordStack.okeDashboardRecord.element.name}`,
           http: {
             path: [
               {
@@ -218,7 +215,6 @@ export class K8S_Oke_Apps_Dashboard_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {

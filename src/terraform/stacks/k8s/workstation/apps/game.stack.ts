@@ -173,6 +173,80 @@ export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
     }),
   );
 
+  sdtdServerSideModsPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sdtdServerSideModsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '5Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  sdtdBothSidesModsPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sdtdBothSidesModsPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '5Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+  sdtdBothSideModsFbDbPersistentVolumeClaim = this.provide(
+    PersistentVolumeClaimV1,
+    'sdtdBothSideModsFbDbPersistentVolumeClaim',
+    id => ({
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        storageClassName:
+          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+            .metadata.name,
+        accessModes: ['ReadWriteMany'],
+        resources: {
+          requests: {
+            storage: '1Gi',
+          },
+        },
+      },
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

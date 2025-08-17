@@ -12,10 +12,7 @@ import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { LocalBackend } from 'cdktf';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import yaml from 'yaml';
-import {
-  Cloudflare_Zone_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
@@ -78,7 +75,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           ingress: {
             enabled: true,
             ingressClassName: 'nginx',
-            host: `${this.cloudflareRecordStack.longhornRecord.element.name}.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+            host: `${this.cloudflareRecordStack.longhornRecord.element.name}`,
             annotations: {
               'nginx.ingress.kubernetes.io/rewrite-target': '/',
               'nginx.ingress.kubernetes.io/auth-url':
@@ -211,7 +208,6 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
