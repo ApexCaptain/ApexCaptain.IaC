@@ -11,7 +11,7 @@ const bothSidesModsDirPath = process.env.BOTH_SIDES_MODS_DIR_PATH;
 fs.readdirSync(targetModDirPath).forEach(modName => {
   const modDirPath = path.join(targetModDirPath, modName);
   if (!modsNotToDeleteOnStart.includes(modName)) {
-    fs.rmSync(modDirPath, { recursive: true, force: true });
+    execSync(`rm -rf "${modDirPath}"`);
   }
 });
 

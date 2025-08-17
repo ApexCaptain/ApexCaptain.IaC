@@ -27,6 +27,7 @@ import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import path from 'path';
 import dedent from 'dedent';
 
+// yarn tf@deploy:single K8S_Workstation_Apps_Game_7dtd_Stack --auto-approve && sleep 10 && kubectl logs deployment/game-sdtd-deployment -n game -f
 @Injectable()
 export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
   terraform = {
@@ -68,37 +69,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     ];
   });
 
-  sdtdBothSidesModsFileBrowserService = this.provide(
-    ServiceV1,
-    'sdtdBothSidesModsFileBrowserService',
-    () => {
-      const selector = {
-        app: 'sdtd-both-sides-mods-file-browser',
-      };
-      return [
-        {
-          metadata: {
-            name: this.k8sWorkstationAppsGameStack.metadata.shared.services[
-              '7dtd-both-sides-mods-file-browser'
-            ].name,
-            namespace:
-              this.k8sWorkstationAppsGameStack.namespace.element.metadata.name,
-          },
-          spec: {
-            selector,
-            type: 'ClusterIP',
-            port: Object.values(
-              this.k8sWorkstationAppsGameStack.metadata.shared.services[
-                '7dtd-both-sides-mods-file-browser'
-              ].ports,
-            ),
-          },
-        },
-        { selector },
-      ];
-    },
-  );
-
   sdtdServerConfigConfigMap = this.provide(
     ConfigMapV1,
     'sdtdServerConfigConfigMap',
@@ -112,7 +82,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
         'sdtdserver.xml': new SdtdServerConfigXmlTemplate().render({
           // Server representation
           ServerName: 'ApexCaptain 7dtd Server',
-          ServerDescription: 'ApexCaptain 7dtd Server',
+          ServerDescription: 'Kill everything that moves',
           ServerWebsiteURL: `https://${this.cloudflareRecordStack.sdtdRecord.element.name}`,
           ServerPassword:
             this.k8sWorkstationAppsGameStack.config.sdtd.settings
@@ -122,7 +92,8 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
           Language: 'Korean',
 
           // Networking
-          ServerDisabledNetworkProtocols: 'LiteNetLib',
+          // ServerDisabledNetworkProtocols: 'LiteNetLib',
+          ServerDisabledNetworkProtocols: '',
 
           // Other technical settings
           EACEnabled: false,
@@ -191,6 +162,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
   /**
    * To restart 7dtd server : kubectl rollout restart deployment/game-sdtd-deployment -n game
    */
+
   sdtdDeployment = this.provide(DeploymentV1, 'sdtdDeployment', id => {
     const configMapFilesContainerDirPath = '/tmp/config-maps';
     const additionalModsContainerDirPath = '/tmp/additional-mods';
@@ -216,6 +188,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
       'Allocs_WebAndMapRendering',
     ];
     const targetModDirPath = '/home/sdtdserver/serverfiles/Mods';
+    const imageTag = 'v0.9.2';
 
     return {
       metadata: {
@@ -233,12 +206,91 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
             labels: this.sdtdService.shared.selector,
           },
           spec: {
+            initContainer: [
+              {
+                name: 'init-config',
+                image: `vinanrra/7dtd-server:${imageTag}`,
+                imagePullPolicy: 'Always',
+                command: [
+                  '/bin/sh',
+                  '-c',
+                  dedent`
+                    apt-get update -y
+                    apt-get install -y \
+                      p7zip-full
+
+                    7z a -p"${this.k8sWorkstationAppsGameStack.config.sdtd.settings.serverPassword}" -mhe=on -r ${targetModDirPath}/TFP_WebServer/webroot/mods.7z ${bothSidesModsContainerDirPath}/*
+
+                    cp ${configMapFilesContainerDirPath}/sdtdserver.xml /home/sdtdserver/serverfiles/sdtdserver.xml
+                    node ${configMapFilesContainerDirPath}/install-additional-mods.js
+
+                    chown -R sdtdserver:sdtdserver /home/sdtdserver/serverfiles
+                  `,
+                ],
+                volumeMount: [
+                  {
+                    name: this.sdtdServerConfigConfigMap.element.metadata.name,
+                    mountPath: path.join(
+                      configMapFilesContainerDirPath,
+                      'sdtdserver.xml',
+                    ),
+                    subPath: 'sdtdserver.xml',
+                  },
+                  {
+                    name: this.sdtdInstallAdditionalModsConfigMap.element
+                      .metadata.name,
+                    mountPath: path.join(
+                      configMapFilesContainerDirPath,
+                      'install-additional-mods.js',
+                    ),
+                    subPath: 'install-additional-mods.js',
+                  },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdServerConfigPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: '/home/sdtdserver/serverfiles',
+                  },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdServerSideModsPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: serverSideModsContainerDirPath,
+                  },
+                  {
+                    name: this.k8sWorkstationAppsGameStack
+                      .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
+                      .name,
+                    mountPath: bothSidesModsContainerDirPath,
+                  },
+                ],
+                env: [
+                  // Custom
+                  {
+                    name: 'MODS_NOT_TO_DELETE_ON_START',
+                    value: modsNotToDeleteOnStart.join(','),
+                  },
+                  {
+                    name: 'TARGET_MOD_DIR_PATH',
+                    value: targetModDirPath,
+                  },
+                  {
+                    name: 'SERVER_SIDE_MODS_DIR_PATH',
+                    value: serverSideModsContainerDirPath,
+                  },
+                  {
+                    name: 'BOTH_SIDES_MODS_DIR_PATH',
+                    value: bothSidesModsContainerDirPath,
+                  },
+                ],
+              },
+            ],
             container: [
               {
                 name: this.k8sWorkstationAppsGameStack.metadata.shared.services[
                   '7dtd'
                 ].name,
-                image: 'vinanrra/7dtd-server:v0.9.2',
+                image: `vinanrra/7dtd-server:${imageTag}`,
                 imagePullPolicy: 'Always',
                 port: [
                   {
@@ -294,23 +346,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
                 ],
                 volumeMount: [
                   {
-                    name: this.sdtdServerConfigConfigMap.element.metadata.name,
-                    mountPath: path.join(
-                      configMapFilesContainerDirPath,
-                      'sdtdserver.xml',
-                    ),
-                    subPath: 'sdtdserver.xml',
-                  },
-                  {
-                    name: this.sdtdInstallAdditionalModsConfigMap.element
-                      .metadata.name,
-                    mountPath: path.join(
-                      configMapFilesContainerDirPath,
-                      'install-additional-mods.js',
-                    ),
-                    subPath: 'install-additional-mods.js',
-                  },
-                  {
                     name: this.k8sWorkstationAppsGameStack
                       .sdtdSavesPersistentVolumeClaim.element.metadata.name,
                     mountPath: '/home/sdtdserver/.local/share/7DaysToDie',
@@ -337,37 +372,8 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
                       .name,
                     mountPath: '/home/sdtdserver/serverfiles',
                   },
-                  {
-                    name: this.k8sWorkstationAppsGameStack
-                      .sdtdServerSideModsPersistentVolumeClaim.element.metadata
-                      .name,
-                    mountPath: serverSideModsContainerDirPath,
-                  },
-                  {
-                    name: this.k8sWorkstationAppsGameStack
-                      .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
-                      .name,
-                    mountPath: bothSidesModsContainerDirPath,
-                  },
                 ],
                 env: [
-                  // Custom
-                  {
-                    name: 'MODS_NOT_TO_DELETE_ON_START',
-                    value: modsNotToDeleteOnStart.join(','),
-                  },
-                  {
-                    name: 'TARGET_MOD_DIR_PATH',
-                    value: targetModDirPath,
-                  },
-                  {
-                    name: 'SERVER_SIDE_MODS_DIR_PATH',
-                    value: serverSideModsContainerDirPath,
-                  },
-                  {
-                    name: 'BOTH_SIDES_MODS_DIR_PATH',
-                    value: bothSidesModsContainerDirPath,
-                  },
                   // General
                   {
                     name: 'TimeZone',
@@ -429,25 +435,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
                     value: '1',
                   },
                 ],
-                lifecycle: {
-                  postStart: [
-                    {
-                      exec: {
-                        command: [
-                          '/bin/sh',
-                          '-c',
-                          dedent`
-                            cp ${configMapFilesContainerDirPath}/sdtdserver.xml /home/sdtdserver/serverfiles/sdtdserver.xml
-                            chown -R sdtdserver:sdtdserver /home/sdtdserver/serverfiles
-                       
-                          `,
-
-                          // node ${configMapFilesContainerDirPath}/install-additional-mods.js
-                        ],
-                      },
-                    },
-                  ],
-                },
               },
             ],
             volume: [
@@ -558,118 +545,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     };
   });
 
-  sdtdBothSidesModsFileBrowserDeployment = this.provide(
-    DeploymentV1,
-    'sdtdBothSidesModsFileBrowserDeployment',
-    id => {
-      const fbSrvDirContainerPath = '/srv';
-      const fbDatbaseFileName = 'database.db';
-      const fbDatabaseFileDirContainerPath = '/database';
-      const fbDatabaseFileContainerPath = path.join(
-        fbDatabaseFileDirContainerPath,
-        fbDatbaseFileName,
-      );
-
-      return {
-        metadata: {
-          name: `${this.k8sWorkstationAppsGameStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace:
-            this.k8sWorkstationAppsGameStack.namespace.element.metadata.name,
-        },
-        spec: {
-          replicas: '1',
-          selector: {
-            matchLabels:
-              this.sdtdBothSidesModsFileBrowserService.shared.selector,
-          },
-          template: {
-            metadata: {
-              labels: this.sdtdBothSidesModsFileBrowserService.shared.selector,
-            },
-            spec: {
-              container: [
-                {
-                  name: this.k8sWorkstationAppsGameStack.metadata.shared
-                    .services['7dtd-both-sides-mods-file-browser'].name,
-                  image: 'filebrowser/filebrowser',
-                  imagePullPolicy: 'Always',
-                  port: [
-                    {
-                      containerPort:
-                        this.k8sWorkstationAppsGameStack.metadata.shared
-                          .services['7dtd-both-sides-mods-file-browser'].ports
-                          .web.port,
-                      protocol:
-                        this.k8sWorkstationAppsGameStack.metadata.shared
-                          .services['7dtd-both-sides-mods-file-browser'].ports
-                          .web.protocol,
-                    },
-                  ],
-                  volumeMount: [
-                    {
-                      name: this.k8sWorkstationAppsGameStack
-                        .sdtdBothSideModsFbDbPersistentVolumeClaim.element
-                        .metadata.name,
-                      mountPath: fbDatabaseFileDirContainerPath,
-                    },
-                    {
-                      name: this.k8sWorkstationAppsGameStack
-                        .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
-                        .name,
-                      mountPath: fbSrvDirContainerPath,
-                      readOnly: true,
-                    },
-                  ],
-                  env: [
-                    {
-                      name: 'FB_NOAUTH',
-                      value: 'true',
-                    },
-                    {
-                      name: 'FB_DATABASE',
-                      value: fbDatabaseFileContainerPath,
-                    },
-                    {
-                      name: 'FB_PORT',
-                      value:
-                        this.k8sWorkstationAppsGameStack.metadata.shared
-                          .services['7dtd-both-sides-mods-file-browser'].ports
-                          .web.targetPort,
-                    },
-                  ],
-                },
-              ],
-              volume: [
-                {
-                  name: this.k8sWorkstationAppsGameStack
-                    .sdtdBothSideModsFbDbPersistentVolumeClaim.element.metadata
-                    .name,
-                  persistentVolumeClaim: {
-                    claimName:
-                      this.k8sWorkstationAppsGameStack
-                        .sdtdBothSideModsFbDbPersistentVolumeClaim.element
-                        .metadata.name,
-                  },
-                },
-                {
-                  name: this.k8sWorkstationAppsGameStack
-                    .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
-                    .name,
-                  persistentVolumeClaim: {
-                    claimName:
-                      this.k8sWorkstationAppsGameStack
-                        .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
-                        .name,
-                  },
-                },
-              ],
-            },
-          },
-        },
-      };
-    },
-  );
-
   sdtdDashboardIngress = this.provide(
     IngressV1,
     'sdtdDashboardIngress',
@@ -697,46 +572,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
                         number:
                           this.k8sWorkstationAppsGameStack.metadata.shared
                             .services['7dtd'].ports.dashboard.port,
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }),
-  );
-
-  sdtdBothSidesModsFileBrowserIngress = this.provide(
-    IngressV1,
-    'sdtdBothSidesModsFileBrowserIngress',
-    id => ({
-      metadata: {
-        name: `${this.k8sWorkstationAppsGameStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace:
-          this.k8sWorkstationAppsGameStack.namespace.element.metadata.name,
-      },
-      spec: {
-        ingressClassName: 'nginx',
-        rule: [
-          {
-            host: `${this.cloudflareRecordStack.sdtdModsRecord.element.name}`,
-            http: {
-              path: [
-                {
-                  path: '/',
-                  pathType: 'Prefix',
-                  backend: {
-                    service: {
-                      name: this.sdtdBothSidesModsFileBrowserService.element
-                        .metadata.name,
-                      port: {
-                        number:
-                          this.k8sWorkstationAppsGameStack.metadata.shared
-                            .services['7dtd-both-sides-mods-file-browser'].ports
-                            .web.port,
                       },
                     },
                   },

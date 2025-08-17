@@ -240,16 +240,6 @@ export class K8S_Workstation_Apps_Game_Sftp_Stack extends AbstractStack {
                       'both-sides-mods',
                     ),
                   },
-                  {
-                    name: this.k8sWorkstationAppsGameStack
-                      .sdtdBothSideModsFbDbPersistentVolumeClaim.element
-                      .metadata.name,
-                    mountPath: path.join(
-                      sftpDataDirContainerPath,
-                      '7dtd',
-                      'both-sides-mods-file-browser-database',
-                    ),
-                  },
                 ],
                 lifecycle: {
                   postStart: [
@@ -341,17 +331,6 @@ export class K8S_Workstation_Apps_Game_Sftp_Stack extends AbstractStack {
                     this.k8sWorkstationAppsGameStack
                       .sdtdBothSidesModsPersistentVolumeClaim.element.metadata
                       .name,
-                },
-              },
-              {
-                name: this.k8sWorkstationAppsGameStack
-                  .sdtdBothSideModsFbDbPersistentVolumeClaim.element.metadata
-                  .name,
-                persistentVolumeClaim: {
-                  claimName:
-                    this.k8sWorkstationAppsGameStack
-                      .sdtdBothSideModsFbDbPersistentVolumeClaim.element
-                      .metadata.name,
                 },
               },
             ],
