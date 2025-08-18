@@ -4,15 +4,10 @@ import { StacksSchema } from './stacks/.schema';
 export const TerraformSchema = Joi.object({
   externalIpCidrBlocks: Joi.object({
     apexCaptainHomeIpv4: Joi.string().required(),
-    gjwoo960101Ipv4: Joi.string().required(),
-    gjwoo960101Ipv6: Joi.string().required(),
     nayuntechCorpIpv4: Joi.string().required(),
   }).required(),
   externalGithubUsers: Joi.object({
     ApexCaptain: Joi.object({
-      githubUsername: Joi.string().required(),
-    }).required(),
-    gjwoo960101: Joi.object({
       githubUsername: Joi.string().required(),
     }).required(),
   }).required(),

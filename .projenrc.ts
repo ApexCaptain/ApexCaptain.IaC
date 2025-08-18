@@ -407,17 +407,12 @@ void (async () => {
     terraform: {
       externalIpCidrBlocks: {
         apexCaptainHomeIpv4: `${workstationIpAddress}/32`,
-        gjwoo960101Ipv4: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV4!!,
-        gjwoo960101Ipv6: process.env.EXTERNAL_IP_CIDR_BLOCK_GJWOO960101_IPV6!!,
         nayuntechCorpIpv4:
           process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_IPV4!!,
       },
       externalGithubUsers: {
         ApexCaptain: {
           githubUsername: process.env.GITHUB_APEX_CAPTAIN_USERNAME!!,
-        },
-        gjwoo960101: {
-          githubUsername: process.env.GITHUB_GJWOO960101_USERNAME!!,
         },
       },
       stacks: {

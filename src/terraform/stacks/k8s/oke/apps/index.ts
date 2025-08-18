@@ -29,17 +29,8 @@ export * from './redis-ui.stack';
 // Vault
 export * from './vault.stack';
 
-// Docent AI Web
-export * from './docent-ai-web.stack';
-
-// Docent AI Engine
-export * from './docent-ai-engine.stack';
-
 // Argo CD
 export * from './argo-cd.stack';
-
-// Rollout Trigger
-export * from './rollout-trigger.stack';
 
 // Monitoring
 export * from './monitoring.stack';

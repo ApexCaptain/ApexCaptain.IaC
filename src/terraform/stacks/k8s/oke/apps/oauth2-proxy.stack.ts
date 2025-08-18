@@ -67,10 +67,7 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
         this.globalConfigService.config.terraform.externalGithubUsers
           .ApexCaptain.githubUsername,
       ],
-      contributorGithubUsers: [
-        this.globalConfigService.config.terraform.externalGithubUsers
-          .gjwoo960101.githubUsername,
-      ],
+      contributorGithubUsers: [],
     },
   ]);
 
