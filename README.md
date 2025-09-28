@@ -1,4 +1,4 @@
-# ApexCaptain.IaC - Infrastructure as Code 포트폴리오
+# ApexCaptain.IaC - Infrastructure as Code
 
 ## 📋 프로젝트 개요
 
@@ -8,7 +8,7 @@
 
 - **하이브리드 멀티 클러스터 Kubernetes 환경** 구축 및 관리
   - Oracle Cloud OKE 클러스터 (클라우드)
-  - On-premise Workstation 클러스터 (kubeadm 기반)
+  - On-premise Workstation 클러스터 (microk8s 기반, kubeadm 마이그레이션 예정)
 - **GitOps 기반 배포 파이프라인** 구현
 - **개인 미디어 서버 인프라**
 - **보안 및 모니터링** 체계 구축
@@ -48,7 +48,7 @@ ApexCaptain.IaC/
 │   │   │   │   │   ├── network.stack.ts
 │   │   │   │   │   ├── bastion.stack.ts
 │   │   │   │   │   └── system.stack.ts
-│   │   │   │   └── 📁 workstation/ # On-premise Workstation (kubeadm)
+│   │   │   │   └── 📁 workstation/ # On-premise Workstation (microk8s)
 │   │   │   │       ├── 📁 apps/   # 개인/미디어 서비스
 │   │   │   │       ├── 📁 dev-pods/ # 개발 환경
 │   │   │   │       └── system.stack.ts
@@ -78,7 +78,7 @@ ApexCaptain.IaC/
 ### 1. 하이브리드 멀티 클러스터 Kubernetes 환경
 
 - **Oracle Kubernetes Engine (OKE)** 클러스터 자동 프로비저닝 (클라우드)
-- **On-premise Workstation 클러스터** kubeadm 기반 구축 (로컬 환경)
+- **On-premise Workstation 클러스터** microk8s 기반 구축 (로컬 환경)
 - **Istio 서비스 메시** 구축으로 서비스 간 통신 관리
 - **하이브리드 멀티 클러스터 통신** 설정 (진행 중)
 
@@ -128,13 +128,9 @@ Oracle Cloud OKE Cluster (클라우드)
 │   ├── ArgoCD (개발 중)
 │   ├── Vault (개발 중)
 │   └── Monitoring Stack (개발 중)
-├── Application Namespace
-│   ├── Docent AI Engine
-│   ├── Docent AI Web
-│   └── Business Applications
 └── Ingress Controller
 
-On-premise Workstation Cluster (kubeadm 기반)
+On-premise Workstation Cluster (microk8s)
 ├── System Namespace
 │   ├── Istio Control Plane
 │   ├── Local Development Tools
@@ -265,12 +261,17 @@ yarn tf@clean
 **도전**: 클라우드(OKE)와 On-premise(Workstation) Kubernetes 클러스터 간 안전한 통신 구축
 **해결**: Istio 서비스 메시와 전용 네트워크 구성으로 해결 (진행 중)
 
-### 2. 상태 관리
+### 2. Kubernetes 클러스터 마이그레이션
+
+**도전**: microk8s에서 kubeadm으로의 안전한 마이그레이션
+**해결**: 단계적 마이그레이션 계획 수립 및 자동화 스크립트 개발 (계획 중)
+
+### 3. 상태 관리
 
 **도전**: Terraform 상태 파일의 안전한 관리
 **해결**: 자동화된 백업 스크립트와 원격 상태 저장소 구현
 
-### 3. 보안 강화
+### 4. 보안 강화
 
 **도전**: 클라우드 네이티브 환경에서의 보안 강화
 **해결**: Vault, OAuth2 Proxy, Cert-Manager를 통한 종합적 보안 체계 구축 (진행 중)

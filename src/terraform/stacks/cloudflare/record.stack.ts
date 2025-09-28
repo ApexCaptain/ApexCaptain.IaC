@@ -50,32 +50,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Keycloak Admin service',
   }));
 
-  docentRecord = this.provide(DnsRecord, 'docentRecord', () => ({
-    name: `docent.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Docent service',
-  }));
-
-  docentEngineRecord = this.provide(DnsRecord, 'docentEngineRecord', () => ({
-    name: `docent-engine.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Docent Engine service',
-  }));
-
   okeSftpRecord = this.provide(DnsRecord, 'okeSftpRecord', () => ({
     name: `sftp-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -281,6 +255,15 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for 7DTD service',
   }));
 
+  blogRecord = this.provide(DnsRecord, 'blogRecord', () => ({
+    name: `blog.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content: `${this.globalConfigService.config.terraform.config.providers.github.ApexCaptain.owner.toLowerCase()}.github.io`,
+    proxied: true,
+    comment: 'Cloudflare record for Blog service',
+  }));
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

@@ -30,6 +30,10 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
     },
   };
 
+  /**
+   * @see https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new
+   */
+
   jellyfinRelease = this.provide(Release, 'jellyfinRelease', () => {
     return {
       name: this.k8sWorkstationAppsNasStack.metadata.shared.helm.jellyfin.name,

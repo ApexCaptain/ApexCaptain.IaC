@@ -22,7 +22,6 @@ import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { SelfSignedCert } from '@lib/terraform/providers/tls/self-signed-cert';
 import { CertRequest } from '@lib/terraform/providers/tls/cert-request';
 import { LocallySignedCert } from '@lib/terraform/providers/tls/locally-signed-cert';
-
 @Injectable()
 export class Project_Stack extends AbstractStack {
   terraform = {

@@ -1,1 +1,2 @@
-export * from './apps';
+export * from './profile.stack';
+export * from './github-io.stack';
