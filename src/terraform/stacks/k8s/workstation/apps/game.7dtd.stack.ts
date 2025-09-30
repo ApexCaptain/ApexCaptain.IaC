@@ -113,7 +113,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
           XPMultiplier: 200,
 
           // Game Rules
-          BuildCreate: true, // 치트 모드. 테스트를 위해서 잠시 활성화
+          BuildCreate: false,
           StormFreq: StormFrequencyOption.F150,
           DeathPenalty: DeathPenaltyMode.ClassicXPPenalty,
           DropOnDeath: DropOnDeathOption.Nothing,

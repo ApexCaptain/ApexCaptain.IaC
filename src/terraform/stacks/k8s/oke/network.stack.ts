@@ -83,17 +83,10 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       description: 'SFTP port for NFS service',
     });
 
-    const rolloutTriggerNodePort = createLoadBalancerPortInfo({
-      inbound: 33287,
-      protocol: OciNetworkProtocol.TCP,
-      description: 'Rollout Trigger port',
-    });
-
     const combination = {
       httpNodePort,
       httpsNodePort,
       nfsSftpNodePort,
-      rolloutTriggerNodePort,
     };
 
     const inboundPorts = Object.values(combination).map(

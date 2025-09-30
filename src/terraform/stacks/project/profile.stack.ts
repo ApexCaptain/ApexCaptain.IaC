@@ -1,14 +1,14 @@
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Branch } from '@lib/terraform/providers/github/branch';
 import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { Repository } from '@lib/terraform/providers/github/repository';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 
 @Injectable()
-export class Project_Apps_Test_Stack extends AbstractStack {
+export class Project_Profile_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -22,35 +22,25 @@ export class Project_Apps_Test_Stack extends AbstractStack {
     },
   };
 
-  repository = this.provide(Repository, 'repository', () => ({
-    name: 'test',
-    description:
-      'Test appliaction template using k8s, devpod, argocd, vault and etc...',
+  profileRepository = this.provide(Repository, 'profileRepository', () => ({
+    name: this.globalConfigService.config.terraform.config.providers.github
+      .ApexCaptain.owner,
     visibility: 'public',
     autoInit: true,
-    // lifecycle: {
-    //   preventDestroy: true,
-    // },
-  }));
-
-  developBranch = this.provide(Branch, 'developBranch', () => ({
-    repository: this.repository.element.name,
-    sourceBranch: 'main',
-    branch: 'develop',
-    lifecycle: {
-      preventDestroy: true,
-    },
   }));
 
   constructor(
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
+
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
   ) {
     super(
       terraformAppService.cdktfApp,
-      Project_Apps_Test_Stack.name,
-      'Project Apps Test Stack',
+      Project_Profile_Stack.name,
+      'Project profile stack',
     );
   }
 }
