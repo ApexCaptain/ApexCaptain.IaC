@@ -6,6 +6,7 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { Ruleset } from '@lib/terraform/providers/cloudflare/ruleset';
+import { Cloudflare_Record_Stack } from './record.stack';
 
 @Injectable()
 export class Cloudflare_Firewall_Stack extends AbstractStack {
@@ -22,17 +23,31 @@ export class Cloudflare_Firewall_Stack extends AbstractStack {
     },
   };
 
-  countryBasedRuleset = this.provide(Ruleset, 'countryBasedRuleset', id => ({
+  firewallRules = this.provide(Ruleset, 'firewallRules', id => ({
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
     name: id,
-    description: 'Block countries except Korea and Japan',
+    description:
+      'Block countries except Korea and Japan, allow ArgoCD webhooks',
     kind: 'zone',
     phase: 'http_request_firewall_custom',
     rules: [
       {
+        description: 'Allow ArgoCD webhooks from GitHub for specific domain',
+        enabled: true,
+        action: 'skip',
+        logging: {
+          enabled: true,
+        },
+        expression: `http.host eq "${this.cloudflareRecordStack.argoCdRecord.element.name}" and http.request.uri.path contains "/api/webhook"`,
+        actionParameters: {
+          ruleset: 'current',
+        },
+      },
+      {
+        description: 'Block countries except Korea and Japan',
+        enabled: true,
         action: 'block',
         expression: '(ip.geoip.country ne "KR" and ip.geoip.country ne "JP")',
-        enabled: true,
       },
     ],
   }));
@@ -44,6 +59,7 @@ export class Cloudflare_Firewall_Stack extends AbstractStack {
 
     // Stacks
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
+    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

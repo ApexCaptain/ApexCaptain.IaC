@@ -97,7 +97,7 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
                       .shared.authSignin,
                 },
                 hosts: [
-                  `${this.cloudflareRecordStack.grafanaOkeRecord.element.name}`,
+                  this.cloudflareRecordStack.grafanaOkeRecord.element.name,
                 ],
               },
               dashboards: {

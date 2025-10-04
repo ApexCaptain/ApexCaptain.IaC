@@ -519,7 +519,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.filesRecord.element.name}`,
+          host: this.cloudflareRecordStack.filesRecord.element.name,
           http: {
             path: [
               {

@@ -118,7 +118,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     const initialVaultPodName = 'vault-0';
     const containerName = 'vault';
     const internalDataPath = '/vault/data';
-    const host = `${this.cloudflareRecordStack.vaultRecord.element.name}`;
+    const host = this.cloudflareRecordStack.vaultRecord.element.name;
 
     return [
       {

@@ -390,6 +390,11 @@ void (async () => {
           source: 'kreuzwerker/docker',
         },
         {
+          // https://registry.terraform.io/providers/argoproj-labs/argocd/latest
+          name: 'argocd',
+          source: 'argoproj-labs/argocd',
+        },
+        {
           // https://registry.terraform.io/providers/goauthentik/authentik/latest
           name: 'authentik',
           source: 'goauthentik/authentik',
@@ -442,6 +447,12 @@ void (async () => {
         k8s: {
           oke: {
             apps: {
+              argoCd: {
+                adminPassword:
+                  process.env.OKE_ARGOCD_APP_ARGOCD_ADMIN_PASSWORD!!,
+                adminPasswordBcryted:
+                  process.env.OKE_ARGOCD_APP_ARGOCD_ADMIN_PASSWORD_BCRYPTED!!,
+              },
               monitoring: {
                 grafana: {
                   adminUser:

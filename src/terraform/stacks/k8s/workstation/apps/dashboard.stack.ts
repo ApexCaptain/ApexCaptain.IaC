@@ -174,7 +174,8 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.workstationDashboardRecord.element.name}`,
+          host: this.cloudflareRecordStack.workstationDashboardRecord.element
+            .name,
           http: {
             path: [
               {

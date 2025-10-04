@@ -145,7 +145,8 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     () => {
       const rootDomain =
         this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
-      const host = `${this.cloudflareRecordStack.oauth2ProxyAdminRecord.element.name}`;
+      const host =
+        this.cloudflareRecordStack.oauth2ProxyAdminRecord.element.name;
 
       return [
         {
@@ -209,7 +210,8 @@ export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {
     () => {
       const rootDomain =
         this.cloudflareZoneStack.dataAyteneve93Zone.element.name;
-      const host = `${this.cloudflareRecordStack.oauth2ProxyContributorRecord.element.name}`;
+      const host =
+        this.cloudflareRecordStack.oauth2ProxyContributorRecord.element.name;
 
       return [
         {

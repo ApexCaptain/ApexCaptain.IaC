@@ -75,7 +75,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           ingress: {
             enabled: true,
             ingressClassName: 'nginx',
-            host: `${this.cloudflareRecordStack.longhornRecord.element.name}`,
+            host: this.cloudflareRecordStack.longhornRecord.element.name,
             annotations: {
               'nginx.ingress.kubernetes.io/rewrite-target': '/',
               'nginx.ingress.kubernetes.io/auth-url':

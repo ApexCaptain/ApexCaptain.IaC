@@ -2,6 +2,10 @@ import Joi from '@hapi/joi';
 
 export const OkeSchema = Joi.object({
   apps: Joi.object({
+    argoCd: Joi.object({
+      adminPassword: Joi.string().required(),
+      adminPasswordBcryted: Joi.string().required(),
+    }).required(),
     monitoring: Joi.object({
       grafana: Joi.object({
         adminUser: Joi.string().required(),

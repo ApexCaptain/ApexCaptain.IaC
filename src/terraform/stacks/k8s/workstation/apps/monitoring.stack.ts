@@ -87,7 +87,8 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
                       .shared.authSignin,
                 },
                 hosts: [
-                  `${this.cloudflareRecordStack.grafanaWorkstationRecord.element.name}`,
+                  this.cloudflareRecordStack.grafanaWorkstationRecord.element
+                    .name,
                 ],
               },
               dashboards: {

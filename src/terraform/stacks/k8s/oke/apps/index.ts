@@ -31,6 +31,10 @@ export * from './vault.stack';
 
 // Argo CD
 export * from './argo-cd.stack';
+export * from './argo-cd.resources.stack';
 
 // Monitoring
 export * from './monitoring.stack';
+
+// GitOps
+export * from './git-ops.stack';

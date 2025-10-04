@@ -56,7 +56,7 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
             className: 'nginx',
             hosts: [
               {
-                host: `${this.cloudflareRecordStack.jellyfinRecord.element.name}`,
+                host: this.cloudflareRecordStack.jellyfinRecord.element.name,
                 paths: [
                   {
                     path: '/',

@@ -559,7 +559,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
         ingressClassName: 'nginx',
         rule: [
           {
-            host: `${this.cloudflareRecordStack.sdtdRecord.element.name}`,
+            host: this.cloudflareRecordStack.sdtdRecord.element.name,
             http: {
               path: [
                 {
