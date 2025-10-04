@@ -12,7 +12,7 @@ if (!fs.existsSync(tfStateBackupDir)) {
 }
 
 const backupFilePostfix = '.tfstate.backup.zip';
-const backupFileRetentionCount = 10;
+const backupFileRetentionCount = 30;
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19); // YYYY-MM-DDTHH-MM-SS 형식
 const backupFileName = `${timestamp}${backupFilePostfix}`;
 const backupFilePath = path.join(tfStateBackupDir, backupFileName);

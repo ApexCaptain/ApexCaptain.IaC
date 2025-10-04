@@ -24,6 +24,19 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     },
   };
 
+  numberPlanetRecord = this.provide(DnsRecord, 'numberPlanetRecord', () => ({
+    name: `number-planet.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Number Planet service',
+  }));
+
   keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
     name: `keycloak.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -178,6 +191,19 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for OKE Files Browser service',
   }));
 
+  argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
+    name: `argo-cd.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Argo CD service',
+  }));
+
   longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
     name: `longhorn.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -264,6 +290,7 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     proxied: true,
     comment: 'Cloudflare record for Blog service',
   }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

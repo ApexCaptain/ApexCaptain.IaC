@@ -322,7 +322,7 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
       ingressClassName: 'nginx',
       rule: [
         {
-          host: `${this.cloudflareRecordStack.torrentRecord.element.name}`,
+          host: this.cloudflareRecordStack.torrentRecord.element.name,
           http: {
             path: [
               {

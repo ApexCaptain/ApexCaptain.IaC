@@ -23,7 +23,7 @@
 - **Oracle Cloud Infrastructure (OCI)** - 클라우드 플랫폼
 - **Kubernetes** - 컨테이너 오케스트레이션
 - **Istio** - 서비스 메시
-- **ArgoCD** - GitOps 배포 관리 (개발 중)
+- **ArgoCD** - GitOps 배포 관리 (구현 완료)
 - **Longhorn** - 분산 스토리지 시스템
 - **MetalLB** - 로드 밸런서
 
@@ -57,7 +57,11 @@ ApexCaptain.IaC/
 │   │   │   │       ├── 📁 dev-pods/ # 개발 환경
 │   │   │   │       └── system.stack.ts
 │   │   │   ├── 📁 cloudflare/      # DNS 및 CDN 설정
-│   │   │   └── 📁 project/         # 프로젝트 공통 설정
+│   │   │   ├── 📁 project/         # 프로젝트 공통 설정
+│   │   │   │   └── 📁 apps/       # 비즈니스 애플리케이션
+│   │   │   │       └── number-planet.stack.ts
+│   │   │   ├── 📁 ocir/           # Oracle Container Image Registry
+│   │   │   └── 📁 git-ops/        # GitOps 관리 스택
 │   │   ├── terraform.module.ts
 │   │   └── terraform.config.service.ts
 │   ├── 📁 common/                  # 공통 유틸리티
@@ -99,7 +103,9 @@ ApexCaptain.IaC/
 
 ### 4. DevOps 도구
 
-- **ArgoCD** - GitOps 기반 배포 관리 (개발 중)
+- **ArgoCD** - GitOps 기반 배포 관리 (구현 완료)
+- **OCIR** - Oracle Container Image Registry 통합 (구현 완료)
+- **GitOps 파이프라인** - 자동화된 CI/CD 워크플로우 (구현 완료)
 - **CloudBeaver** - 데이터베이스 관리 도구 (구현 완료)
 - **Redis UI** - Redis 관리 인터페이스 (구현 완료)
 - **Home L2TP VPN Proxy** - 원격 네트워크 접근 프록시 (구현 완료)
@@ -119,14 +125,17 @@ ApexCaptain.IaC/
 ### Oracle Cloud OKE 클러스터 (클라우드)
 
 #### 시스템 애플리케이션
+
 - **Istio Service Mesh** - 서비스 간 통신 관리 (개발 중)
-- **ArgoCD** - GitOps 배포 관리 (개발 중)
+- **ArgoCD** - GitOps 배포 관리 (구현 완료)
 - **Vault** - 시크릿 관리 시스템 (개발 중)
 - **Prometheus + Grafana** - 모니터링 및 메트릭 수집 (개발 중)
 - **Cert-Manager** - SSL 인증서 자동 관리 (구현 완료)
 - **Ingress Controller** - 트래픽 라우팅 (구현 완료)
 
 #### 비즈니스 애플리케이션
+
+- **Number Planet** - 웹 애플리케이션 (구현 완료)
 - **CloudBeaver** - 데이터베이스 관리 도구
 - **Redis UI** - Redis 관리 인터페이스
 - **OAuth2 Proxy** - 인증 프록시
@@ -137,6 +146,7 @@ ApexCaptain.IaC/
 ### On-premise Workstation 클러스터
 
 #### 시스템 애플리케이션
+
 - **Istio Service Mesh** - 서비스 간 통신 관리 (개발 중)
 - **Longhorn Storage** - 분산 스토리지 시스템 (구현 완료)
 - **MetalLB Load Balancer** - 로드 밸런싱 (구현 완료)
@@ -145,6 +155,7 @@ ApexCaptain.IaC/
 - **Ingress Controller** - 트래픽 라우팅 (구현 완료)
 
 #### 미디어 및 게임 서버
+
 - **Jellyfin** - 미디어 스트리밍 서버
 - **qBittorrent** - 토렌트 다운로드 관리
 - **7 Days to Die** - 게임 서버
@@ -152,6 +163,7 @@ ApexCaptain.IaC/
 - **NAS Server** - 네트워크 연결 스토리지
 
 #### 개발 도구
+
 - **Kubernetes Dashboard** - 클러스터 관리 UI
 - **Development Pods** - 개발 환경 컨테이너
 
@@ -174,10 +186,13 @@ OCI VCN
 Oracle Cloud OKE Cluster (클라우드)
 ├── System Namespace
 │   ├── Istio Control Plane (개발 중)
-│   ├── ArgoCD (개발 중)
+│   ├── ArgoCD (구현 완료)
 │   ├── Vault (개발 중)
 │   ├── Monitoring Stack (개발 중)
 │   └── Home L2TP VPN Proxy (구현 완료)
+├── Application Namespace
+│   ├── Number Planet (구현 완료)
+│   └── Business Applications (구현 완료)
 └── Ingress Controller (구현 완료)
 
 On-premise Workstation Cluster (microk8s)
@@ -203,9 +218,41 @@ On-premise Workstation Cluster (microk8s)
 - **총 코드 라인**: 22,246 라인
 - **TypeScript 파일**: 129 개
 - **Terraform 스택**: 45 개
-- **배포된 애플리케이션**: 25+ 개 (일부 개발 중)
+- **배포된 애플리케이션**: 26+ 개 (일부 개발 중)
 - **자동화 스크립트**: 9 개
-- **개발 진행률**: 약 65% 완료
+- **개발 진행률**: 약 70% 완료
+
+---
+
+## 🎉 최근 완성된 기능 (2024년 12월)
+
+### 1. ArgoCD GitOps 파이프라인 완성
+
+- **ArgoCD 설치 및 설정** 완료
+- **GitOps 리포지토리** 연동
+- **자동화된 배포 파이프라인** 구축
+- **ArgoCD 리소스 관리** 스택 구현
+
+### 2. Oracle Container Image Registry (OCIR) 통합
+
+- **OCIR 컨테이너 레포지토리** 생성
+- **CI/CD 사용자 계정** 및 권한 관리
+- **이미지 풀 시크릿** 자동화
+- **GitHub Actions 연동** 설정
+
+### 3. Number Planet 애플리케이션 배포
+
+- **첫 번째 비즈니스 애플리케이션** 성공적 배포
+- **GitOps 기반 자동 배포** 파이프라인 구현
+- **이미지 업데이트 자동화** (ArgoCD Image Updater)
+- **DNS 및 Ingress** 자동 설정
+
+### 4. 완전한 GitOps 워크플로우
+
+- **코드 → 빌드 → 배포** 전체 파이프라인 자동화
+- **ArgoCD 애플리케이션** 자동 생성 및 관리
+- **환경별 설정** 분리 및 관리
+- **롤백 및 자동 복구** 기능
 
 ---
 
@@ -214,7 +261,7 @@ On-premise Workstation Cluster (microk8s)
 ### 1. 인프라 자동화
 
 - **100% 코드 기반 인프라** 관리
-- **GitOps 워크플로우** 구현으로 배포 자동화 (개발 중)
+- **GitOps 워크플로우** 구현으로 배포 자동화 (구현 완료)
 - **멀티 환경 지원** (클라우드/On-premise)
 
 ### 2. 보안 강화
@@ -285,7 +332,9 @@ yarn tf@clean
 
 ### 단기 목표 (1-3개월)
 
-- [ ] **ArgoCD 완성**: GitOps 배포 파이프라인 구축 완료
+- [x] **ArgoCD 완성**: GitOps 배포 파이프라인 구축 완료
+- [x] **OCIR 통합**: Oracle Container Image Registry 통합 완료
+- [x] **Number Planet 배포**: 첫 번째 비즈니스 애플리케이션 배포 완료
 - [ ] **Vault 완성**: 시크릿 관리 시스템 구축 완료
 - [ ] **Prometheus/Grafana 완성**: 모니터링 시스템 구축 완료
 - [ ] **Istio Service Mesh**: 서비스 메시 구축 완료
