@@ -452,6 +452,7 @@ void (async () => {
                   process.env.OKE_ARGOCD_APP_ARGOCD_ADMIN_PASSWORD!!,
                 adminPasswordBcryted:
                   process.env.OKE_ARGOCD_APP_ARGOCD_ADMIN_PASSWORD_BCRYPTED!!,
+                workstationClusterServer: `https://${process.env.WORKSTATION_COMMON_DOMAIN_IPTIME}:${process.env.WORKSTATION_COMMON_K8S_CONTROL_PLANE_EXTERNAL_PORT}`,
               },
               monitoring: {
                 grafana: {

@@ -8,7 +8,7 @@ services:
       TZ: 'Asia/Seoul'
       IS_DEV_CONTAINER: true
       ENABLE_AUTO_SYNC: true
-      DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_GEMINI_CONFIG_DIR_PATH} ${CONTAINER_KUBE_CONFIG_DIR_PATH}
+      DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_GEMINI_CONFIG_DIR_PATH}
 
     env_file:
       - .env
@@ -20,8 +20,6 @@ services:
       - ..:${containerWorkspaceFolder}:cached
       # Mount Secrets
       - ${HOST_SECRETS_DIR_PATH}:${CONTAINER_SECRETS_DIR_PATH}
-      # Mount Local(Workstation) kubeconfig
-      - ${HOST_WORKSTATION_KUBE_CONFIG_FILE_PATH}:${CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH}
       # Named Volume
       ## Node Modules
       - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
