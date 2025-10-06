@@ -31,3 +31,6 @@ export * from './ingress-controller.stack';
 
 // monitoring
 export * from './monitoring.stack';
+
+// git-ops
+export * from './git-ops.stack';

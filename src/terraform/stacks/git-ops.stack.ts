@@ -1,6 +1,6 @@
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
 import { GithubProvider } from '@lib/terraform/providers/github/provider';
@@ -16,6 +16,12 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { RepositoryDeployKey } from '@lib/terraform/providers/github/repository-deploy-key';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
+import _ from 'lodash';
+import { ClusterRoleV1 } from '@lib/terraform/providers/kubernetes/cluster-role-v1';
+import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 
 @Injectable()
 export class GitOps_Stack extends AbstractStack {
@@ -32,6 +38,9 @@ export class GitOps_Stack extends AbstractStack {
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
+      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
+        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      ),
     },
   };
 
@@ -104,6 +113,93 @@ export class GitOps_Stack extends AbstractStack {
     },
     active: true,
   }));
+
+  workstationClusterArgocdManagerServiceAccount = this.provide(
+    ServiceAccountV1,
+    'workstationClusterArgocdManagerServiceAccount',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+        namespace: 'kube-system',
+      },
+      secret: [
+        {
+          name: `${_.kebabCase(id)}-token`,
+        },
+      ],
+    }),
+  );
+
+  workstationClusterArgocdManagerServiceAccountToken = this.provide(
+    SecretV1,
+    'workstationClusterArgocdManagerServiceAccountToken',
+    () => ({
+      metadata: {
+        name: this.workstationClusterArgocdManagerServiceAccount.element.secret.get(
+          0,
+        ).name,
+        annotations: {
+          'kubernetes.io/service-account.name':
+            this.workstationClusterArgocdManagerServiceAccount.element.metadata
+              .name,
+        },
+        namespace:
+          this.workstationClusterArgocdManagerServiceAccount.element.metadata
+            .namespace,
+        generateName:
+          this.workstationClusterArgocdManagerServiceAccount.element.secret.get(
+            0,
+          ).name,
+      },
+      type: 'kubernetes.io/service-account-token',
+      waitForServiceAccountToken: true,
+    }),
+  );
+
+  workstationClusterArgocdManagerClusterRole = this.provide(
+    ClusterRoleV1,
+    'workstationClusterArgocdManagerClusterRole',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+      },
+      rule: [
+        {
+          apiGroups: ['*'],
+          resources: ['*'],
+          verbs: ['*'],
+        },
+        {
+          nonResourceUrls: ['*'],
+          verbs: ['*'],
+        },
+      ],
+    }),
+  );
+
+  workstationClusterArgocdManagerClusterRoleBinding = this.provide(
+    ClusterRoleBindingV1,
+    'workstationClusterArgocdManagerClusterRoleBinding',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+      },
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: this.workstationClusterArgocdManagerClusterRole.element.metadata
+          .name,
+      },
+      subject: [
+        {
+          kind: 'ServiceAccount',
+          name: this.workstationClusterArgocdManagerServiceAccount.element
+            .metadata.name,
+          namespace: 'kube-system',
+        },
+      ],
+    }),
+  );
 
   constructor(
     // Global

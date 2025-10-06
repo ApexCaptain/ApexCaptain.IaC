@@ -5,6 +5,7 @@ export const OkeSchema = Joi.object({
     argoCd: Joi.object({
       adminPassword: Joi.string().required(),
       adminPasswordBcryted: Joi.string().required(),
+      workstationClusterServer: Joi.string().required(),
     }).required(),
     monitoring: Joi.object({
       grafana: Joi.object({
