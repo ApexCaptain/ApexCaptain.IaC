@@ -34,3 +34,6 @@ export * from './monitoring.stack';
 
 // git-ops
 export * from './git-ops.stack';
+
+// windows
+export * from './windows.stack';

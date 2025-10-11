@@ -281,6 +281,18 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for 7DTD service',
   }));
 
+  windowsRecord = this.provide(DnsRecord, 'windowsRecord', () => ({
+    name: `windows.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Windows service',
+  }));
+
   blogRecord = this.provide(DnsRecord, 'blogRecord', () => ({
     name: `blog.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,

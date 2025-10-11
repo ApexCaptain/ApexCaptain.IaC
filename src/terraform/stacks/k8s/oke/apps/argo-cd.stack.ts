@@ -248,6 +248,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
         repository: this.metadata.shared.helm.argoCdImageUpdater.repository,
         namespace: this.namespace.element.metadata.name,
         createNamespace: false,
+        forceUpdate: true,
         values,
       };
     },

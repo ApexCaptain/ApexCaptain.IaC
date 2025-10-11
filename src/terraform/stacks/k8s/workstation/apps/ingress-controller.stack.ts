@@ -103,6 +103,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
       repository: this.metadata.shared.helm.ingressController.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
+      forceUpdate: true,
       values: [yaml.stringify(values)],
     };
   });

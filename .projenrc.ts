@@ -594,6 +594,10 @@ void (async () => {
                   userName: process.env.WORKSTATION_APPS_NAS_SFTP_USER_NAME!!,
                 },
               },
+              windows: {
+                username: process.env.WORKSTATION_APPS_WINDOWS_USERNAME!!,
+                password: process.env.WORKSTATION_APPS_WINDOWS_PASSWORD!!,
+              },
             },
           },
         },

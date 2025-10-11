@@ -49,17 +49,25 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
   );
 
   metallbPorts = (() => {
-    const metallbMinPortNumber = 8000;
-    const metallbMaxPortNumber = 30000;
+    const externalMetallbMinPortNumber = 8000;
+    const externalMetallbMaxPortNumber = 30000;
+
+    const internalMetallbMinPortNumber = 60000;
+    const internalMetallbMaxPortNumber = 65535;
 
     const metallbPorts = {
+      // NAS
       nasSftp: 10022,
 
+      // Game
       game7dtdGamePort1: 26900,
       game7dtdGamePort2: 26901,
       game7dtdGamePort3: 26902,
-
       gameSftp: 10023,
+
+      // Windows
+      windowsRdp: 60000,
+      windowsVnc: 60001,
     };
 
     const ports = Object.values(metallbPorts);
@@ -67,11 +75,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       throw new Error('Metallb ports must be unique');
     }
     Object.entries(metallbPorts).forEach(([key, value]) => {
-      if (value < metallbMinPortNumber || value > metallbMaxPortNumber) {
-        throw new Error(
-          `Metallb port ${value} of ${key} must be in range [${metallbMinPortNumber}, ${metallbMaxPortNumber}]`,
-        );
+      if (
+        (value >= externalMetallbMinPortNumber &&
+          value <= externalMetallbMaxPortNumber) ||
+        (value >= internalMetallbMinPortNumber &&
+          value <= internalMetallbMaxPortNumber)
+      ) {
+        return;
       }
+      throw new Error(
+        `Metallb port ${value} of ${key} must be in range [${externalMetallbMinPortNumber}, ${externalMetallbMaxPortNumber}] or [${internalMetallbMinPortNumber}, ${internalMetallbMaxPortNumber}]`,
+      );
     });
     return metallbPorts;
   })();
@@ -251,6 +265,46 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
                   name: 'sftp',
                   port: 22,
                   targetPort: '22',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+        windows: createK8sApplicationMetadata({
+          namespace: 'windows',
+          services: {
+            windows: {
+              labels: {
+                app: 'windows',
+              },
+              name: 'windows',
+              ports: {
+                http: {
+                  name: 'http',
+                  port: 8006,
+                  targetPort: '8006',
+                  protocol: 'TCP',
+                },
+                'rdp-tcp': {
+                  portBasedIngressPort: this.metallbPorts.windowsRdp,
+                  name: 'rdp-tcp',
+                  port: 3389,
+                  targetPort: '3389',
+                  protocol: 'TCP',
+                },
+                'rdp-udp': {
+                  portBasedIngressPort: this.metallbPorts.windowsRdp,
+                  name: 'rdp-udp',
+                  port: 3389,
+                  targetPort: '3389',
+                  protocol: 'UDP',
+                },
+                vnc: {
+                  portBasedIngressPort: this.metallbPorts.windowsVnc,
+                  name: 'vnc',
+                  port: 5900,
+                  targetPort: '5900',
                   protocol: 'TCP',
                 },
               },
