@@ -119,7 +119,10 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     ConfigMapV1,
     'windowsOemAssetsConfigmap',
     id => {
-      const assetsDirPath = path.join(process.cwd(), 'assets/static/windows');
+      const assetsDirPath = path.join(
+        process.cwd(),
+        'assets/static/windows/oem',
+      );
       return {
         metadata: {
           name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -127,7 +130,7 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
         },
         data: Object.fromEntries(
           fs
-            .readdirSync(path.join(process.cwd(), 'assets/static/windows'))
+            .readdirSync(assetsDirPath)
             .map(eachFileName => [
               eachFileName,
               Fn.file(path.join(assetsDirPath, eachFileName)),
