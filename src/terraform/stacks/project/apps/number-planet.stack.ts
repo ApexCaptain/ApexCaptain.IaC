@@ -20,7 +20,6 @@ import { Cloudflare_Record_Stack } from '../../cloudflare/record.stack';
 import { Ocir_Stack } from '../../ocir.stack';
 import { K8S_Oke_Apps_GitOps_Stack } from '../../k8s/oke/apps/git-ops.stack';
 import { GitOps_Stack } from '../../git-ops.stack';
-import { K8S_Workstation_Apps_GitOps_Stack } from '../../k8s/workstation/apps/git-ops.stack';
 
 @Injectable()
 export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
@@ -51,6 +50,8 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
     () => ({
       name: 'number-planet',
       visibility: 'public',
+      homepageUrl: `https://${this.cloudflareRecordStack.numberPlanetRecord.element.name}`,
+      description: 'Number Planet React repository for testing ArgoCD GitOps',
       autoInit: true,
       lifecycle: {
         preventDestroy: true,
@@ -197,7 +198,6 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
     private readonly ocirStack: Ocir_Stack,
     private readonly k8sOkeAppsArgoCdResourcesStack: K8S_Oke_Apps_ArgoCd_Resources_Stack,
     private readonly k8sOkeAppsGitOpsStack: K8S_Oke_Apps_GitOps_Stack,
-    private readonly k8sWorkstationAppsGitOpsStack: K8S_Workstation_Apps_GitOps_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly gitOpsProjectStack: GitOps_Stack,
   ) {

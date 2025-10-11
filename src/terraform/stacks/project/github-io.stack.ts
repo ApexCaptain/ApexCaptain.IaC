@@ -33,6 +33,7 @@ export class Project_GithubIO_Stack extends AbstractStack {
         visibility: 'public',
         autoInit: true,
         homepageUrl: `https://${this.cloudflareRecordStack.blogRecord.element.name}`,
+        hasIssues: true,
         pages: {
           source: {
             branch: ghPagesBranchName,

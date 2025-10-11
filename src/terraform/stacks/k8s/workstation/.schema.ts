@@ -46,5 +46,9 @@ export const WorkstationSchema = Joi.object({
         userName: Joi.string().required(),
       }).required(),
     }).required(),
+    windows: Joi.object({
+      username: Joi.string().required(),
+      password: Joi.string().required(),
+    }).required(),
   }).required(),
 }).required();
