@@ -135,6 +135,7 @@ export class Project_Stack extends AbstractStack {
       },
     ];
   });
+  */
 
   iacGithubRepositoryActionArgs = this.provide(
     Resource,
@@ -171,7 +172,6 @@ export class Project_Stack extends AbstractStack {
       return {};
     },
   );
-  */
 
   dataRootOciTenancy = this.provide(
     DataOciIdentityTenancy,
