@@ -39,7 +39,7 @@
     "@nestjs/testing": "^10.4.20",
     "@types/flat": "5.0.2",
     "@types/lodash": "^4.17.20",
-    "@types/node": "^22.18.9",
+    "@types/node": "^22.18.10",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "commander": "^13.1.0",

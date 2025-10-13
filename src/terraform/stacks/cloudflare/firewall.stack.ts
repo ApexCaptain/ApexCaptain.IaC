@@ -7,6 +7,7 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { Ruleset } from '@lib/terraform/providers/cloudflare/ruleset';
 import { Cloudflare_Record_Stack } from './record.stack';
+import dedent from 'dedent';
 
 @Injectable()
 export class Cloudflare_Firewall_Stack extends AbstractStack {
@@ -26,13 +27,24 @@ export class Cloudflare_Firewall_Stack extends AbstractStack {
   firewallRules = this.provide(Ruleset, 'firewallRules', id => ({
     zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
     name: id,
-    description:
-      'Block countries except Korea and Japan, allow ArgoCD webhooks',
+    description: dedent`
+      Allow ArgoCD webhooks and all traffic to Blog.
+      Otherwise, block countries except Korea and Japan.
+    `,
     kind: 'zone',
     phase: 'http_request_firewall_custom',
     rules: [
       {
-        description: 'Allow ArgoCD webhooks from GitHub for specific domain',
+        description: 'Allow all traffic to blog',
+        enabled: true,
+        action: 'skip',
+        expression: `http.host eq "${this.cloudflareRecordStack.blogRecord.element.name}"`,
+        actionParameters: {
+          ruleset: 'current',
+        },
+      },
+      {
+        description: 'Allow ArgoCD webhooks',
         enabled: true,
         action: 'skip',
         logging: {
