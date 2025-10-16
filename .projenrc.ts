@@ -126,7 +126,7 @@ const project = new typescript.TypeScriptAppProject({
     devdirs: [constants.paths.dirs.scriptDir],
     ignorePatterns: [
       '/**/node_modules/*',
-      'eslint.config.cjs',
+      '/eslint.config.cjs',
       `${constants.paths.dirs.libDir}/`,
       `${constants.paths.dirs.generatedScriptLibDir}/`,
     ],
