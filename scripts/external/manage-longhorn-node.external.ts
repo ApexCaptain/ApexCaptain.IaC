@@ -1,8 +1,8 @@
 import { execSync } from 'child_process';
-import { ExternalProgram, ExternalProgramOutput } from './abstract.external';
 import { Option } from 'commander';
 import dedent from 'dedent';
 import _ from 'lodash';
+import { ExternalProgram, ExternalProgramOutput } from './abstract.external';
 
 interface ExternalManageLonghornNodeOptions {
   kubeconfig?: string;

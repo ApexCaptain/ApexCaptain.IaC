@@ -1,11 +1,11 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import _ from 'lodash';
 
 @Injectable()
 export class K8S_Workstation_Apps_GitOps_Stack extends AbstractStack {

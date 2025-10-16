@@ -1,21 +1,21 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
+import yaml from 'yaml';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
+import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
+import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { K8sApplicationMetadata } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import { K8S_Workstation_System_Stack } from '../system.stack';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { K8sApplicationMetadata } from '@/common';
-import yaml from 'yaml';
-import { Release } from '@lib/terraform/providers/helm/release';
-import _ from 'lodash';
-import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
-import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
-import { K8S_Workstation_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack {
@@ -75,9 +75,8 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     Object.values(
       this.k8sWorkstationSystemStack.applicationMetadata.shared,
     ).forEach(eachMetadata => {
-      const services = eachMetadata[
-        'services'
-      ] as K8sApplicationMetadata['services'];
+      const services =
+        eachMetadata.services as K8sApplicationMetadata['services'];
       if (!services) return;
       const namespace = eachMetadata.namespace;
       Object.values(services).forEach(eachService => {

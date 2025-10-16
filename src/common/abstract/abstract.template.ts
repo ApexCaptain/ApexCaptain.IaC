@@ -1,6 +1,6 @@
+import path from 'path';
 import { Fn } from 'cdktf';
 import deepmerge from 'deepmerge';
-import path from 'path';
 export abstract class AbstractTemplate<T_Vars> {
   abstract templateFileName: string;
 

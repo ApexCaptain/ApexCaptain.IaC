@@ -1,22 +1,22 @@
-import { AbstractStack } from '@/common';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { TerraformAppService } from '@/terraform/terraform.app.service';
-import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { K8S_Oke_Apps_ArgoCd_Stack } from './argo-cd.stack';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { GitOps_Stack } from '@/terraform/stacks/git-ops.stack';
+import { TerraformAppService } from '@/terraform/terraform.app.service';
+import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { AccountToken } from '@lib/terraform/providers/argocd/account-token';
+import { Cluster as ArgocdCluster } from '@lib/terraform/providers/argocd/cluster';
 import {
   ArgocdProvider,
   ArgocdProviderConfig,
 } from '@lib/terraform/providers/argocd/provider';
-import { AccountToken } from '@lib/terraform/providers/argocd/account-token';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import _ from 'lodash';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import { Cluster as ArgocdCluster } from '@lib/terraform/providers/argocd/cluster';
-import { GitOps_Stack } from '@/terraform/stacks/git-ops.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {

@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 
 const generateChoices = (env: NodeJS.ProcessEnv, namespace: string) => {
   const choices: ChoiceOrSeparatorArray<{
@@ -41,7 +41,7 @@ let choices: ChoiceOrSeparatorArray<{
 }> = [];
 
 export const choosePod = async (env: NodeJS.ProcessEnv, namespace: string) => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available pod',
     searchText: 'Searching pods...',
     source: async input => {

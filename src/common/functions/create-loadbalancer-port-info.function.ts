@@ -1,5 +1,5 @@
-import { OciLoadBalancerPortInfo } from '../types';
 import { OciNetworkProtocol } from '../enum/oci-network-protocol.enum';
+import { OciLoadBalancerPortInfo } from '../types';
 
 export function createLoadBalancerPortInfo(
   options: Partial<OciLoadBalancerPortInfo>,

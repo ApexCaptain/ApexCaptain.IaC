@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 
 const generateChoices = (env: NodeJS.ProcessEnv) => {
   const choices: ChoiceOrSeparatorArray<string> = (
@@ -31,7 +31,7 @@ const generateChoices = (env: NodeJS.ProcessEnv) => {
 let choices: ChoiceOrSeparatorArray<string> = [];
 
 export const chooseNamespace = async (env: NodeJS.ProcessEnv) => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available namespace',
     searchText: 'Searching namespaces...',
     source: async input => {

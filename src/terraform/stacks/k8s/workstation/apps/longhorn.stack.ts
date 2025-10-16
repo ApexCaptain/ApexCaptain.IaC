@@ -1,26 +1,26 @@
+import path from 'path';
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import dedent from 'dedent';
+import _ from 'lodash';
+import yaml from 'yaml';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Injectable } from '@nestjs/common';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import _ from 'lodash';
-import { Release } from '@lib/terraform/providers/helm/release';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { LocalBackend } from 'cdktf';
-import { K8S_Workstation_System_Stack } from '../system.stack';
-import yaml from 'yaml';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
 import { ExternalProvider } from '@lib/terraform/providers/external/provider';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { StorageClassV1 } from '@lib/terraform/providers/kubernetes/storage-class-v1';
-import dedent from 'dedent';
-import path from 'path';
-import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
@@ -120,10 +120,10 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
                 tags: string[];
               },
             ]
-          >(({ name, path, diskType, isSsd }) => [
+          >(({ name, path: diskPath, diskType, isSsd }) => [
             name,
             {
-              path,
+              path: diskPath,
               diskType,
               tags: isSsd ? ['ssd'] : ['hdd'],
             },

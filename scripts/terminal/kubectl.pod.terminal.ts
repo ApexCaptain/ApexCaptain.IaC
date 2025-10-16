@@ -48,14 +48,14 @@ export class KubectlPodTerminal extends AbstractTerminal<KubectlPod> {
       value: {
         name: each.metadata.name,
         namespace: each.metadata.namespace,
-        containers: each.spec.containers.map(each => ({
-          name: each.name,
+        containers: each.spec.containers.map(eachContainer => ({
+          name: eachContainer.name,
         })),
       },
       description: `Select pod ${each.metadata.name}`,
     }));
   }
   async execute() {
-    return await this.choose();
+    return this.choose();
   }
 }

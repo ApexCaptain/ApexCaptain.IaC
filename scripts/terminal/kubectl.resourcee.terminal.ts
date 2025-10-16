@@ -22,6 +22,14 @@ export enum KubectlResource {
 }
 
 export class KubectlResourceTerminal extends AbstractTerminal<KubectlResource> {
+  constructor(private readonly option: { disabled: KubectlResource[] }) {
+    super({
+      name: 'Kubectl Resource',
+      description: 'Select a kubectl resource',
+      type: 'argument',
+    });
+  }
+
   protected generateChoices(): Promise<Choice<KubectlResource>[]> {
     return Promise.resolve(
       [
@@ -139,12 +147,5 @@ export class KubectlResourceTerminal extends AbstractTerminal<KubectlResource> {
   async execute() {
     const resource = await this.choose();
     return resource;
-  }
-  constructor(private readonly option: { disabled: KubectlResource[] }) {
-    super({
-      name: 'Kubectl Resource',
-      description: 'Select a kubectl resource',
-      type: 'argument',
-    });
   }
 }

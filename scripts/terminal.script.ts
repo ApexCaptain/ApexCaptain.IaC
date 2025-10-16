@@ -1,3 +1,7 @@
+import { spawnSync } from 'child_process';
+import { input } from '@inquirer/prompts';
+import _ from 'lodash';
+import { okeEndpointSource } from './generated/K8S_Oke_Endpoint_Stack-okeEndpointSource.source';
 import {
   chooseBinary,
   chooseDataCenter,
@@ -10,10 +14,6 @@ import {
   chooseContainer,
   choosePod,
 } from './stage';
-import { okeEndpointSource } from './generated/K8S_Oke_Endpoint_Stack-okeEndpointSource.source';
-import { input } from '@inquirer/prompts';
-import { spawnSync } from 'child_process';
-import _ from 'lodash';
 
 const executeKubectl = async (dataCenter: DataCenter) => {
   const env = (() => {
@@ -60,7 +60,7 @@ const executeKubectl = async (dataCenter: DataCenter) => {
 
   // Set Pod
   let pod: { podName: string; containerNames: string[] } | undefined;
-  if (namespace)
+  if (namespace) {
     switch (command) {
       case KubectlCommand.LOGS:
       case KubectlCommand.EXEC:
@@ -68,6 +68,7 @@ const executeKubectl = async (dataCenter: DataCenter) => {
         pod = await choosePod(env, namespace);
         commandArgs.push(pod.podName);
     }
+  }
 
   // Set Container
   let container: string | undefined;

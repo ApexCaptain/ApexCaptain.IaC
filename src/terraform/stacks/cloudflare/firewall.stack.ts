@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import dedent from 'dedent';
+import { Cloudflare_Record_Stack } from './record.stack';
 import { Cloudflare_Zone_Stack } from './zone.stack';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
 import { Ruleset } from '@lib/terraform/providers/cloudflare/ruleset';
-import { Cloudflare_Record_Stack } from './record.stack';
-import dedent from 'dedent';
 
 @Injectable()
 export class Cloudflare_Firewall_Stack extends AbstractStack {

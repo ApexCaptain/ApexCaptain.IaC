@@ -1,41 +1,41 @@
+import { Injectable } from '@nestjs/common';
+import { Fn, LocalBackend } from 'cdktf';
+import dedent from 'dedent';
+import yaml from 'yaml';
+import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_System_Stack } from '../system.stack';
+import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
+import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
+import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Injectable } from '@nestjs/common';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { DataExternal } from '@lib/terraform/providers/external/data-external';
+import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { AbstractStack } from '@/common';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Fn, LocalBackend } from 'cdktf';
-import { K8S_Oke_System_Stack } from '../system.stack';
-import yaml from 'yaml';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { Release } from '@lib/terraform/providers/helm/release';
-import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
-import { KmsVault } from '@lib/terraform/providers/oci/kms-vault';
 import { KmsKey } from '@lib/terraform/providers/oci/kms-key';
+import { KmsVault } from '@lib/terraform/providers/oci/kms-vault';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
-import dedent from 'dedent';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
-import { ExternalProvider } from '@lib/terraform/providers/external/provider';
-import { DataExternal } from '@lib/terraform/providers/external/data-external';
+import { AuthBackend } from '@lib/terraform/providers/vault/auth-backend';
+import { GenericEndpoint } from '@lib/terraform/providers/vault/generic-endpoint';
+import { KvSecretBackendV2 } from '@lib/terraform/providers/vault/kv-secret-backend-v2';
+import { KvSecretV2 } from '@lib/terraform/providers/vault/kv-secret-v2';
+import { Mount } from '@lib/terraform/providers/vault/mount';
+import { Policy } from '@lib/terraform/providers/vault/policy';
 import {
   VaultProvider,
   VaultProviderConfig,
 } from '@lib/terraform/providers/vault/provider';
 
 // Testing vault...
-import { Mount } from '@lib/terraform/providers/vault/mount';
-import { KvSecretBackendV2 } from '@lib/terraform/providers/vault/kv-secret-backend-v2';
-import { KvSecretV2 } from '@lib/terraform/providers/vault/kv-secret-v2';
-import { AuthBackend } from '@lib/terraform/providers/vault/auth-backend';
-import { GenericEndpoint } from '@lib/terraform/providers/vault/generic-endpoint';
-import { Policy } from '@lib/terraform/providers/vault/policy';
 
 @Injectable()
 export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {

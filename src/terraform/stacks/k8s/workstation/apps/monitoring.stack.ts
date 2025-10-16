@@ -1,20 +1,20 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import Timezone from 'timezone-enum';
+import yaml from 'yaml';
+import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
+import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { K8S_Workstation_System_Stack } from '../system.stack';
-import { Release } from '@lib/terraform/providers/helm/release';
-import Timezone from 'timezone-enum';
-import yaml from 'yaml';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {

@@ -4,6 +4,7 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
+import { Project_Stack } from '../../project.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -20,11 +21,10 @@ import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { Integer as RandomInteger } from '@lib/terraform/providers/random/integer';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
-import { Project_Stack } from '../../project.stack';
+import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {

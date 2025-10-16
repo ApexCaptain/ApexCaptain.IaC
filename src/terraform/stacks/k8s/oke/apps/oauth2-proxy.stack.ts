@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractStack, createExpirationInterval } from '@/common';
-import yaml from 'yaml';
-import { TerraformAppService } from '@/terraform/terraform.app.service';
-import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { LocalBackend } from 'cdktf';
-import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { HelmProvider } from '@lib/terraform/providers/helm/provider';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import { Release } from '@lib/terraform/providers/helm/release';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
-import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
+import dedent from 'dedent';
 import _ from 'lodash';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
+import yaml from 'yaml';
+import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
-import dedent from 'dedent';
+import { AbstractStack, createExpirationInterval } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
+import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
+import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
+import { TerraformAppService } from '@/terraform/terraform.app.service';
+import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
 
 @Injectable()
 export class K8S_Oke_Apps_OAuth2Proxy_Stack extends AbstractStack {

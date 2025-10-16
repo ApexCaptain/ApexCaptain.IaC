@@ -1,29 +1,29 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import { Project_Stack } from './project.stack';
+import { TerraformAppService } from '../terraform.app.service';
+import { TerraformConfigService } from '../terraform.config.service';
 import {
   AbstractStack,
   createExpirationInterval,
   createOciPolicyStatement,
 } from '@/common';
-import { Injectable } from '@nestjs/common';
-import { TerraformAppService } from '../terraform.app.service';
-import { TerraformConfigService } from '../terraform.config.service';
-import { Project_Stack } from './project.stack';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { TimeProvider } from '@lib/terraform/providers/time/provider';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { LocalBackend } from 'cdktf';
+import { Resource } from '@lib/terraform/providers/null/resource';
 import { ArtifactsContainerRepository } from '@lib/terraform/providers/oci/artifacts-container-repository';
 import { IdentityApiKey } from '@lib/terraform/providers/oci/identity-api-key';
 import { IdentityAuthToken } from '@lib/terraform/providers/oci/identity-auth-token';
-import { Resource } from '@lib/terraform/providers/null/resource';
 import { IdentityCompartment } from '@lib/terraform/providers/oci/identity-compartment';
 import { IdentityGroup } from '@lib/terraform/providers/oci/identity-group';
 import { IdentityPolicy } from '@lib/terraform/providers/oci/identity-policy';
 import { IdentityUser } from '@lib/terraform/providers/oci/identity-user';
 import { IdentityUserCapabilitiesManagement } from '@lib/terraform/providers/oci/identity-user-capabilities-management';
 import { IdentityUserGroupMembership } from '@lib/terraform/providers/oci/identity-user-group-membership';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
+import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 
 @Injectable()
 export class Ocir_Stack extends AbstractStack {

@@ -1,6 +1,6 @@
-import { Resource } from '@lib/terraform/providers/null/resource';
 import { Fn, LocalExecProvisioner } from 'cdktf';
 import { Construct } from 'constructs';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 export interface K8sNodeMetaConfig {
   nodeName: string;

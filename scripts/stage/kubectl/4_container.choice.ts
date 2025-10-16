@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 
 const generateChoices = (containerNames: string[]) => {
   const choices: ChoiceOrSeparatorArray<string> = containerNames.map(each => ({
@@ -15,7 +15,7 @@ const generateChoices = (containerNames: string[]) => {
 let choices: ChoiceOrSeparatorArray<string> = [];
 
 export const chooseContainer = async (containerNames: string[]) => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available container',
     searchText: 'Searching containers...',
     source: async input => {
