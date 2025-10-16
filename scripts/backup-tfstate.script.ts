@@ -1,6 +1,6 @@
-import path from 'path';
-import fs from 'fs';
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 const secretsDir = path.join(process.cwd(), '.secrets');
 const tfStateSrcDir = path.join(secretsDir, 'terraform');

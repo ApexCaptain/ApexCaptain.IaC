@@ -11,6 +11,14 @@ export enum Binary {
   // SSH = 'ssh',
 }
 export class BinaryTerminal extends AbstractTerminal<Binary> {
+  constructor() {
+    super({
+      name: 'Binary',
+      description: 'Select a binary to use',
+      type: 'argument',
+    });
+  }
+
   protected async generateChoices(): Promise<
     {
       value: Binary;
@@ -39,13 +47,6 @@ export class BinaryTerminal extends AbstractTerminal<Binary> {
     ];
   }
 
-  constructor() {
-    super({
-      name: 'Binary',
-      description: 'Select a binary to use',
-      type: 'argument',
-    });
-  }
   async execute() {
     const binary = await this.choose();
     switch (binary) {

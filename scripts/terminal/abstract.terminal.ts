@@ -1,9 +1,9 @@
-import { Option, Command, Argument } from 'commander';
-import autoComplete from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
-import _ from 'lodash';
 import { execSync } from 'child_process';
 import { input } from '@inquirer/prompts';
+import { Option, Command, Argument } from 'commander';
+import fuzzy from 'fuzzy';
+import autoComplete from 'inquirer-autocomplete-standalone';
+import _ from 'lodash';
 export type Choice<T_Choice> = {
   value: T_Choice;
   name: string;
@@ -13,25 +13,50 @@ export type Choice<T_Choice> = {
 
 export abstract class AbstractTerminal<T_Choice> {
   private _choices!: Choice<T_Choice>[];
+  private parentTerminal?: AbstractTerminal<any>;
+  private program: Command;
+
+  constructor(
+    private readonly abstractTerminalOption: {
+      name: string;
+      description: string;
+    } & (
+      | {
+          type: 'none';
+        }
+      | {
+          type: 'argument';
+        }
+      | {
+          type: 'option';
+          flag: string;
+          useShortFlag: boolean;
+        }
+    ),
+  ) {
+    this.program = new Command(this.abstractTerminalOption.name)
+      .allowExcessArguments()
+      .allowUnknownOption();
+  }
+
   private get choices() {
     return new Promise<Choice<T_Choice>[]>(async resolve => {
       if (!this._choices) this._choices = await this.generateChoices();
-      if (this._choices.length == 0)
+      if (this._choices.length == 0) {
         throw new Error(
           `No choices found for ${this.abstractTerminalOption.name}`,
         );
+      }
       resolve(this._choices);
     });
   }
-  private async getFilteredChoices(input?: string) {
+  private async getFilteredChoices(searchInput?: string) {
     return fuzzy
-      .filter(input ?? '', await this.choices, {
-        extract: item => item.name,
+      .filter(searchInput ?? '', await this.choices, {
+        extract: choice => choice.name,
       })
-      .map(each => each.original);
+      .map(choice => choice.original);
   }
-  private parentTerminal?: AbstractTerminal<any>;
-  private program: Command;
 
   protected async runTerminal(commands: string[], env: NodeJS.ProcessEnv) {
     commands = commands
@@ -97,21 +122,22 @@ export abstract class AbstractTerminal<T_Choice> {
         }
         const results = await this.getFilteredChoices(passedValue);
         const hitsLength = results.length;
-        if (hitsLength == 0)
+        if (hitsLength == 0) {
           console.warn(`Could not found ${name} like "${passedValue}"`);
-        else if (hitsLength == 1) return results[0].value;
-        else {
+        } else if (hitsLength == 1) {
+          return results[0].value;
+        } else {
           console.warn(
             `Found ${hitsLength} ${name} like "${passedValue}", please refine your keyword next time`,
           );
         }
       }
     }
-    return await autoComplete({
+    return autoComplete({
       message: `Choose available ${name}`,
       searchText: `Searching ${name}...`,
-      source: async input => {
-        return await this.getFilteredChoices(input);
+      source: async searchInput => {
+        return this.getFilteredChoices(searchInput);
       },
       pageSize: 30,
     });
@@ -120,31 +146,9 @@ export abstract class AbstractTerminal<T_Choice> {
     nextTerminal: AbstractTerminal<T_Next_Choice>,
   ) {
     nextTerminal.parentTerminal = this;
-    return await nextTerminal.execute();
+    return nextTerminal.execute();
   }
 
-  constructor(
-    private readonly abstractTerminalOption: {
-      name: string;
-      description: string;
-    } & (
-      | {
-          type: 'none';
-        }
-      | {
-          type: 'argument';
-        }
-      | {
-          type: 'option';
-          flag: string;
-          useShortFlag: boolean;
-        }
-    ),
-  ) {
-    this.program = new Command(this.abstractTerminalOption.name)
-      .allowExcessArguments()
-      .allowUnknownOption();
-  }
   protected abstract generateChoices(): Promise<Choice<T_Choice>[]>;
   abstract execute(): Promise<T_Choice>;
 }

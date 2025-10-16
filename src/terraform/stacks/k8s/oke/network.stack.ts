@@ -7,20 +7,20 @@ import {
   OciNetworkSourceType,
   createLoadBalancerPortInfo,
 } from '@/common';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { CoreDhcpOptions } from '@lib/terraform/providers/oci/core-dhcp-options';
 import { CoreInternetGateway } from '@lib/terraform/providers/oci/core-internet-gateway';
 import { CoreNatGateway } from '@lib/terraform/providers/oci/core-nat-gateway';
+import { CorePublicIp } from '@lib/terraform/providers/oci/core-public-ip';
 import { CoreRouteTable } from '@lib/terraform/providers/oci/core-route-table';
 import { CoreSecurityList } from '@lib/terraform/providers/oci/core-security-list';
 import { CoreServiceGateway } from '@lib/terraform/providers/oci/core-service-gateway';
 import { CoreSubnet } from '@lib/terraform/providers/oci/core-subnet';
 import { CoreVcn } from '@lib/terraform/providers/oci/core-vcn';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { CorePublicIp } from '@lib/terraform/providers/oci/core-public-ip';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {

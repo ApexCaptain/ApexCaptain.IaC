@@ -1,13 +1,13 @@
-import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { Injectable } from '@nestjs/common';
-import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { LocalBackend } from 'cdktf';
-import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import _ from 'lodash';
+import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { MetallbIpAddressPool, MetallbL2Advertisement } from '@/common';
+import { AbstractStack } from '@/common/abstract/abstract.stack';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
-import _ from 'lodash';
-import { MetallbIpAddressPool, MetallbL2Advertisement } from '@/common';
+import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 
 @Injectable()
 export class K8S_Workstation_Apps_Metallb_CRD_Stack extends AbstractStack {

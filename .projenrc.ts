@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import path from 'path';
+import dedent from 'dedent';
 import { flatten } from 'flat';
 import {
   IniFile,
@@ -264,6 +265,7 @@ void (async () => {
   });
 
   // Add "files" to eslintrc.json
+  project.eslint?.eslintTask.env('ESLINT_USE_FLAT_CONFIG', 'true');
   project.eslint?.file.addOverride('files', [
     ...[constants.paths.dirs.srcDir, constants.paths.dirs.scriptDir].map(
       eachDir => `${eachDir}/**/*.ts`,
@@ -274,8 +276,11 @@ void (async () => {
   // Set Package Scripts
   project.addScripts({
     // Projen Hooks
-    postprojen:
-      'npx --yes --quiet @eslint/migrate-config .eslintrc.json --commonjs > /dev/null && rm -rf .eslintrc.json && cdktf get && yarn tf@backup',
+    postprojen: dedent`
+      npx --yes --quiet @eslint/migrate-config .eslintrc.json --commonjs > /dev/null && \
+      rm -rf .eslintrc.json && \
+      cdktf get && \
+      yarn tf@backup`,
 
     // Terraform
     'tf@build': 'cdktf synth',

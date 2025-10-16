@@ -1,7 +1,7 @@
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 
 export enum KubectlCommand {
   FREE_TEXT = 'free-text',
@@ -84,7 +84,7 @@ const generateChoices = () => {
 let choices: ChoiceOrSeparatorArray<KubectlCommand> = [];
 
 export const chooseKubectlCommand = async () => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available kubectl command',
     searchText: 'Searching kubectl commands...',
     source: async input => {

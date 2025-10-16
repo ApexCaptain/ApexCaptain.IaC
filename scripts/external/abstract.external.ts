@@ -1,7 +1,7 @@
+import fs from 'fs';
 import path from 'path';
 import { Command, Option } from 'commander';
 import moment from 'moment-timezone';
-import fs from 'fs';
 
 export interface ExternalProgramOptions {
   calledFromTerraform: boolean;

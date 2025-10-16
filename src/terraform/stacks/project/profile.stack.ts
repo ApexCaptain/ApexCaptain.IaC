@@ -1,11 +1,11 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { Repository } from '@lib/terraform/providers/github/repository';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
 
 @Injectable()
 export class Project_Profile_Stack extends AbstractStack {

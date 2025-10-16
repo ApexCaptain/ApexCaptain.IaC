@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import { Cloudflare_Zone_Stack } from './zone.stack';
+import { K8S_Oke_Network_Stack } from '../k8s/oke/network.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DnsRecord } from '@lib/terraform/providers/cloudflare/dns-record';
 import { CloudflareProvider } from '@lib/terraform/providers/cloudflare/provider';
-import { K8S_Oke_Network_Stack } from '../k8s/oke/network.stack';
 
 @Injectable()
 export class Cloudflare_Record_Stack extends AbstractStack {

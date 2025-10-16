@@ -1,25 +1,25 @@
+import { Injectable } from '@nestjs/common';
+import { Fn, LocalBackend } from 'cdktf';
+import _ from 'lodash';
+import { Cloudflare_Record_Stack } from '../../cloudflare/record.stack';
+import { GitOps_Stack } from '../../git-ops.stack';
+import { K8S_Oke_Apps_ArgoCd_Resources_Stack } from '../../k8s/oke/apps/argo-cd.resources.stack';
+import { K8S_Oke_Apps_GitOps_Stack } from '../../k8s/oke/apps/git-ops.stack';
+import { Ocir_Stack } from '../../ocir.stack';
+import { Project_Stack } from '../../project.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { GithubProvider } from '@lib/terraform/providers/github/provider';
-import { NullProvider } from '@lib/terraform/providers/null/provider';
-import { Injectable } from '@nestjs/common';
-import { Fn, LocalBackend } from 'cdktf';
-import { Resource } from '@lib/terraform/providers/null/resource';
-import { Project_Stack } from '../../project.stack';
-import { Branch } from '@lib/terraform/providers/github/branch';
-import { Repository } from '@lib/terraform/providers/github/repository';
+import { Application } from '@lib/terraform/providers/argocd/application';
+import { ArgocdProvider } from '@lib/terraform/providers/argocd/provider';
 import { ActionsSecret } from '@lib/terraform/providers/github/actions-secret';
 import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
-import _ from 'lodash';
-import { ArgocdProvider } from '@lib/terraform/providers/argocd/provider';
-import { K8S_Oke_Apps_ArgoCd_Resources_Stack } from '../../k8s/oke/apps/argo-cd.resources.stack';
-import { Application } from '@lib/terraform/providers/argocd/application';
-import { Cloudflare_Record_Stack } from '../../cloudflare/record.stack';
-import { Ocir_Stack } from '../../ocir.stack';
-import { K8S_Oke_Apps_GitOps_Stack } from '../../k8s/oke/apps/git-ops.stack';
-import { GitOps_Stack } from '../../git-ops.stack';
+import { Branch } from '@lib/terraform/providers/github/branch';
+import { GithubProvider } from '@lib/terraform/providers/github/provider';
+import { Repository } from '@lib/terraform/providers/github/repository';
+import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class Project_Apps_NumberPlanet_Stack extends AbstractStack {

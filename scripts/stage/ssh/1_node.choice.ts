@@ -1,7 +1,7 @@
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 
 type SshNode = {
   keyFilePath: string;
@@ -22,7 +22,7 @@ const generateChoices = (nodes: SshNode[]) => {
 };
 
 export const chooseSshNode = async (nodes: SshNode[]) => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available node',
     searchText: 'Searching nodes...',
     source: async input => {

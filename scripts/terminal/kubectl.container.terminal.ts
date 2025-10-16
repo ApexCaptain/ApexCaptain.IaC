@@ -29,6 +29,6 @@ export class KubectlContainerTerminal extends AbstractTerminal<string> {
     ];
   }
   async execute() {
-    return await this.choose();
+    return this.choose();
   }
 }

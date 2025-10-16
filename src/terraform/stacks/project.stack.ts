@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { ActionsSecret } from '@lib/terraform/providers/github/actions-secret';
+import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
 import { DataGithubRepository } from '@lib/terraform/providers/github/data-github-repository';
 import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { ActionsVariable } from '@lib/terraform/providers/github/actions-variable';
-import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
 import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
 import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { DataOciObjectstorageNamespace } from '@lib/terraform/providers/oci/data-oci-objectstorage-namespace';
-import _ from 'lodash';
-import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
-import { SelfSignedCert } from '@lib/terraform/providers/tls/self-signed-cert';
+import { OciProvider } from '@lib/terraform/providers/oci/provider';
 import { CertRequest } from '@lib/terraform/providers/tls/cert-request';
 import { LocallySignedCert } from '@lib/terraform/providers/tls/locally-signed-cert';
+import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
+import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { SelfSignedCert } from '@lib/terraform/providers/tls/self-signed-cert';
 @Injectable()
 export class Project_Stack extends AbstractStack {
   terraform = {

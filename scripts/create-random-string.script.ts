@@ -1,5 +1,5 @@
-import { Option, program } from 'commander';
 import crypto from 'crypto';
+import { Option, program } from 'commander';
 
 const command = program
   .addOption(

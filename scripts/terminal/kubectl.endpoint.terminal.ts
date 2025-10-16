@@ -6,6 +6,14 @@ export type KubectlEndpoint = {
   socks5ProxyUrl?: string;
 };
 export class KubectlEndpointTerminal extends AbstractTerminal<KubectlEndpoint> {
+  constructor() {
+    super({
+      name: 'Kubectl Endpoint',
+      description: 'Select a kubectl endpoint',
+      type: 'argument',
+    });
+  }
+
   protected async generateChoices(): Promise<Choice<KubectlEndpoint>[]> {
     return [
       {
@@ -26,14 +34,8 @@ export class KubectlEndpointTerminal extends AbstractTerminal<KubectlEndpoint> {
       },
     ];
   }
-  constructor() {
-    super({
-      name: 'Kubectl Endpoint',
-      description: 'Select a kubectl endpoint',
-      type: 'argument',
-    });
-  }
+
   async execute() {
-    return await this.choose();
+    return this.choose();
   }
 }

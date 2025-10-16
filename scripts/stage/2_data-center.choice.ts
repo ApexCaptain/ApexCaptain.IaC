@@ -1,7 +1,7 @@
+import fuzzy from 'fuzzy';
 import autoComplete, {
   ChoiceOrSeparatorArray,
 } from 'inquirer-autocomplete-standalone';
-import fuzzy from 'fuzzy';
 import { Binary } from './1_binary.choice';
 export enum DataCenter {
   OKE_APEX_CAPTAIN = 'oke',
@@ -25,11 +25,11 @@ const generateChoices = () => {
 let choices: ChoiceOrSeparatorArray<DataCenter> = [];
 
 export const chooseDataCenter = async (binary: Binary) => {
-  return await autoComplete({
+  return autoComplete({
     message: 'Choose available data center',
     searchText: 'Searching data centers...',
     source: async input => {
-      if (choices.length == 0)
+      if (choices.length == 0) {
         choices = generateChoices().filter(eachChoice => {
           if (binary === Binary.SSH) {
             return (
@@ -39,6 +39,7 @@ export const chooseDataCenter = async (binary: Binary) => {
           }
           return true;
         });
+      }
 
       const filtered = fuzzy.filter(input ?? '', Array.from(choices), {
         extract: item =>

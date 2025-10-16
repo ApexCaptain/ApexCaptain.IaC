@@ -2,6 +2,20 @@ import { execSync } from 'child_process';
 import { AbstractTerminal, Choice, KubectlEndpoint } from './';
 
 export class KubectlNamespaceTerminal extends AbstractTerminal<string> {
+  constructor(
+    private readonly option: {
+      endpoint: KubectlEndpoint;
+    },
+  ) {
+    super({
+      name: 'Kubectl Namespace',
+      description: 'Select a kubectl namespace',
+      type: 'option',
+      flag: 'namespace',
+      useShortFlag: true,
+    });
+  }
+
   protected async generateChoices(): Promise<Choice<string>[]> {
     return [
       {
@@ -36,19 +50,6 @@ export class KubectlNamespaceTerminal extends AbstractTerminal<string> {
     ];
   }
   async execute() {
-    return await this.choose();
-  }
-  constructor(
-    private readonly option: {
-      endpoint: KubectlEndpoint;
-    },
-  ) {
-    super({
-      name: 'Kubectl Namespace',
-      description: 'Select a kubectl namespace',
-      type: 'option',
-      flag: 'namespace',
-      useShortFlag: true,
-    });
+    return this.choose();
   }
 }

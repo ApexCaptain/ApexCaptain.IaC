@@ -1,8 +1,8 @@
+import { Construct } from 'constructs';
 import {
   Manifest,
   ManifestConfig,
 } from '@lib/terraform/providers/kubernetes/manifest';
-import { Construct } from 'constructs';
 export class MetallbIpAddressPool extends Manifest {
   constructor(
     scope: Construct,

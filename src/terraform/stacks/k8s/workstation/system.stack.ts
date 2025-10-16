@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import { K8S_Workstation_NodeMeta_Stack } from './node-meta.stack';
 import { AbstractStack, createK8sApplicationMetadata } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -8,7 +9,6 @@ import { DataKubernetesService } from '@lib/terraform/providers/kubernetes/data-
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_NodeMeta_Stack } from './node-meta.stack';
 
 @Injectable()
 export class K8S_Workstation_System_Stack extends AbstractStack {

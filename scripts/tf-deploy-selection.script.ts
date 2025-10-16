@@ -1,10 +1,10 @@
-import { Command, Argument, Option } from 'commander';
-import path from 'path';
-import fs from 'fs';
-import fuzzy from 'fuzzy';
-import { checkbox, confirm } from '@inquirer/prompts';
-import dedent from 'dedent';
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { checkbox, confirm } from '@inquirer/prompts';
+import { Command, Argument, Option } from 'commander';
+import dedent from 'dedent';
+import fuzzy from 'fuzzy';
 
 const params = new Command('tf-deploy-selection')
   .addArgument(new Argument('[Stack]', 'The name of the stack to deploy'))
@@ -36,17 +36,19 @@ const stackCandidates = Object.keys(manifest.stacks).sort((front, rear) =>
 );
 
 const selectTargetStacks = async (
-  targetStack: string | undefined,
+  selectedTargetStack: string | undefined,
 ): Promise<string[]> => {
-  const filteredCandidates = targetStack
-    ? fuzzy.filter(targetStack, stackCandidates).map(each => each.original)
+  const filteredCandidates = selectedTargetStack
+    ? fuzzy
+        .filter(selectedTargetStack, stackCandidates)
+        .map(each => each.original)
     : stackCandidates;
   switch (filteredCandidates.length) {
     case 0:
       console.warn(
-        `No stack candidates found for ${targetStack}, please select from the following stacks`,
+        `No stack candidates found for ${selectedTargetStack}, please select from the following stacks`,
       );
-      return await checkbox<string>({
+      return checkbox<string>({
         message: 'Select stacks to deploy',
         choices: stackCandidates,
         pageSize: 10,
@@ -54,7 +56,7 @@ const selectTargetStacks = async (
     case 1:
       return [filteredCandidates[0]];
     default:
-      return await checkbox<string>({
+      return checkbox<string>({
         message: 'Select stacks to deploy',
         choices: filteredCandidates,
         pageSize: 10,
