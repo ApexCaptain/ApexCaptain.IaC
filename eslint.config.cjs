@@ -26,7 +26,7 @@ const compat = new FlatCompat({
 
 module.exports = defineConfig([globalIgnores([
     "**/node_modules/*",
-    "**/eslint.config.cjs",
+    "eslint.config.cjs",
     "**/lib/",
     "scripts/generated/",
     "!**/.projenrc.ts",
