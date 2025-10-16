@@ -1,6 +1,10 @@
 {
   "dependencies": [
     {
+      "name": "@eslint/compat",
+      "type": "build"
+    },
+    {
       "name": "@inquirer/prompts",
       "type": "build"
     },

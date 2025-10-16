@@ -12,8 +12,8 @@ import {
 } from 'projen';
 import { GithubCredentials } from 'projen/lib/github';
 import { ArrowParens } from 'projen/lib/javascript';
-import { GlobalConfigType } from './src/global/config/global.config.schema';
 import { VsCode } from 'projen/lib/vscode';
+import { GlobalConfigType } from './src/global/config/global.config.schema';
 
 const flatley = <TargetType, ResultType>(
   target: TargetType,
@@ -27,7 +27,6 @@ const flatley = <TargetType, ResultType>(
     }[];
   } & Parameters<typeof flatten>[1],
 ): ResultType => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('flatley')(target, opts);
 };
 
@@ -126,6 +125,7 @@ const project = new typescript.TypeScriptAppProject({
     devdirs: [constants.paths.dirs.scriptDir],
     ignorePatterns: [
       '/**/node_modules/*',
+      'eslint.config.cjs',
       `${constants.paths.dirs.libDir}/`,
       `${constants.paths.dirs.generatedScriptLibDir}/`,
     ],
@@ -253,6 +253,7 @@ const project = new typescript.TypeScriptAppProject({
     'fuzzy',
     '@inquirer/prompts',
     'inquirer-autocomplete-standalone',
+    '@eslint/compat',
   ],
 });
 
@@ -262,10 +263,19 @@ void (async () => {
     exec: 'nest build',
   });
 
+  // Add "files" to eslintrc.json
+  project.eslint?.file.addOverride('files', [
+    ...[constants.paths.dirs.srcDir, constants.paths.dirs.scriptDir].map(
+      eachDir => `${eachDir}/**/*.ts`,
+    ),
+    `${path.basename(__filename)}`,
+  ]);
+
   // Set Package Scripts
   project.addScripts({
-    // Projen
-    postprojen: 'cdktf get && yarn tf@backup',
+    // Projen Hooks
+    postprojen:
+      'npx --yes --quiet @eslint/migrate-config .eslintrc.json --commonjs > /dev/null && rm -rf .eslintrc.json && cdktf get && yarn tf@backup',
 
     // Terraform
     'tf@build': 'cdktf synth',

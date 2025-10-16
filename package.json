@@ -15,7 +15,7 @@
     "upgrade": "npx projen upgrade",
     "watch": "npx projen watch",
     "projen": "npx projen",
-    "postprojen": "cdktf get && yarn tf@backup",
+    "postprojen": "npx --yes --quiet @eslint/migrate-config .eslintrc.json --commonjs > /dev/null && rm -rf .eslintrc.json && cdktf get && yarn tf@backup",
     "tf@build": "cdktf synth",
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
     "tf@deploy:single": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies",
@@ -33,6 +33,7 @@
     "organization": false
   },
   "devDependencies": {
+    "@eslint/compat": "^1.4.0",
     "@inquirer/prompts": "^7.8.6",
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",

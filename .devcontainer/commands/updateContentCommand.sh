@@ -25,7 +25,10 @@ install_helm() {
 
 install_npm_packages() {
     echo "🔄 Installing global npm packages"
-    npm install -g npm@latest @google/gemini-cli
+    npm install -g \ 
+        npm@latest \ 
+        @google/gemini-cli \
+        @eslint/migrate-config
 }
 
 export -f install_oci install_helm install_npm_packages
