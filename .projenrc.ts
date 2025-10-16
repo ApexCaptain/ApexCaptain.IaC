@@ -126,7 +126,6 @@ const project = new typescript.TypeScriptAppProject({
     devdirs: [constants.paths.dirs.scriptDir],
     ignorePatterns: [
       '/**/node_modules/*',
-      '/eslint.config.cjs',
       `${constants.paths.dirs.libDir}/`,
       `${constants.paths.dirs.generatedScriptLibDir}/`,
     ],
@@ -254,7 +253,6 @@ const project = new typescript.TypeScriptAppProject({
     'fuzzy',
     '@inquirer/prompts',
     'inquirer-autocomplete-standalone',
-    '@eslint/compat',
   ],
 });
 
@@ -263,22 +261,10 @@ void (async () => {
   (project.compileTask as any)._steps = new Array<TaskStep>({
     exec: 'nest build',
   });
-
-  // Add "files" to eslintrc.json
-  project.eslint?.eslintTask.env('ESLINT_USE_FLAT_CONFIG', 'true');
-  project.eslint?.file.addOverride('files', [
-    ...[constants.paths.dirs.srcDir, constants.paths.dirs.scriptDir].map(
-      eachDir => `${eachDir}/**/*.ts`,
-    ),
-    `${path.basename(__filename)}`,
-  ]);
-
   // Set Package Scripts
   project.addScripts({
     // Projen Hooks
     postprojen: dedent`
-      npx --yes --quiet @eslint/migrate-config .eslintrc.json --commonjs > /dev/null && \
-      rm -rf .eslintrc.json && \
       cdktf get && \
       yarn tf@backup`,
 

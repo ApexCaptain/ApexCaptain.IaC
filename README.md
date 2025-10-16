@@ -230,7 +230,6 @@ ApexCaptain.IaC/
 OCI VCN
 ├── Public Subnet (Bastion, Load Balancer)
 ├── Private Subnet (Kubernetes Nodes)
-└── Database Subnet (RDS, Redis)
 ```
 
 ### 하이브리드 Kubernetes 클러스터 구성
@@ -247,7 +246,7 @@ Oracle Cloud OKE Cluster (클라우드)
 │   ├── Istio Control Plane (개발 중)
 │   ├── ArgoCD (구현 완료)
 │   ├── Vault (개발 중)
-│   ├── Monitoring Stack (Prometheus/Grafana) (개발 중)
+│   ├── Monitoring Stack (Prometheus/Grafana) (구현 완료)
 │   ├── Cert-Manager (구현 완료)
 │   └── Ingress Controller (구현 완료)
 ├── Application Namespace
@@ -268,7 +267,7 @@ On-premise Workstation Cluster
 │   └── MetalLB Load Balancer (구현 완료)
 ├── System Namespace
 │   ├── Istio Control Plane (개발 중)
-│   ├── Monitoring Stack (Prometheus/Grafana) (개발 중)
+│   ├── Monitoring Stack (Prometheus/Grafana) (구현 완료)
 │   ├── Cert-Manager (구현 완료)
 │   └── Ingress Controller (구현 완료)
 ├── Application Namespace
@@ -319,7 +318,6 @@ On-premise Workstation Cluster
 - **클라우드 네이티브 개발 환경** (Dev Pods)
 - **Windows 원격 데스크톱** 환경
 - **데이터베이스 관리 도구** (CloudBeaver)
-- **대화형 배포 도구** (터미널 v2)
 - **MCP 서버 통합** (Context7)
 
 ---
