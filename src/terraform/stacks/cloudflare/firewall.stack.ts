@@ -38,6 +38,9 @@ export class Cloudflare_Firewall_Stack extends AbstractStack {
         description: 'Allow all traffic to blog',
         enabled: true,
         action: 'skip',
+        logging: {
+          enabled: true,
+        },
         expression: `http.host eq "${this.cloudflareRecordStack.blogRecord.element.name}"`,
         actionParameters: {
           ruleset: 'current',

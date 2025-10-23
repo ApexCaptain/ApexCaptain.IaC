@@ -75,8 +75,9 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     Object.values(
       this.k8sWorkstationSystemStack.applicationMetadata.shared,
     ).forEach(eachMetadata => {
-      const services =
-        eachMetadata.services as K8sApplicationMetadata['services'];
+      const services = eachMetadata[
+        'services'
+      ] as K8sApplicationMetadata['services'];
       if (!services) return;
       const namespace = eachMetadata.namespace;
       Object.values(services).forEach(eachService => {
