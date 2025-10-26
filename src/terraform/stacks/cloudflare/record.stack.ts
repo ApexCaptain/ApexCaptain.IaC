@@ -303,6 +303,30 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Blog service',
   }));
 
+  ollamaRecord = this.provide(DnsRecord, 'ollamaRecord', () => ({
+    name: `ollama.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Ollama service',
+  }));
+
+  aiRecord = this.provide(DnsRecord, 'aiRecord', () => ({
+    name: `ai.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Ollama service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
