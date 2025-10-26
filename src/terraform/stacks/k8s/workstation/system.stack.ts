@@ -311,6 +311,28 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        ollama: createK8sApplicationMetadata({
+          namespace: 'ollama',
+          helm: {
+            ollama: {
+              name: 'ollama',
+              chart: 'ollama',
+              repository: 'https://helm.otwld.com',
+            },
+          },
+        }),
+
+        openWebUi: createK8sApplicationMetadata({
+          namespace: 'open-webui',
+          helm: {
+            openWebui: {
+              name: 'open-webui',
+              chart: 'open-webui',
+              repository: 'https://helm.openwebui.com/',
+            },
+          },
+        }),
       },
     ];
   });

@@ -37,3 +37,9 @@ export * from './git-ops.stack';
 
 // windows
 export * from './windows.stack';
+
+// ollama
+export * from './ollama.stack';
+
+// open-web-ui
+export * from './open-web-ui.stack';

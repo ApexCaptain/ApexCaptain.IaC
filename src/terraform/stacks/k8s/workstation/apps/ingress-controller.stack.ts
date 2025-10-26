@@ -63,6 +63,8 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
           externalTrafficPolicy: 'Local',
         },
         config: {
+          'allow-snippet-annotations': true,
+          'annotations-risk-level': 'Critical',
           'use-forwarded-headers': 'true',
           'compute-full-forwarded-for': 'true',
           'ssl-default-certificate': `${this.k8sWorkstationAppsCertManagerStack.namespace.element.metadata.name}/${this.k8sWorkstationAppsCertManagerCRDStack.wildcardCertificate.shared.name}`,

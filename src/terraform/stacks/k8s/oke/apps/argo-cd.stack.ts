@@ -138,6 +138,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
     const oauthBypassKeyName = 'X-OAuth-Bypass-Key';
     const oauthBypassKeyValue = this.oauthBypassKey.element.result;
     const gitOpsDeployerAccountName = 'gitops-bot';
+    const domain = this.cloudflareRecordStack.argoCdRecord.element.name;
     return [
       {
         name: this.metadata.shared.helm.argoCd.name,
@@ -148,7 +149,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
         values: [
           yaml.stringify({
             global: {
-              domain: this.cloudflareRecordStack.argoCdRecord.element.name,
+              domain,
             },
             server: {
               ingress: {
@@ -198,7 +199,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
         ],
       },
       {
-        domain: this.cloudflareRecordStack.argoCdRecord.element.name,
+        domain,
         gitOpsDeployerAccountName,
         oauthBypassKeyHeader: {
           name: oauthBypassKeyName,
