@@ -128,7 +128,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
       /**
        * @note
        * - Cycling 사용하려면 Basic Type으론 안된다.
-       * - Enhanced Cluster로 Type 변경하란다... 시간당 $0.1 소모됨.
+       * - Enhanced Cluster로 Type 변경시 시간당 $0.1 소모
        */
       // nodePoolCyclingDetails: {
       //   isNodeCyclingEnabled: true,

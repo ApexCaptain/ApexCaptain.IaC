@@ -51,7 +51,6 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
     },
   }));
 
-  // https://grafana-workstation.ayteneve93.com
   kubePrometheusStackRelease = this.provide(
     Release,
     'kubePrometheusStackRelease',
@@ -73,6 +72,14 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
               adminPassword:
                 this.globalConfigService.config.terraform.stacks.k8s.oke.apps
                   .monitoring.grafana.adminPassword,
+
+              sidecar: {
+                datasources: {
+                  enabled: true,
+                  skipTlsVerify: true,
+                },
+              },
+
               ingress: {
                 enabled: true,
                 ingressClassName: 'nginx',
@@ -99,6 +106,13 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
                     datasource: 'Prometheus',
                   },
                 },
+                gpu: {
+                  'nvidia-gpu-metrics': {
+                    gnetId: 11578,
+                    revision: 1,
+                    datasource: 'Prometheus',
+                  },
+                },
               },
               dashboardProviders: {
                 'dashboardproviders.yaml': {
@@ -112,6 +126,14 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
                         path: '/var/lib/grafana/dashboards/node-exporter',
                       },
                     },
+                    {
+                      name: 'gpu',
+                      folder: 'GPU',
+                      type: 'file',
+                      options: {
+                        path: '/var/lib/grafana/dashboards/gpu',
+                      },
+                    },
                   ],
                 },
               },
@@ -121,6 +143,25 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
       };
     },
   );
+
+  dcgmExporterRelease = this.provide(Release, 'dcgmExporterRelease', () => {
+    return {
+      name: this.metadata.shared.helm.dcgmExporter.name,
+      chart: this.metadata.shared.helm.dcgmExporter.chart,
+      repository: this.metadata.shared.helm.dcgmExporter.repository,
+      namespace: this.namespace.element.metadata.name,
+      createNamespace: false,
+      values: [
+        yaml.stringify({
+          serviceMonitor: {
+            additionalLabels: {
+              release: 'kube-prometheus-stack',
+            },
+          },
+        }),
+      ],
+    };
+  });
 
   constructor(
     // Terraform

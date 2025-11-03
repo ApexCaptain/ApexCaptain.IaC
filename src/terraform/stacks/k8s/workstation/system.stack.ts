@@ -165,6 +165,11 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               chart: 'kube-prometheus-stack',
               repository: 'https://prometheus-community.github.io/helm-charts',
             },
+            dcgmExporter: {
+              name: 'dcgm-exporter',
+              chart: 'dcgm-exporter',
+              repository: 'https://nvidia.github.io/dcgm-exporter/helm-charts',
+            },
           },
         }),
 
