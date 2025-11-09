@@ -8,6 +8,7 @@ import { GlobalConfigService } from '@/global/config/global.config.schema.servic
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { DataKubernetesSecretV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-secret-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 
 @Injectable()
@@ -62,38 +63,6 @@ export class K8S_Workstation_Apps_CertManager_CRD_Stack extends AbstractStack {
                   },
                 ],
               },
-            },
-          },
-        },
-        { name },
-      ];
-    },
-  );
-
-  wildcardCertificate = this.provide(
-    CertManagerCertificate,
-    'wildcardCertificate',
-    id => {
-      const name = `${this.k8sWorkstationAppsCertManagerStack.namespace.element.metadata.name}-${_.kebabCase(id)}`;
-      return [
-        {
-          manifest: {
-            metadata: {
-              name,
-              namespace:
-                this.k8sWorkstationAppsCertManagerStack.namespace.element
-                  .metadata.name,
-            },
-            spec: {
-              secretName: name,
-              issuerRef: {
-                name: this.letsEncryptProdClusterIssuer.shared.name,
-                kind: 'ClusterIssuer',
-              },
-              dnsNames: [
-                `*.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-                this.cloudflareZoneStack.dataAyteneve93Zone.element.name,
-              ],
             },
           },
         },

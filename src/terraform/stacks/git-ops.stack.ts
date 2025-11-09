@@ -117,17 +117,20 @@ export class GitOps_Stack extends AbstractStack {
   workstationClusterArgocdManagerServiceAccount = this.provide(
     ServiceAccountV1,
     'workstationClusterArgocdManagerServiceAccount',
-    id => ({
-      metadata: {
-        name: _.kebabCase(id),
-        namespace: 'kube-system',
-      },
-      secret: [
-        {
-          name: `${_.kebabCase(id)}-token`,
+    id => {
+      const name = _.kebabCase(id);
+      return {
+        metadata: {
+          name,
+          namespace: 'kube-system',
         },
-      ],
-    }),
+        secret: [
+          {
+            name: `${name}-token`,
+          },
+        ],
+      };
+    },
   );
 
   workstationClusterArgocdManagerServiceAccountToken = this.provide(

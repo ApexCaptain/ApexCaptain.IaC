@@ -1,22 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
+import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.stack';
+import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Oke_Apps_HomeL2tpVpnProxy_Stack } from './home-l2tp-vpn-proxy.stack';
+import { K8S_Oke_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
-import { AbstractStack } from '@/common';
+import {
+  AbstractStack,
+  IstioAuthorizationPolicy,
+  IstioVirtualService,
+} from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
+import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { Application as AuthentikApplication } from '@lib/terraform/providers/authentik/application';
+import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
+import { ProviderProxy } from '@lib/terraform/providers/authentik/provider-proxy';
 import {
   DeploymentV1,
   DeploymentV1SpecTemplateSpecContainerPort,
 } from '@lib/terraform/providers/kubernetes/deployment-v1';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
@@ -44,6 +52,12 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
             this.k8sOkeEndpointStack.okeEndpointSource.shared
               .kubeConfigFilePath,
         }),
+      ),
+      authentik: this.provide(
+        AuthentikProvider,
+        'authentikProvider',
+        () =>
+          this.k8sOkeAppsAuthentikStack.authentikProviderConfig.shared.config,
       ),
     },
   };
@@ -158,48 +172,101 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
     },
   }));
 
-  ingress = this.provide(IngressV1, 'ingress', id => ({
-    metadata: {
-      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-      namespace: this.namespace.element.metadata.name,
-      annotations: {
-        'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-        'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authUrl,
-        'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authSignin,
+  virtualService = this.provide(IstioVirtualService, 'virtualService', id => ({
+    manifest: {
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
       },
-    },
-    spec: {
-      ingressClassName: 'nginx',
-      rule: [
-        {
-          host: this.cloudflareRecordStack.dbRecord.element.name,
-          http: {
-            path: [
+      spec: {
+        hosts: [this.cloudflareRecordOkeStack.dbRecord.element.name],
+        gateways: [
+          this.k8sOkeAppsIstioGatewayStack.istioGateway.shared.gatewayPath,
+        ],
+        http: [
+          {
+            route: [
               {
-                path: '/',
-                pathType: 'Prefix',
-                backend: {
-                  service: {
-                    name: this.service.element.metadata.name,
-                    port: {
-                      number:
-                        this.metadata.shared.services.cloudbeaver.ports
-                          .cloudbeaver.port,
-                    },
+                destination: {
+                  host: this.service.element.metadata.name,
+                  port: {
+                    number:
+                      this.metadata.shared.services.cloudbeaver.ports
+                        .cloudbeaver.port,
                   },
                 },
               },
             ],
           },
-        },
-      ],
+        ],
+      },
     },
   }));
+
+  authentikProxyProvider = this.provide(
+    ProviderProxy,
+    'authentikProxyProvider',
+    id => ({
+      name: _.startCase(`${this.metadata.shared.namespace}-${id}`),
+      mode: 'forward_single',
+      internalHost: `http://${this.service.element.metadata.name}.${this.namespace.element.metadata.name}.svc.cluster.local`,
+      externalHost: `https://${this.cloudflareRecordOkeStack.dbRecord.element.name}`,
+      authorizationFlow:
+        this.k8sOkeAppsAuthentikResourcesStack
+          .dataDefaultProviderAuthorizationImplicitConsent.element.id,
+      invalidationFlow:
+        this.k8sOkeAppsAuthentikResourcesStack.dataDefaultInvalidationFlow
+          .element.id,
+    }),
+  );
+
+  authentikApplication = this.provide(
+    AuthentikApplication,
+    'authentikApplication',
+    id => ({
+      name: _.startCase(`${this.metadata.shared.namespace}-${id}`),
+      slug: _.kebabCase(`${this.metadata.shared.namespace}-${id}`),
+      protocolProvider: Fn.tonumber(this.authentikProxyProvider.element.id),
+    }),
+  );
+
+  authorizationPolicy = this.provide(
+    IstioAuthorizationPolicy,
+    'authorizationPolicy',
+    id => ({
+      manifest: {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
+        },
+        spec: {
+          selector: {
+            matchLabels: {
+              istio: 'gateway',
+            },
+          },
+          action: 'CUSTOM' as const,
+          provider: {
+            name: this.k8sOkeAppsIstioStack.istiodRelease.shared
+              .authentikProxyProviderName,
+          },
+          rules: [
+            {
+              to: [
+                {
+                  operation: {
+                    hosts: [
+                      this.cloudflareRecordOkeStack.dbRecord.element.name,
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  );
 
   constructor(
     // Global
@@ -211,11 +278,13 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
+    private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsHomeL2tpVpnProxyStack: K8S_Oke_Apps_HomeL2tpVpnProxy_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
+    private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
+    private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
+    private readonly k8sOkeAppsIstioGatewayStack: K8S_Oke_Apps_Istio_Gateway_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

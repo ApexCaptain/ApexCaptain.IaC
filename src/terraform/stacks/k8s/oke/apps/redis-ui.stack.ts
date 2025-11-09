@@ -6,7 +6,6 @@ import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_HomeL2tpVpnProxy_Stack } from './home-l2tp-vpn-proxy.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
@@ -155,6 +154,7 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
     },
   }));
 
+  /*
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -197,6 +197,7 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
       ],
     },
   }));
+  */
 
   constructor(
     // Global
@@ -208,8 +209,6 @@ export class K8S_Oke_Apps_RedisUi_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
     private readonly k8sOkeAppsHomeL2tpVpnProxyStack: K8S_Oke_Apps_HomeL2tpVpnProxy_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,

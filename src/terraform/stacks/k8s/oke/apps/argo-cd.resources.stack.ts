@@ -42,6 +42,7 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
               .kubeConfigFilePath,
         }),
       ),
+      /*
       argocd: this.provide(ArgocdProvider, 'argocdProvider', () => ({
         serverAddr: `${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.domain}:443`,
         username: 'admin',
@@ -51,9 +52,11 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
           `${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.oauthBypassKeyHeader.name}: ${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.oauthBypassKeyHeader.value}`,
         ],
       })),
+      */
     },
   };
 
+  /*
   workstationCluster = this.provide(
     ArgocdCluster,
     'workstationCluster',
@@ -107,6 +110,7 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
       return [{}, argoCdProviderConfig];
     },
   );
+  */
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

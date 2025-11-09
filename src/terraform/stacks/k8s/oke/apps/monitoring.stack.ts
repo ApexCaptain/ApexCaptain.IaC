@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
-import Timezone from 'timezone-enum';
-import yaml from 'yaml';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
@@ -144,13 +141,11 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Oke_Apps_Monitoring_Stack.name,
       'Monitoring stack for oke k8s',
     );
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

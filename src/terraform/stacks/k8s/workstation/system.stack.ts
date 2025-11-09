@@ -94,6 +94,16 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     return [
       {},
       {
+        authentik: createK8sApplicationMetadata({
+          namespace: 'authentik',
+          helm: {
+            'authentik-remote-cluster': {
+              chart: 'authentik-remote-cluster',
+              name: 'authentik-remote-cluster',
+              repository: 'https://charts.goauthentik.io/',
+            },
+          },
+        }),
         dashboard: createK8sApplicationMetadata({
           namespace: 'dashboard',
         }),
@@ -130,6 +140,11 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             base: {
               name: 'istio-base',
               chart: 'base',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
+            istioGateway: {
+              name: 'istio-gateway',
+              chart: 'gateway',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
           },

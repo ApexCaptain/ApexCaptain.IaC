@@ -7,7 +7,6 @@ import yaml from 'yaml';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
@@ -492,6 +491,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     ];
   });
 
+  /*
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -542,6 +542,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
       ],
     },
   }));
+  */
 
   release = this.provide(Release, 'release', () => {
     const storageClassName = 'nfs-client';
@@ -587,7 +588,6 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(

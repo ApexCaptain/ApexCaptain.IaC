@@ -5,12 +5,14 @@ import dedent from 'dedent';
 import _ from 'lodash';
 import Timezone from 'timezone-enum';
 import { K8S_Workstation_Apps_Game_Stack } from './game.stack';
+import { K8S_Workstation_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
 import {
   AbstractStack,
   DeathPenaltyMode,
   DropOnDeathOption,
   DropOnQuitOption,
   GameDifficultyLevel,
+  IstioVirtualService,
   MoveSpeedTier,
   PlayerKillingMode,
   RegionOption,
@@ -23,7 +25,6 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 
@@ -545,6 +546,44 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     };
   });
 
+  sdtdDashboardVirtualService = this.provide(
+    IstioVirtualService,
+    'sdtdDashboardVirtualService',
+    id => ({
+      manifest: {
+        metadata: {
+          name: `${this.k8sWorkstationAppsGameStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace:
+            this.k8sWorkstationAppsGameStack.namespace.element.metadata.name,
+        },
+        spec: {
+          hosts: [this.cloudflareRecordStack.sdtdRecord.element.name],
+          gateways: [
+            this.k8sWorkstationAppsIstioGatewayStack.istioGateway.shared
+              .gatewayPath,
+          ],
+          http: [
+            {
+              route: [
+                {
+                  destination: {
+                    host: this.sdtdService.element.metadata.name,
+                    port: {
+                      number:
+                        this.k8sWorkstationAppsGameStack.metadata.shared
+                          .services['7dtd'].ports.dashboard.port,
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  );
+
+  /*
   sdtdDashboardIngress = this.provide(
     IngressV1,
     'sdtdDashboardIngress',
@@ -583,6 +622,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
       },
     }),
   );
+  */
 
   constructor(
     // Global
@@ -593,6 +633,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationAppsIstioGatewayStack: K8S_Workstation_Apps_Istio_Gateway_Stack,
     private readonly k8sWorkstationAppsGameStack: K8S_Workstation_Apps_Game_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {

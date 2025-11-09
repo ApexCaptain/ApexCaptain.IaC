@@ -3,6 +3,7 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
+import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -64,15 +65,72 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
   });
 
   istiodRelease = this.provide(Release, 'istiodRelease', () => {
+    const authentikProxyOutpostName = 'workstation-authentik-proxy-outpost';
+    const authentikProxyProviderName = 'workstation-authentik-proxy-provider';
+    return [
+      {
+        name: this.metadata.shared.helm.istiod.name,
+        chart: this.metadata.shared.helm.istiod.chart,
+        repository: this.metadata.shared.helm.istiod.repository,
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        dependsOn: [this.istioBaseRelease.element],
+        values: [
+          yaml.stringify({
+            meshConfig: {
+              extensionProviders: [
+                {
+                  name: authentikProxyProviderName,
+                  envoyExtAuthzHttp: {
+                    service: `ak-outpost-${authentikProxyOutpostName}.${this.k8sWorkstationSystemStack.applicationMetadata.shared.authentik.namespace}.svc.cluster.local`,
+                    port: '9000',
+                    pathPrefix: '/outpost.goauthentik.io/auth/envoy',
+                    headersToDownstreamOnAllow: ['set-cookie'],
+                    headersToUpstreamOnAllow: ['x-authentik-*', 'cookie'],
+                    includeRequestHeadersInCheck: ['cookie'],
+                  },
+                },
+              ],
+            },
+          }),
+        ],
+      },
+      {
+        authentikProxyOutpostName,
+        authentikProxyProviderName,
+      },
+    ];
+  });
+
+  istioGatewayRelease = this.provide(Release, 'istioGatewayRelease', () => {
     return {
-      name: this.metadata.shared.helm.istiod.name,
-      chart: this.metadata.shared.helm.istiod.chart,
-      repository: this.metadata.shared.helm.istiod.repository,
+      name: this.metadata.shared.helm.istioGateway.name,
+      chart: this.metadata.shared.helm.istioGateway.chart,
+      repository: this.metadata.shared.helm.istioGateway.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
       dependsOn: [this.istioBaseRelease.element],
     };
   });
+
+  defaultPeerAuthentication = this.provide(
+    IstioPeerAuthentication,
+    'defaultPeerAuthentication',
+    () => ({
+      manifest: {
+        metadata: {
+          name: 'default',
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          mtls: {
+            mode: 'STRICT' as const,
+          },
+        },
+      },
+      dependsOn: [this.istioBaseRelease.element],
+    }),
+  );
 
   constructor(
     // Terraform

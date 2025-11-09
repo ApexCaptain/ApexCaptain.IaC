@@ -1,8 +1,13 @@
+// authentik
+export * from './authentik.stack';
+export * from './authentik.outpost.stack';
+
 // dashboard
 export * from './dashboard.stack';
 
 // istio
 export * from './istio.stack';
+export * from './istio.gateway.stack';
 
 // game
 export * from './game.7dtd.stack';
