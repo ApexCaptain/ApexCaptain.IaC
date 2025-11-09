@@ -94,6 +94,16 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
     return [
       {},
       {
+        authentik: createK8sApplicationMetadata({
+          namespace: 'authentik',
+          helm: {
+            'authentik-remote-cluster': {
+              chart: 'authentik-remote-cluster',
+              name: 'authentik-remote-cluster',
+              repository: 'https://charts.goauthentik.io/',
+            },
+          },
+        }),
         dashboard: createK8sApplicationMetadata({
           namespace: 'dashboard',
         }),
@@ -132,6 +142,11 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
+            istioGateway: {
+              name: 'istio-gateway',
+              chart: 'gateway',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
           },
         }),
 
@@ -164,6 +179,11 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               name: 'kube-prometheus-stack',
               chart: 'kube-prometheus-stack',
               repository: 'https://prometheus-community.github.io/helm-charts',
+            },
+            dcgmExporter: {
+              name: 'dcgm-exporter',
+              chart: 'dcgm-exporter',
+              repository: 'https://nvidia.github.io/dcgm-exporter/helm-charts',
             },
           },
         }),

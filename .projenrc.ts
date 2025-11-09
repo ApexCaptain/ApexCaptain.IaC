@@ -257,6 +257,9 @@ const project = new typescript.TypeScriptAppProject({
 });
 
 void (async () => {
+  // @Tmp fix eslint version 8
+  project.package.addDevDeps('eslint@^8');
+
   // Tasks
   (project.compileTask as any)._steps = new Array<TaskStep>({
     exec: 'nest build',
@@ -386,6 +389,11 @@ void (async () => {
 
         // Community
         {
+          // https://registry.terraform.io/providers/goauthentik/authentik/latest
+          name: 'authentik',
+          source: 'goauthentik/authentik',
+        },
+        {
           // https://registry.terraform.io/providers/kreuzwerker/docker/latest
           name: 'docker',
           source: 'kreuzwerker/docker',
@@ -455,6 +463,16 @@ void (async () => {
                   process.env.OKE_ARGOCD_APP_ARGOCD_ADMIN_PASSWORD_BCRYPTED!!,
                 workstationClusterServer: `https://${process.env.WORKSTATION_COMMON_DOMAIN_IPTIME}:${process.env.WORKSTATION_COMMON_K8S_CONTROL_PLANE_EXTERNAL_PORT}`,
               },
+              authentik: {
+                bootstrap: {
+                  email:
+                    process.env.OKE_AUTHENTIK_APP_AUTHENTIK_BOOTSTRAP_EMAIL!!,
+                  password:
+                    process.env
+                      .OKE_AUTHENTIK_APP_AUTHENTIK_BOOTSTRAP_PASSWORD!!,
+                },
+                workstationClusterServer: `https://${process.env.WORKSTATION_COMMON_DOMAIN_IPTIME}:${process.env.WORKSTATION_COMMON_K8S_CONTROL_PLANE_EXTERNAL_PORT}`,
+              },
               monitoring: {
                 grafana: {
                   adminUser:
@@ -484,13 +502,6 @@ void (async () => {
                     process.env
                       .APEX_CAPTAIN_GITHUB_CONTRIBUTOR_OAUTH_APP_CLIENT_SECRET!!,
                 },
-              },
-              keyCloackVaultProxy: {
-                clientId:
-                  process.env.APEX_CAPTAIN_GITHUB_VAULT_OAUTH_APP_CLIENT_ID!!,
-                clientSecret:
-                  process.env
-                    .APEX_CAPTAIN_GITHUB_VAULT_OAUTH_APP_CLIENT_SECRET!!,
               },
               homeL2tpVpnProxy: {
                 vpnServerAddr: workstationIpAddress,

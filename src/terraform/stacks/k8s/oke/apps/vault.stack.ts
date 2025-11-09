@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Fn, LocalBackend } from 'cdktf';
+import { LocalBackend } from 'cdktf';
 import dedent from 'dedent';
 import yaml from 'yaml';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
-import { K8S_Oke_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from './oauth2-proxy.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
@@ -24,16 +22,7 @@ import { Resource } from '@lib/terraform/providers/null/resource';
 import { KmsKey } from '@lib/terraform/providers/oci/kms-key';
 import { KmsVault } from '@lib/terraform/providers/oci/kms-vault';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { AuthBackend } from '@lib/terraform/providers/vault/auth-backend';
-import { GenericEndpoint } from '@lib/terraform/providers/vault/generic-endpoint';
-import { KvSecretBackendV2 } from '@lib/terraform/providers/vault/kv-secret-backend-v2';
-import { KvSecretV2 } from '@lib/terraform/providers/vault/kv-secret-v2';
-import { Mount } from '@lib/terraform/providers/vault/mount';
-import { Policy } from '@lib/terraform/providers/vault/policy';
-import {
-  VaultProvider,
-  VaultProviderConfig,
-} from '@lib/terraform/providers/vault/provider';
+import { VaultProviderConfig } from '@lib/terraform/providers/vault/provider';
 
 // Testing vault...
 
@@ -136,8 +125,9 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 storageClass:
                   this.k8sOkeAppsNfsStack.release.shared.storageClassName,
               },
+              /*
               ingress: {
-                enabled: true,
+                enabled: false,
                 annotations: {
                   'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
                   'nginx.ingress.kubernetes.io/rewrite-target': '/',
@@ -160,6 +150,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                   },
                 ],
               },
+              */
 
               /**
                * @note
@@ -350,7 +341,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
   ) {
     super(
@@ -359,6 +349,5 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       'Vault stack for oke k8s',
     );
     this.addDependency(this.k8sOkeAppsNfsStack);
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

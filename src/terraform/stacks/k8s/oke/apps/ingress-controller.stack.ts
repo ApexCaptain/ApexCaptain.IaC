@@ -68,6 +68,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
    * - NLB로 변경하면 가능은 한데, NLB는 아무래도 존재하는 것 만으로도 비용 차지가 발생하는 것 같음. 추후 확인 필요.
    * - 아직까지 UDP 포트 개방이 필요한 상황이 아니므로 일단은 이대로 넘어가도 될듯?
    */
+  /*
   release = this.provide(Release, 'release', () => {
     const values = {
       controller: {
@@ -100,9 +101,8 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
 
     Object.values(this.k8sOkeSystemStack.applicationMetadata.shared).forEach(
       eachMetadata => {
-        const services = eachMetadata[
-          'services'
-        ] as K8sApplicationMetadata['services'];
+        const services =
+          eachMetadata.services as K8sApplicationMetadata['services'];
         if (!services) return;
         const namespace = eachMetadata.namespace;
         Object.values(services).forEach(eachService => {
@@ -134,6 +134,7 @@ export class K8S_Oke_Apps_IngressController_Stack extends AbstractStack {
       values: [yaml.stringify(values)],
     };
   });
+  */
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

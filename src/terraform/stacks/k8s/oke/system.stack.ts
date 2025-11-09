@@ -78,6 +78,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
     return [
       {},
       {
+        authentik: createK8sApplicationMetadata({
+          namespace: 'authentik',
+          helm: {
+            authentik: {
+              name: 'authentik',
+              chart: 'authentik',
+              repository: 'https://charts.goauthentik.io',
+            },
+          },
+        }),
+
         certManager: createK8sApplicationMetadata({
           namespace: 'cert-manager',
           helm: {
@@ -176,6 +187,11 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
+            istioGateway: {
+              name: 'istio-gateway',
+              chart: 'gateway',
+              repository: 'https://istio-release.storage.googleapis.com/charts',
+            },
           },
         }),
 
@@ -186,17 +202,6 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               name: 'ingress-controller',
               chart: 'ingress-nginx',
               repository: 'https://kubernetes.github.io/ingress-nginx',
-            },
-          },
-        }),
-
-        keycloak: createK8sApplicationMetadata({
-          namespace: 'keycloak',
-          helm: {
-            keycloak: {
-              name: 'keycloak',
-              chart: 'keycloak',
-              repository: 'https://charts.bitnami.com/bitnami',
             },
           },
         }),

@@ -2,16 +2,13 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke/apps/oauth2-proxy.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
@@ -155,6 +152,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
     }),
   );
 
+  /*
   ingress = this.provide(IngressV1, 'ingress', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
@@ -196,6 +194,7 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       ],
     },
   }));
+  */
 
   constructor(
     // Global
@@ -207,8 +206,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
@@ -216,7 +213,6 @@ export class K8S_Workstation_Apps_Dashboard_Stack extends AbstractStack {
       K8S_Workstation_Apps_Dashboard_Stack.name,
       'Dashboard stack for workstation k8s',
     );
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
     this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

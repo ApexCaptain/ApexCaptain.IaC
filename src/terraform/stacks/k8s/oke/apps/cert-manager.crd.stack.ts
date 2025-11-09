@@ -3,11 +3,7 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Apps_CertManager_Stack } from './cert-manager.stack';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
-import {
-  AbstractStack,
-  CertManagerCertificate,
-  CertManagerClusterIssuer,
-} from '@/common';
+import { AbstractStack, CertManagerClusterIssuer } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -74,37 +70,6 @@ export class K8S_Oke_Apps_CertManager_CRD_Stack extends AbstractStack {
                   },
                 ],
               },
-            },
-          },
-        },
-        { name },
-      ];
-    },
-  );
-
-  wildcardCertificate = this.provide(
-    CertManagerCertificate,
-    'wildcardCertificate',
-    id => {
-      const name = `${this.k8sOkeAppsCertManagerStack.namespace.element.metadata.name}-${_.kebabCase(id)}`;
-      return [
-        {
-          manifest: {
-            metadata: {
-              name,
-              namespace:
-                this.k8sOkeAppsCertManagerStack.namespace.element.metadata.name,
-            },
-            spec: {
-              secretName: name,
-              issuerRef: {
-                name: this.letsEncryptProdClusterIssuer.shared.name,
-                kind: 'ClusterIssuer',
-              },
-              dnsNames: [
-                `*.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-                this.cloudflareZoneStack.dataAyteneve93Zone.element.name,
-              ],
             },
           },
         },

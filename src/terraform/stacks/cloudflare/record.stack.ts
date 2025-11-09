@@ -37,32 +37,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Number Planet service',
   }));
 
-  keycloakRecord = this.provide(DnsRecord, 'keycloakRecord', () => ({
-    name: `keycloak.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Keycloak service',
-  }));
-
-  keycloakAdminRecord = this.provide(DnsRecord, 'keycloakAdminRecord', () => ({
-    name: `keycloak-admin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Keycloak Admin service',
-  }));
-
   okeSftpRecord = this.provide(DnsRecord, 'okeSftpRecord', () => ({
     name: `sftp-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -87,19 +61,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .ipAddress,
     proxied: true,
     comment: 'Cloudflare record for Vault service',
-  }));
-
-  dbRecord = this.provide(DnsRecord, 'dbRecord', () => ({
-    name: `db.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Database Client service',
   }));
 
   redisRecord = this.provide(DnsRecord, 'redisRecord', () => ({
@@ -216,30 +177,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for Longhorn service',
   }));
 
-  jellyfinRecord = this.provide(DnsRecord, 'jellyfinRecord', () => ({
-    name: `jellyfin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'CNAME',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-        .domain.iptime,
-    proxied: true,
-    comment: 'Cloudflare record for Jellyfin service',
-  }));
-
-  torrentRecord = this.provide(DnsRecord, 'qbittorrentRecord', () => ({
-    name: `torrent.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'CNAME',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-        .domain.iptime,
-    proxied: true,
-    comment: 'Cloudflare record for Qbittorrent service',
-  }));
-
   grafanaWorkstationRecord = this.provide(
     DnsRecord,
     'grafanaWorkstationRecord',
@@ -279,18 +216,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .domain.iptime,
     proxied: true,
     comment: 'Cloudflare record for 7DTD service',
-  }));
-
-  windowsRecord = this.provide(DnsRecord, 'windowsRecord', () => ({
-    name: `windows.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'CNAME',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-        .domain.iptime,
-    proxied: true,
-    comment: 'Cloudflare record for Windows service',
   }));
 
   blogRecord = this.provide(DnsRecord, 'blogRecord', () => ({

@@ -1,3 +1,8 @@
+// Authentik
+export * from './authentik.stack';
+export * from './authentik.resources.stack';
+export * from './authentik.outpost.stack';
+
 // Cert Manager
 export * from './cert-manager.stack';
 export * from './cert-manager.crd.stack';
@@ -8,14 +13,12 @@ export * from './ingress-controller.stack';
 // Dashboard
 export * from './dashboard.stack';
 
-// OAuth2 Proxy
-export * from './oauth2-proxy.stack';
-
 // Home L2TP VPN Proxy
 export * from './home-l2tp-vpn-proxy.stack';
 
 // Istio
 export * from './istio.stack';
+export * from './istio.gateway.stack';
 
 // NFS
 export * from './nfs.stack';

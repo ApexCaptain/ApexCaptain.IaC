@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import yaml from 'yaml';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_Network_Stack } from '../network.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
+import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -73,15 +75,93 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
   });
 
   istiodRelease = this.provide(Release, 'istiodRelease', () => {
+    const authentikProxyOutpostName = 'oke-authentik-proxy-outpost';
+    const authentikProxyProviderName = 'oke-authentik-proxy-provider';
+
+    return [
+      {
+        name: this.metadata.shared.helm.istiod.name,
+        chart: this.metadata.shared.helm.istiod.chart,
+        repository: this.metadata.shared.helm.istiod.repository,
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        dependsOn: [this.istioBaseRelease.element],
+        values: [
+          yaml.stringify({
+            meshConfig: {
+              extensionProviders: [
+                {
+                  name: authentikProxyProviderName,
+                  envoyExtAuthzHttp: {
+                    service: `ak-outpost-${authentikProxyOutpostName}.${this.k8sOkeSystemStack.applicationMetadata.shared.authentik.namespace}.svc.cluster.local`,
+                    port: '9000',
+                    pathPrefix: '/outpost.goauthentik.io/auth/envoy',
+                    headersToDownstreamOnAllow: ['set-cookie'],
+                    headersToUpstreamOnAllow: ['x-authentik-*', 'cookie'],
+                    includeRequestHeadersInCheck: ['cookie'],
+                  },
+                },
+              ],
+            },
+          }),
+        ],
+      },
+      {
+        authentikProxyOutpostName,
+        authentikProxyProviderName,
+      },
+    ];
+  });
+
+  istioGatewayRelease = this.provide(Release, 'istioGatewayRelease', () => {
     return {
-      name: this.metadata.shared.helm.istiod.name,
-      chart: this.metadata.shared.helm.istiod.chart,
-      repository: this.metadata.shared.helm.istiod.repository,
+      name: this.metadata.shared.helm.istioGateway.name,
+      chart: this.metadata.shared.helm.istioGateway.chart,
+      repository: this.metadata.shared.helm.istioGateway.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
       dependsOn: [this.istioBaseRelease.element],
+
+      values: [
+        yaml.stringify({
+          service: {
+            loadBalancerIP:
+              this.k8sOkeNetworkStack
+                .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+                .ipAddress,
+            annotations: {
+              'service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode':
+                'None',
+              'service.beta.kubernetes.io/oci-load-balancer-shape': 'flexible',
+              'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max':
+                '10',
+              'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min':
+                '10',
+            },
+          },
+        }),
+      ],
     };
   });
+
+  defaultPeerAuthentication = this.provide(
+    IstioPeerAuthentication,
+    'defaultPeerAuthentication',
+    () => ({
+      manifest: {
+        metadata: {
+          name: 'default',
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          mtls: {
+            mode: 'STRICT' as const,
+          },
+        },
+      },
+      dependsOn: [this.istioBaseRelease.element],
+    }),
+  );
 
   constructor(
     // Terraform
@@ -89,6 +169,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
   ) {

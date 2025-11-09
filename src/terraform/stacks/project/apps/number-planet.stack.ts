@@ -34,6 +34,7 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
       github: this.provide(GithubProvider, 'githubProvider', () =>
         this.terraformConfigService.providers.github.ApexCaptain(),
       ),
+      /*
       argoCd: this.provide(
         ArgocdProvider,
         'argoCdProvider',
@@ -41,6 +42,7 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
           this.k8sOkeAppsArgoCdResourcesStack
             .deployerAccountArgoCdProviderConfig.shared,
       ),
+      */
     },
   };
 
@@ -51,7 +53,7 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
       name: 'number-planet',
       visibility: 'public',
       homepageUrl: `https://${this.cloudflareRecordStack.numberPlanetRecord.element.name}`,
-      description: 'Number Planet React repository for testing ArgoCD GitOps',
+      description: 'Number Planet Introduction Web Repository',
       autoInit: true,
       lifecycle: {
         preventDestroy: true,
@@ -118,6 +120,7 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
     return {};
   });
 
+  /*
   application = this.provide(Application, 'application', () => ({
     metadata: {
       name: 'number-planet',
@@ -184,6 +187,7 @@ export class Project_Apps_NumberPlanet_Stack extends AbstractStack {
       },
     },
   }));
+  */
 
   constructor(
     // Global

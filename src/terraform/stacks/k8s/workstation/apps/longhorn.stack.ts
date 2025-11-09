@@ -4,12 +4,10 @@ import { LocalBackend } from 'cdktf';
 import dedent from 'dedent';
 import _ from 'lodash';
 import yaml from 'yaml';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
@@ -72,8 +70,9 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       waitForJobs: true,
       values: [
         yaml.stringify({
+          /*
           ingress: {
-            enabled: true,
+            enabled: false,
             ingressClassName: 'nginx',
             host: this.cloudflareRecordStack.longhornRecord.element.name,
             annotations: {
@@ -86,10 +85,11 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
                   .authSignin,
             },
           },
+          */
           csi: { kubeletRootDir: '/var/snap/microk8s/common/var/lib/kubelet' },
           defaultSettings: {
             createDefaultDiskLabeledNodes: true,
-            defaultReplicaCount: 1,
+            defaultReplicaCount: '1',
             /**
              * @Note
              *  - true: Allow to delete longhorn chart
@@ -208,8 +208,6 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
     private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
@@ -218,6 +216,5 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       'Longhorn stack for workstation k8s',
     );
     this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
   }
 }

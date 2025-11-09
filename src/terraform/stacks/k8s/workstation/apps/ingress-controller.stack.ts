@@ -52,6 +52,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     },
   }));
 
+  /*
   release = this.provide(Release, 'release', () => {
     const values = {
       controller: {
@@ -109,6 +110,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
       values: [yaml.stringify(values)],
     };
   });
+  */
 
   constructor(
     // Terraform

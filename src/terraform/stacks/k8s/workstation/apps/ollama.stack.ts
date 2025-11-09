@@ -1,25 +1,23 @@
+import { Injectable } from '@nestjs/common';
+import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
+import yaml from 'yaml';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
+import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
-import yaml from 'yaml';
-import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
-import { K8S_Oke_Apps_OAuth2Proxy_Stack } from '../../oke';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import _ from 'lodash';
-import { K8S_Workstation_System_Stack } from '../system.stack';
-import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
-import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
-import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
-import { Release } from '@lib/terraform/providers/helm/release';
-import dedent from 'dedent';
-import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
-import { StringResource } from '@lib/terraform/providers/random/string-resource';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
 
 @Injectable()
 export class K8S_Workstation_Apps_Ollama_Stack extends AbstractStack {
@@ -122,8 +120,9 @@ export class K8S_Workstation_Apps_Ollama_Stack extends AbstractStack {
               existingClaim:
                 this.ollamaModelsPersistentVolumeClaim.element.metadata.name,
             },
+            /*
             ingress: {
-              enabled: true,
+              enabled: false,
               className: 'nginx',
               annotations: {
                 'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
@@ -151,6 +150,7 @@ export class K8S_Workstation_Apps_Ollama_Stack extends AbstractStack {
                 },
               ],
             },
+            */
             affinity: {
               nodeAffinity: {
                 requiredDuringSchedulingIgnoredDuringExecution: {
@@ -192,14 +192,12 @@ export class K8S_Workstation_Apps_Ollama_Stack extends AbstractStack {
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeAppsOAuth2ProxyStack: K8S_Oke_Apps_OAuth2Proxy_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Ollama_Stack.name,
       'Ollama stack for workstation k8s',
     );
-    this.addDependency(this.k8sOkeAppsOAuth2ProxyStack);
     this.addDependency(this.k8sWorkstationAppsIstioStack);
   }
 }

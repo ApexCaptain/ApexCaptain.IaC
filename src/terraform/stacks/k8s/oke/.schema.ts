@@ -7,6 +7,13 @@ export const OkeSchema = Joi.object({
       adminPasswordBcryted: Joi.string().required(),
       workstationClusterServer: Joi.string().required(),
     }).required(),
+    authentik: Joi.object({
+      bootstrap: Joi.object({
+        email: Joi.string().email().required(),
+        password: Joi.string().required(),
+      }).required(),
+      workstationClusterServer: Joi.string().required(),
+    }).required(),
     monitoring: Joi.object({
       grafana: Joi.object({
         adminUser: Joi.string().required(),
@@ -28,10 +35,6 @@ export const OkeSchema = Joi.object({
         clientSecret: Joi.string().required(),
       }).required(),
     }).required(),
-    keyCloackVaultProxy: Joi.object({
-      clientId: Joi.string().required(),
-      clientSecret: Joi.string().required(),
-    }),
     homeL2tpVpnProxy: Joi.object({
       vpnServerAddr: Joi.string().required(),
       vpnIpsToRoute: Joi.array().items(Joi.string()).required(),
