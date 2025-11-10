@@ -151,7 +151,7 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@inquirer/prompts,@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/lodash,@types/node,commander,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,flatley,fuzzy,inquirer-autocomplete-standalone,prettier,projen,ts-node,typescript,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,class-transformer,class-validator,constructs,cron-time-generator,dedent,deepmerge,joi-extract-type,lodash,moment,moment-timezone,reflect-metadata,timezone-enum,yaml"
+          "exec": "npx npm-check-updates@18 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@inquirer/prompts,@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/lodash,@types/node,commander,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,flatley,fuzzy,inquirer-autocomplete-standalone,prettier,projen,ts-node,typescript,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,class-transformer,class-validator,constructs,cron-time-generator,dedent,deepmerge,joi-extract-type,lodash,moment,moment-timezone,reflect-metadata,timezone-enum,yaml"
         },
         {
           "exec": "yarn install --check-files"
