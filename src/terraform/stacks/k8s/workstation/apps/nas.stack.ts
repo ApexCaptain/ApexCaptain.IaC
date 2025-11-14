@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
+import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -46,6 +47,24 @@ export class K8S_Workstation_Apps_Nas_Stack extends AbstractStack {
       },
     },
   }));
+
+  defaultPeerAuthentication = this.provide(
+    IstioPeerAuthentication,
+    'defaultPeerAuthentication',
+    () => ({
+      manifest: {
+        metadata: {
+          name: 'default',
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          mtls: {
+            mode: 'STRICT' as const,
+          },
+        },
+      },
+    }),
+  );
 
   // Qbittorrent
   qbittorrentConfigPersistentVolumeClaim = this.provide(

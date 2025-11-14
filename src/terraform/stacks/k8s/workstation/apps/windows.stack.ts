@@ -2,20 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
+import dedent from 'dedent';
 import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
-import { K8S_Workstation_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
-import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import {
   K8S_Oke_Apps_Authentik_Resources_Stack,
   K8S_Oke_Apps_Authentik_Stack,
 } from '../../oke';
-import {
-  AbstractStack,
-  IstioAuthorizationPolicy,
-  IstioVirtualService,
-} from '@/common';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -25,6 +21,7 @@ import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
 import { ProviderProxy } from '@lib/terraform/providers/authentik/provider-proxy';
 import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
@@ -50,6 +47,7 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
       kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
         this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
       ),
+
       authentik: this.provide(
         AuthentikProvider,
         'authentikProvider',
@@ -319,39 +317,6 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     },
   }));
 
-  virtualService = this.provide(IstioVirtualService, 'virtualService', id => ({
-    manifest: {
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        hosts: [
-          this.cloudflareRecordWorkstationStack.windowsRecord.element.name,
-        ],
-        gateways: [
-          this.k8sWorkstationAppsIstioGatewayStack.istioGateway.shared
-            .gatewayPath,
-        ],
-        http: [
-          {
-            route: [
-              {
-                destination: {
-                  host: this.windowsService.element.metadata.name,
-                  port: {
-                    number:
-                      this.metadata.shared.services.windows.ports.http.port,
-                  },
-                },
-              },
-            ],
-          },
-        ],
-      },
-    },
-  }));
-
   authentikProxyProvider = this.provide(
     ProviderProxy,
     'authentikProxyProvider',
@@ -379,7 +344,56 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     }),
   );
 
-  authorizationPolicy = this.provide(
+  windowsIngress = this.provide(IngressV1, 'windowsIngress', id => ({
+    metadata: {
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      namespace: this.namespace.element.metadata.name,
+      annotations: {
+        'nginx.ingress.kubernetes.io/auth-url':
+          this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource
+            .shared.authUrl,
+        'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordWorkstationStack.windowsRecord.element.name}${this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource.shared.authSigninPostfix}`,
+        'nginx.ingress.kubernetes.io/auth-response-headers': dedent`
+          Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-entitlements,X-authentik-email,X-authentik-name,X-authentik-uid
+        `,
+        'nginx.ingress.kubernetes.io/auth-snippet': dedent`
+          if ($request_uri ~ "/websockify") {
+            return 200;
+          }
+          proxy_set_header X-Forwarded-Host $http_host;
+        `,
+      },
+    },
+    spec: {
+      ingressClassName: 'nginx',
+      rule: [
+        {
+          host: this.cloudflareRecordWorkstationStack.windowsRecord.element
+            .name,
+          http: {
+            path: [
+              {
+                path: '/',
+                pathType: 'Prefix',
+                backend: {
+                  service: {
+                    name: this.windowsService.element.metadata.name,
+                    port: {
+                      number:
+                        this.metadata.shared.services.windows.ports.http.port,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }));
+
+  /*
+    authorizationPolicy = this.provide(
     IstioAuthorizationPolicy,
     'authorizationPolicy',
     id => ({
@@ -418,7 +432,7 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
         },
       },
     }),
-  );
+  */
 
   constructor(
     // Global
@@ -430,12 +444,11 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
 
     // Stacks
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
-    private readonly k8sWorkstationAppsIstioGatewayStack: K8S_Workstation_Apps_Istio_Gateway_Stack,
+    private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -443,6 +456,5 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
       'Windows stack for workstation k8s',
     );
     this.addDependency(this.k8sWorkstationLonghornStack);
-    this.addDependency(this.k8sWorkstationAppsIstioStack);
   }
 }

@@ -1,6 +1,11 @@
 import Joi from '@hapi/joi';
 
 export const OkeSchema = Joi.object({
+  network: Joi.object({
+    remoteCluster: Joi.object({
+      sourceCidrBlocks: Joi.array().items(Joi.string()).required(),
+    }).required(),
+  }).required(),
   apps: Joi.object({
     argoCd: Joi.object({
       adminPassword: Joi.string().required(),
@@ -23,16 +28,6 @@ export const OkeSchema = Joi.object({
     nfs: Joi.object({
       sftp: Joi.object({
         userName: Joi.string().required(),
-      }).required(),
-    }).required(),
-    oauth2Proxy: Joi.object({
-      admin: Joi.object({
-        clientId: Joi.string().required(),
-        clientSecret: Joi.string().required(),
-      }).required(),
-      contributor: Joi.object({
-        clientId: Joi.string().required(),
-        clientSecret: Joi.string().required(),
       }).required(),
     }).required(),
     homeL2tpVpnProxy: Joi.object({

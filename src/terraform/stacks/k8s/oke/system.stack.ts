@@ -187,8 +187,8 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               chart: 'base',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },
-            istioGateway: {
-              name: 'istio-gateway',
+            istioEastWestGateway: {
+              name: 'istio-eastwestgateway',
               chart: 'gateway',
               repository: 'https://istio-release.storage.googleapis.com/charts',
             },

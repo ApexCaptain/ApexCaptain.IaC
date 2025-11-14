@@ -78,6 +78,52 @@ export class K8S_Oke_Apps_CertManager_CRD_Stack extends AbstractStack {
     },
   );
 
+  letsEncryptStagingClusterIssuer = this.provide(
+    CertManagerClusterIssuer,
+    'letsEncryptStagingClusterIssuer',
+    id => {
+      const name = `${this.k8sOkeAppsCertManagerStack.namespace.element.metadata.name}-${_.kebabCase(id)}`;
+      return [
+        {
+          manifest: {
+            metadata: {
+              name,
+            },
+            spec: {
+              acme: {
+                server:
+                  'https://acme-staging-v02.api.letsencrypt.org/directory',
+                email:
+                  this.globalConfigService.config.terraform.config.providers
+                    .cloudflare.ApexCaptain.email,
+                privateKeySecretRef: {
+                  name: 'letsencrypt-staging',
+                },
+                solvers: [
+                  {
+                    dns01: {
+                      cloudflare: {
+                        email:
+                          this.globalConfigService.config.terraform.config
+                            .providers.cloudflare.ApexCaptain.email,
+                        apiTokenSecretRef: {
+                          name: this.k8sOkeAppsCertManagerStack
+                            .cloudflareApiTokenSecret.element.metadata.name,
+                          key: 'api-token',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        { name },
+      ];
+    },
+  );
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

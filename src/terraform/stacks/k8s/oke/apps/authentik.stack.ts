@@ -6,11 +6,15 @@ import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
-import { AbstractStack, IstioVirtualService } from '@/common';
+import {
+  AbstractStack,
+  IstioPeerAuthentication,
+  IstioVirtualService,
+} from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import {
   Cloudflare_Record_Oke_Stack,
-  Cloudflare_Record_Stack,
+  Cloudflare_Zone_Stack,
 } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -78,6 +82,24 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
       },
     },
   }));
+
+  defaultPeerAuthentication = this.provide(
+    IstioPeerAuthentication,
+    'defaultPeerAuthentication',
+    () => ({
+      manifest: {
+        metadata: {
+          name: 'default',
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          mtls: {
+            mode: 'PERMISSIVE' as const,
+          },
+        },
+      },
+    }),
+  );
 
   authentikBootstrapToken = this.provide(
     StringResource,
@@ -371,7 +393,7 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
             spec: {
               hosts: [host],
               gateways: [
-                this.k8sOkeAppsIstioGatewayStack.istioGateway.shared
+                this.k8sOkeAppsIstioGatewayStack.istioIngressGateway.shared
                   .gatewayPath,
               ],
               http: [
@@ -387,6 +409,23 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
                       },
                     },
                   ],
+                  corsPolicy: {
+                    allowOrigins: [
+                      {
+                        regex: `https://.*\\.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+                      },
+                    ],
+                    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                    allowHeaders: [
+                      'Content-Type',
+                      'Authorization',
+                      'X-Requested-With',
+                      'X-authentik-auth-callback',
+                    ],
+                    exposeHeaders: ['Content-Type', 'Authorization'],
+                    allowCredentials: true,
+                    maxAge: '24h',
+                  },
                 },
               ],
             },
@@ -466,7 +505,7 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
     private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeNfsStack: K8S_Oke_Apps_Nfs_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
     private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsIstioGatewayStack: K8S_Oke_Apps_Istio_Gateway_Stack,
   ) {

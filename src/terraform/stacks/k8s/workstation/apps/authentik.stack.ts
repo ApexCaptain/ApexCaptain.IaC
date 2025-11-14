@@ -3,6 +3,7 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
+import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
@@ -86,6 +87,28 @@ export class K8S_Workstation_Apps_Authentik_Stack extends AbstractStack {
     },
   );
 
+  workstationOutpostResource = this.provide(
+    Resource,
+    'workstationOutpostResource',
+    () => {
+      const outpostName = 'workstation-authentik-proxy-outpost';
+      const serviceName = `ak-outpost-${outpostName}`;
+      const servicePort = 9000;
+      const authUrl = `http://${serviceName}.${this.namespace.element.metadata.name}.svc.cluster.local:${servicePort}/outpost.goauthentik.io/auth/nginx`;
+      const authSigninPostfix = `/outpost.goauthentik.io/start?rd=$scheme://$http_host$escaped_request_uri`;
+      return [
+        {},
+        {
+          outpostName,
+          serviceName,
+          servicePort,
+          authUrl,
+          authSigninPostfix,
+        },
+      ];
+    },
+  );
+
   constructor(
     // Terraform
     private readonly terraformAppService: TerraformAppService,
@@ -93,6 +116,7 @@ export class K8S_Workstation_Apps_Authentik_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

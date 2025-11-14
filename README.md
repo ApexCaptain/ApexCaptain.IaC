@@ -7,6 +7,7 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 ### 1. 멀티 Kubernetes 클러스터 아키텍처 구축
 
 - Oracle Cloud OKE 클러스터(클라우드)와 On-premise 클러스터를 통합 관리하는 환경 구축
+- Istio 멀티 클러스터 서비스메시 구성 완료 - OKE와 Workstation 클러스터 간 서비스 메시 통합
 - Istio 서비스 메시와 L2TP VPN 프록시를 구현하여 네트워크 격리와 보안을 동시에 확보
 
 ### 2. 100% 코드 기반 인프라 관리 시스템 개발
@@ -17,6 +18,7 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 
 ### 3. 종합적인 보안 체계 및 DNS/CDN 관리
 
+- Authentik 중앙 인증 처리 시스템 구현 - 멀티 클러스터 환경에서 중앙화된 인증 시스템 구축 (Istio Ingress + Nginx Ingress 통합 지원)
 - OAuth2 Proxy를 통한 GitHub OAuth 인증 시스템 구현
 - Cert-Manager를 활용한 SSL/TLS 인증서 자동 관리 시스템 구축
 - Bastion 호스트를 통한 Zero Trust 네트워크 아키텍처 구현

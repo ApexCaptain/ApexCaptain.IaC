@@ -53,6 +53,7 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
               .kubeConfigFilePath,
         }),
       ),
+
       authentik: this.provide(
         AuthentikProvider,
         'authentikProvider',
@@ -181,7 +182,8 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
       spec: {
         hosts: [this.cloudflareRecordOkeStack.dbRecord.element.name],
         gateways: [
-          this.k8sOkeAppsIstioGatewayStack.istioGateway.shared.gatewayPath,
+          this.k8sOkeAppsIstioGatewayStack.istioIngressGateway.shared
+            .gatewayPath,
         ],
         http: [
           {
@@ -242,13 +244,15 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
         spec: {
           selector: {
             matchLabels: {
-              istio: 'gateway',
+              istio:
+                this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
+                  .istioLabel,
             },
           },
           action: 'CUSTOM' as const,
           provider: {
             name: this.k8sOkeAppsIstioStack.istiodRelease.shared
-              .authentikProxyProviderName,
+              .okeAuthentikProxyProviderName,
           },
           rules: [
             {
@@ -258,6 +262,7 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
                     hosts: [
                       this.cloudflareRecordOkeStack.dbRecord.element.name,
                     ],
+                    notPaths: ['/api/graphql'],
                   },
                 },
               ],

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { LocalBackend, LocalExecProvisioner } from 'cdktf';
+import dedent from 'dedent';
 import yaml from 'yaml';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_Network_Stack } from '../network.stack';
@@ -56,6 +57,9 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.metadata.shared.namespace,
+      labels: {
+        'topology.istio.io/network': 'oke',
+      },
     },
   }));
 
@@ -66,17 +70,13 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
       repository: this.metadata.shared.helm.base.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
-      values: [
-        yaml.stringify({
-          defaultRevision: 'default',
-        }),
-      ],
     };
   });
-
   istiodRelease = this.provide(Release, 'istiodRelease', () => {
-    const authentikProxyOutpostName = 'oke-authentik-proxy-outpost';
-    const authentikProxyProviderName = 'oke-authentik-proxy-provider';
+    const okeAuthentikProxyOutpostName = 'oke-authentik-proxy-outpost';
+    const okeAuthentikProxyProviderName = 'oke-authentik-proxy-provider';
+
+    const istiodServiceInternalDomain = `istiod.${this.namespace.element.metadata.name}.svc.cluster.local`;
 
     return [
       {
@@ -88,12 +88,26 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         dependsOn: [this.istioBaseRelease.element],
         values: [
           yaml.stringify({
+            global: {
+              meshID: 'apex-captain-mesh',
+              externalIstiod: true,
+              multiCluster: {
+                clusterName: 'oke',
+              },
+              network: 'oke',
+            },
             meshConfig: {
+              defaultConfig: {
+                proxyMetadata: {
+                  ISTIO_META_DNS_CAPTURE: 'true',
+                },
+              },
+
               extensionProviders: [
                 {
-                  name: authentikProxyProviderName,
+                  name: okeAuthentikProxyProviderName,
                   envoyExtAuthzHttp: {
-                    service: `ak-outpost-${authentikProxyOutpostName}.${this.k8sOkeSystemStack.applicationMetadata.shared.authentik.namespace}.svc.cluster.local`,
+                    service: `ak-outpost-${okeAuthentikProxyOutpostName}.authentik.svc.cluster.local`,
                     port: '9000',
                     pathPrefix: '/outpost.goauthentik.io/auth/envoy',
                     headersToDownstreamOnAllow: ['set-cookie'],
@@ -107,42 +121,169 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         ],
       },
       {
-        authentikProxyOutpostName,
-        authentikProxyProviderName,
+        okeAuthentikProxyOutpostName,
+        okeAuthentikProxyProviderName,
+        istiodServiceInternalDomain,
       },
     ];
   });
 
-  istioGatewayRelease = this.provide(Release, 'istioGatewayRelease', () => {
-    return {
-      name: this.metadata.shared.helm.istioGateway.name,
-      chart: this.metadata.shared.helm.istioGateway.chart,
-      repository: this.metadata.shared.helm.istioGateway.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      dependsOn: [this.istioBaseRelease.element],
+  istioEastWestGatewayRelease = this.provide(
+    Release,
+    'istioEastWestGatewayRelease',
+    () => {
+      const istioLabel = 'eastwestgateway';
+      const name = `istio-${istioLabel}`;
 
-      values: [
-        yaml.stringify({
-          service: {
-            loadBalancerIP:
-              this.k8sOkeNetworkStack
-                .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-                .ipAddress,
-            annotations: {
-              'service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode':
-                'None',
-              'service.beta.kubernetes.io/oci-load-balancer-shape': 'flexible',
-              'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max':
-                '10',
-              'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min':
-                '10',
-            },
-          },
-        }),
-      ],
-    };
-  });
+      return [
+        {
+          name: this.metadata.shared.helm.istioEastWestGateway.name,
+          chart: this.metadata.shared.helm.istioEastWestGateway.chart,
+          repository: this.metadata.shared.helm.istioEastWestGateway.repository,
+          namespace: this.namespace.element.metadata.name,
+          createNamespace: false,
+          dependsOn: [
+            this.istioBaseRelease.element,
+            this.istiodRelease.element,
+          ],
+          values: [
+            yaml.stringify({
+              name,
+              networkGateway: 'oke',
+              service: {
+                type: 'LoadBalancer',
+                loadBalancerIP:
+                  this.k8sOkeNetworkStack
+                    .ingressControllerFlexibleLoadbalancerReservedPublicIp
+                    .element.ipAddress,
+                annotations: {
+                  'service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode':
+                    'None',
+                  'service.beta.kubernetes.io/oci-load-balancer-shape':
+                    'flexible',
+                  'service.beta.kubernetes.io/oci-load-balancer-shape-flex-max':
+                    '10',
+                  'service.beta.kubernetes.io/oci-load-balancer-shape-flex-min':
+                    '10',
+                },
+              },
+            }),
+          ],
+        },
+        { name, istioLabel },
+      ];
+    },
+  );
+
+  /**
+   * @Note
+   * networkGateway 지정하면 무조건 East-West Gateway로 만들어져서, Helm values에서 포트 설정이 다 무시됨
+   * LB 값 아끼려면 이렇게 별도 스크립트 짜는 수밖에 없는듯...
+   * 회사에서 쓸 때는 그냥 맘 편하게 LB 하나 더 할당하도록 하자, 그게 더 안전하기도 함
+   *
+   * Flextible Load Balancer 사용 시 UDP 포트 사용이 불가능 하므로 TCP만 할당함
+   * NLB로 변경하면 가능은 한데, NLB는 존재하는 것 만으로도 비용 차지가 발생
+   */
+  istioEastWestGatewayServicePortPatch = this.provide(
+    Resource,
+    'istioEastWestGatewayServicePortPatch',
+    () => {
+      const kubeConfigPath =
+        this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath;
+      const proxyUrl =
+        this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5;
+      const serviceName = this.istioEastWestGatewayRelease.shared.name;
+      const namespace = this.namespace.element.metadata.name;
+
+      const additionalPorts: {
+        port: number;
+        name: string;
+        targetPort: number;
+        protocol: string;
+        present: boolean;
+      }[] = [
+        {
+          port: 80,
+          name: 'http',
+          targetPort: 80,
+          protocol: 'TCP',
+          present: true,
+        },
+        {
+          port: 443,
+          name: 'https',
+          targetPort: 443,
+          protocol: 'TCP',
+          present: true,
+        },
+      ];
+
+      const provisioners = additionalPorts.map<LocalExecProvisioner>(
+        ({ port, name, targetPort, protocol, present }) => {
+          if (present) {
+            // 포트 추가
+            return {
+              type: 'local-exec',
+              command: dedent`
+                port_exists=$(kubectl get svc ${serviceName} -n ${namespace} \
+                  -o jsonpath='{.spec.ports[?(@.port==${port})].port}' 2>/dev/null || echo '')
+                if [ -z "$port_exists" ]; then
+                  kubectl patch svc ${serviceName} -n ${namespace} \
+                    --type='json' \
+                    -p='[{"op": "add", "path": "/spec/ports/-", "value": {"name": "${name}", "port": ${port}, "protocol": "${protocol}", "targetPort": ${targetPort}}}]' || true
+                fi
+              `,
+              environment: {
+                KUBECONFIG: kubeConfigPath,
+                HTTPS_PROXY: proxyUrl,
+              },
+            };
+          } else {
+            return {
+              type: 'local-exec',
+              command: dedent`
+                  port_exists=$(kubectl get svc ${serviceName} -n ${namespace} \
+                    -o jsonpath="{.spec.ports[?(@.port==${port})].port}" 2>/dev/null || echo '')
+
+                  if [ -z "$port_exists" ]; then
+                    exit 0
+                  fi
+
+                  ports_list=$(kubectl get svc ${serviceName} -n ${namespace} \
+                    -o jsonpath='{.spec.ports[*].port}' 2>/dev/null || echo '')
+                  
+                  idx=0
+                  for port_item in $ports_list; do
+                    if [ "$port_item" = "${port}" ]; then
+                      kubectl patch svc ${serviceName} -n ${namespace} \
+                        --type='json' \
+                        -p="[{\"op\": \"remove\", \"path\": \"/spec/ports/$idx\"}]" || exit 1
+                      exit 0
+                    fi
+                    idx=$((idx + 1))
+                  done
+                  
+                  exit 1
+              `,
+              environment: {
+                KUBECONFIG: kubeConfigPath,
+                HTTPS_PROXY: proxyUrl,
+              },
+            };
+          }
+        },
+      );
+
+      return {
+        triggers: {
+          releaseId: this.istioEastWestGatewayRelease.element.id,
+          ports: JSON.stringify(additionalPorts),
+        },
+        dependsOn: [this.istioEastWestGatewayRelease.element],
+        provisioners,
+      };
+    },
+  );
 
   defaultPeerAuthentication = this.provide(
     IstioPeerAuthentication,
@@ -155,7 +296,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         },
         spec: {
           mtls: {
-            mode: 'STRICT' as const,
+            mode: 'PERMISSIVE' as const,
           },
         },
       },

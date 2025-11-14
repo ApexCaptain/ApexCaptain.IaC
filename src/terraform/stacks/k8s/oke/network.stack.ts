@@ -24,6 +24,8 @@ import { OciProvider } from '@lib/terraform/providers/oci/provider';
 
 @Injectable()
 export class K8S_Oke_Network_Stack extends AbstractStack {
+  config = this.globalConfigService.config.terraform.stacks.k8s.oke.network;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -83,10 +85,34 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
       description: 'SFTP port for NFS service',
     });
 
+    const tlsIstiodNodePort = createLoadBalancerPortInfo({
+      inbound: 15012,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'TLS Istiod port for Istio gateway',
+      sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
+    });
+
+    const tlsWebhookNodePort = createLoadBalancerPortInfo({
+      inbound: 15017,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'TLS Webhook port for Istio gateway',
+      sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
+    });
+
+    const tlsTunnelNodePort = createLoadBalancerPortInfo({
+      inbound: 15443,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'TLS tunnel port for Istio gateway',
+      sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
+    });
+
     const combination = {
       httpNodePort,
       httpsNodePort,
       nfsSftpNodePort,
+      tlsIstiodNodePort,
+      tlsWebhookNodePort,
+      tlsTunnelNodePort,
     };
 
     const inboundPorts = Object.values(combination).map(
