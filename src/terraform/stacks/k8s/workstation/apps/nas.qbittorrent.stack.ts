@@ -2,16 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import dedent from 'dedent';
 import _ from 'lodash';
-import { K8S_Workstation_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
-import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Workstation_Apps_Nas_Stack } from './nas.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from '../../oke/apps/authentik.stack';
-import {
-  AbstractStack,
-  IstioAuthorizationPolicy,
-  IstioVirtualService,
-} from '@/common';
+import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -20,6 +15,7 @@ import { Application as AuthentikApplication } from '@lib/terraform/providers/au
 import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
 import { ProviderProxy } from '@lib/terraform/providers/authentik/provider-proxy';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
+import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
@@ -317,45 +313,7 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
     },
   );
 
-  qbittorrentVirtualService = this.provide(
-    IstioVirtualService,
-    'qbittorrentVirtualService',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.k8sWorkstationAppsNasStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace:
-            this.k8sWorkstationAppsNasStack.namespace.element.metadata.name,
-        },
-        spec: {
-          hosts: [
-            this.cloudflareRecordWorkstationStack.torrentRecord.element.name,
-          ],
-          gateways: [
-            this.k8sWorkstationAppsIstioGatewayStack.istioGateway.shared
-              .gatewayPath,
-          ],
-          http: [
-            {
-              route: [
-                {
-                  destination: {
-                    host: this.qbittorrentService.element.metadata.name,
-                    port: {
-                      number:
-                        this.k8sWorkstationAppsNasStack.metadata.shared.services
-                          .qbittorrent.ports.web.port,
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      },
-    }),
-  );
-
+  // Authentik Proxy Provider (nginx ingress용)
   qbittorrentAuthentikProxyProvider = this.provide(
     ProviderProxy,
     'qbittorrentAuthentikProxyProvider',
@@ -391,45 +349,54 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
     }),
   );
 
-  qbittorrentAuthorizationPolicy = this.provide(
-    IstioAuthorizationPolicy,
-    'qbittorrentAuthorizationPolicy',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.k8sWorkstationAppsNasStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace:
-            this.k8sWorkstationAppsIstioStack.namespace.element.metadata.name,
+  qbittorrentIngress = this.provide(IngressV1, 'qbittorrentIngress', id => {
+    return {
+      metadata: {
+        name: `${this.k8sWorkstationAppsNasStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace:
+          this.k8sWorkstationAppsNasStack.namespace.element.metadata.name,
+        annotations: {
+          'nginx.ingress.kubernetes.io/auth-url':
+            this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource
+              .shared.authUrl,
+          'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordWorkstationStack.torrentRecord.element.name}${this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource.shared.authSigninPostfix}`,
+          'nginx.ingress.kubernetes.io/auth-response-headers': dedent`
+            Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-entitlements,X-authentik-email,X-authentik-name,X-authentik-uid
+          `,
+          'nginx.ingress.kubernetes.io/auth-snippet': dedent`
+            proxy_set_header X-Forwarded-Host $http_host;
+          `,
         },
-        spec: {
-          selector: {
-            matchLabels: {
-              istio: 'gateway',
-            },
-          },
-          action: 'CUSTOM' as const,
-          provider: {
-            name: this.k8sWorkstationAppsIstioStack.istiodRelease.shared
-              .authentikProxyProviderName,
-          },
-          rules: [
-            {
-              to: [
+      },
+      spec: {
+        ingressClassName: 'nginx',
+        rule: [
+          {
+            host: this.cloudflareRecordWorkstationStack.torrentRecord.element
+              .name,
+            http: {
+              path: [
                 {
-                  operation: {
-                    hosts: [
-                      this.cloudflareRecordWorkstationStack.torrentRecord
-                        .element.name,
-                    ],
+                  path: '/',
+                  pathType: 'Prefix',
+                  backend: {
+                    service: {
+                      name: this.qbittorrentService.element.metadata.name,
+                      port: {
+                        number:
+                          this.k8sWorkstationAppsNasStack.metadata.shared
+                            .services.qbittorrent.ports.web.port,
+                      },
+                    },
                   },
                 },
               ],
             },
-          ],
-        },
+          },
+        ],
       },
-    }),
-  );
+    };
+  });
 
   constructor(
     // Global
@@ -442,16 +409,14 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
     // Stacks
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
-    private readonly k8sWorkstationAppsIstioGatewayStack: K8S_Workstation_Apps_Istio_Gateway_Stack,
+    private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
-    private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Nas_Qbittorrent_Stack.name,
       'Nas Qbittorrent stack for workstation k8s',
     );
-    this.addDependency(this.k8sWorkstationAppsIstioStack);
   }
 }

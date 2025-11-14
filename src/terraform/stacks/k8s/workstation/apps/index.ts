@@ -17,6 +17,8 @@ export * from './game.stack';
 // longhorn
 export * from './longhorn.stack';
 
+// ingress controller
+export * from './ingress-controller.stack';
 // nas
 export * from './nas.jellyfin.stack';
 export * from './nas.qbittorrent.stack';
@@ -30,9 +32,6 @@ export * from './metallb.crd.stack';
 // cert-manager
 export * from './cert-manager.stack';
 export * from './cert-manager.crd.stack';
-
-// ingress-controller
-export * from './ingress-controller.stack';
 
 // monitoring
 export * from './monitoring.stack';

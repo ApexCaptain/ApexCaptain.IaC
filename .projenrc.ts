@@ -455,6 +455,11 @@ void (async () => {
         },
         k8s: {
           oke: {
+            network: {
+              remoteCluster: {
+                sourceCidrBlocks: [`${workstationIpAddress}/32`],
+              },
+            },
             apps: {
               argoCd: {
                 adminPassword:
@@ -484,23 +489,6 @@ void (async () => {
               nfs: {
                 sftp: {
                   userName: process.env.OKE_NFS_APP_SFTP_USER_NAME!!,
-                },
-              },
-              oauth2Proxy: {
-                admin: {
-                  clientId:
-                    process.env.APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_ID!!,
-                  clientSecret:
-                    process.env
-                      .APEX_CAPTAIN_GITHUB_ADMIN_OAUTH_APP_CLIENT_SECRET!!,
-                },
-                contributor: {
-                  clientId:
-                    process.env
-                      .APEX_CAPTAIN_GITHUB_CONTRIBUTOR_OAUTH_APP_CLIENT_ID!!,
-                  clientSecret:
-                    process.env
-                      .APEX_CAPTAIN_GITHUB_CONTRIBUTOR_OAUTH_APP_CLIENT_SECRET!!,
                 },
               },
               homeL2tpVpnProxy: {
@@ -545,6 +533,7 @@ void (async () => {
           },
           workstation: {
             common: {
+              workstationIpv4Ip: workstationIpAddress,
               defaultCalcioIpv4IpPoolsCidrBlock:
                 process.env
                   .WORKSTATION_COMMON_DEFAULT_CALCIO_IPV4_IP_POOLS_CIDR_BLOCK!!,
@@ -559,6 +548,12 @@ void (async () => {
               metallb: {
                 loadbalancerIpRange:
                   process.env.WORKSTATION_METALLB_LOADBALANCER_IP_RANGE!!,
+                istioCrossNetworkGatewayIp:
+                  process.env
+                    .WORKSTATION_METALLB_LOADBALANCER_ISTIO_CROSS_NETWORK_LB_IP!!,
+                ingressControllerIp:
+                  process.env
+                    .WORKSTATION_METALLB_LOADBALANCER_NGINS_INGRESS_CONTROLLER_LB_IP!!,
               },
               longhorn: {
                 nodes: [

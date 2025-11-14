@@ -1,8 +1,6 @@
-import fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import yaml from 'yaml';
 import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Workstation_Apps_Authentik_Stack } from '../../workstation/apps/authentik.stack';
 import { AbstractStack } from '@/common';
@@ -13,6 +11,7 @@ import { DataAuthentikFlow } from '@lib/terraform/providers/authentik/data-authe
 import { DataAuthentikServiceConnectionKubernetes } from '@lib/terraform/providers/authentik/data-authentik-service-connection-kubernetes';
 import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
 import { ServiceConnectionKubernetes } from '@lib/terraform/providers/authentik/service-connection-kubernetes';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Oke_Apps_Authentik_Resources_Stack extends AbstractStack {
@@ -43,7 +42,6 @@ export class K8S_Oke_Apps_Authentik_Resources_Stack extends AbstractStack {
     }),
   );
 
-  // default-provider-authorization-implicit-consent
   dataDefaultProviderAuthorizationImplicitConsent = this.provide(
     DataAuthentikFlow,
     'dataDefaultProviderAuthorizationImplicitConsent',
@@ -117,11 +115,11 @@ export class K8S_Oke_Apps_Authentik_Resources_Stack extends AbstractStack {
       return {
         name: _.startCase(id),
         kubeconfig: JSON.stringify(kubeConfig),
-        // @ToDO Home k8s의 CA 체인 설정
         verifySsl: false,
       };
     },
   );
+
   constructor(
     // Terraform
     private readonly terraformAppService: TerraformAppService,

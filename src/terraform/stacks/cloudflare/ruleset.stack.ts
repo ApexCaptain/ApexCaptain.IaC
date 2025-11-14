@@ -33,6 +33,10 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       this.globalConfigService.config.terraform.externalIpCidrBlocks.apexCaptainHomeIpv4.split(
         '/',
       )[0];
+    const ipv4NayuntechCorp =
+      this.globalConfigService.config.terraform.externalIpCidrBlocks.nayuntechCorpIpv4.split(
+        '/',
+      )[0];
 
     const ociNgwPublicIp = this.k8sOkeNetworkStack.okeNatGateway.element.natIp;
 
@@ -50,8 +54,7 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       description: dedent`
         Allow ArgoCD webhooks and all traffic to Blog.
         Allow access authentik to covered domains.
-
-        Block Authentik access from other than home IP or OCI NAT Gateway public IP.
+        Block Authentik access from unknown IPs.
         Otherwise, block countries except Korea and Japan as default.
       `,
       kind: 'zone',
@@ -109,14 +112,14 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
           },
         },
         {
-          description:
-            'Block Authentik access from other than home IP or OCI NAT Gateway public IP',
+          description: 'Block Authentik access from unknown IPs',
           enabled: true,
           action: 'block',
           expression: dedent`
             http.host eq "${this.cloudflareRecordOkeStack.authentikRecord.element.name}"
-            and ip.src ne ${ipv4Home}
-            and ip.src ne ${ociNgwPublicIp}
+            ${[ipv4Home, ipv4NayuntechCorp, ociNgwPublicIp]
+              .map(ip => `and ip.src ne ${ip}`)
+              .join('\n')}
           `,
         },
         {

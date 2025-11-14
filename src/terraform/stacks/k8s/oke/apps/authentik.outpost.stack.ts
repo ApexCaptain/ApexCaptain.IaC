@@ -5,10 +5,7 @@ import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Oke_Apps_Cloudbeaver_Stack } from './cloudbeaver.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { AbstractStack } from '@/common';
-import {
-  Cloudflare_Record_Oke_Stack,
-  Cloudflare_Record_Stack,
-} from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { Outpost } from '@lib/terraform/providers/authentik/outpost';
@@ -36,7 +33,7 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
     const providers = [this.k8sOkeAppsCloudbeaverStack.authentikProxyProvider];
     return {
       name: this.k8sOkeAppsIstioStack.istiodRelease.shared
-        .authentikProxyOutpostName,
+        .okeAuthentikProxyOutpostName,
       type: 'proxy',
       protocolProviders: providers.map(provider =>
         Fn.tonumber(provider.element.id),

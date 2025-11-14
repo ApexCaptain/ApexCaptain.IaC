@@ -546,6 +546,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     };
   });
 
+  /*
   sdtdDashboardVirtualService = this.provide(
     IstioVirtualService,
     'sdtdDashboardVirtualService',
@@ -579,46 +580,6 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
             },
           ],
         },
-      },
-    }),
-  );
-
-  /*
-  sdtdDashboardIngress = this.provide(
-    IngressV1,
-    'sdtdDashboardIngress',
-    id => ({
-      metadata: {
-        name: `${this.k8sWorkstationAppsGameStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace:
-          this.k8sWorkstationAppsGameStack.namespace.element.metadata.name,
-        annotations: {},
-      },
-      spec: {
-        ingressClassName: 'nginx',
-        rule: [
-          {
-            host: this.cloudflareRecordStack.sdtdRecord.element.name,
-            http: {
-              path: [
-                {
-                  path: '/',
-                  pathType: 'Prefix',
-                  backend: {
-                    service: {
-                      name: this.sdtdService.element.metadata.name,
-                      port: {
-                        number:
-                          this.k8sWorkstationAppsGameStack.metadata.shared
-                            .services['7dtd'].ports.dashboard.port,
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        ],
       },
     }),
   );

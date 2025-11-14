@@ -7,9 +7,6 @@ export * from './authentik.outpost.stack';
 export * from './cert-manager.stack';
 export * from './cert-manager.crd.stack';
 
-// Ingress Controller
-export * from './ingress-controller.stack';
-
 // Dashboard
 export * from './dashboard.stack';
 

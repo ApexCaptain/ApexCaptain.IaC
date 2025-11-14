@@ -4,6 +4,7 @@ export const WorkstationSchema = Joi.object({
   common: Joi.object({
     defaultCalcioIpv4IpPoolsCidrBlock: Joi.string().required(),
     nordLynxPrivateKey: Joi.string().required(),
+    workstationIpv4Ip: Joi.string().required(),
     domain: Joi.object({
       iptime: Joi.string().required(),
     }).required(),
@@ -11,6 +12,8 @@ export const WorkstationSchema = Joi.object({
   apps: Joi.object({
     metallb: Joi.object({
       loadbalancerIpRange: Joi.string().required(),
+      istioCrossNetworkGatewayIp: Joi.string().required(),
+      ingressControllerIp: Joi.string().required(),
     }).required(),
     longhorn: Joi.object({
       nodes: Joi.array()
