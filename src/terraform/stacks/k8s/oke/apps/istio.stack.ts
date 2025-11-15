@@ -181,7 +181,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
    * LB 값 아끼려면 이렇게 별도 스크립트 짜는 수밖에 없는듯...
    * 회사에서 쓸 때는 그냥 맘 편하게 LB 하나 더 할당하도록 하자, 그게 더 안전하기도 함
    *
-   * Flextible Load Balancer 사용 시 UDP 포트 사용이 불가능 하므로 TCP만 할당함
+   * Flexible Load Balancer 사용 시 UDP 포트 사용이 불가능 하므로 TCP만 할당함
    * NLB로 변경하면 가능은 한데, NLB는 존재하는 것 만으로도 비용 차지가 발생
    */
   istioEastWestGatewayServicePortPatch = this.provide(

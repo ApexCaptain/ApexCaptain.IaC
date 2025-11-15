@@ -147,10 +147,9 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
                   hosts,
                   tls: {
                     mode: 'SIMPLE' as const,
-                    // @ToDo Rate Limit 제한으로 잠시 Staging 인증서 적용, 추후 발급 제한 풀리면 Production 인증서 적용 필요
                     credentialName:
-                      this.istioIngressGatewayWildcardStagingCertificate.shared
-                        .secretName,
+                      this.istioIngressGatewayWildcardProductionCertificate
+                        .shared.secretName,
                   },
                 },
               ],

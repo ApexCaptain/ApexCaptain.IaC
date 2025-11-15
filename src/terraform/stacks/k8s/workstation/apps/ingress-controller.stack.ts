@@ -72,7 +72,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
               secretName,
               issuerRef: {
                 name: this.k8sWorkstationAppsCertManagerCRDStack
-                  .letsEncryptStagingClusterIssuer.shared.name,
+                  .letsEncryptProdClusterIssuer.shared.name,
                 kind: 'ClusterIssuer',
               },
               dnsNames: [
