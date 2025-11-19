@@ -35,6 +35,10 @@ export * from './argo-cd.resources.stack';
 
 // Monitoring
 export * from './monitoring.stack';
+export * from './monitoring.resources.stack';
 
 // GitOps
 export * from './git-ops.stack';
+
+// Kiali Operator
+export * from './kiali-operator.stack';

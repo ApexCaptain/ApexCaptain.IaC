@@ -32,7 +32,7 @@ export class IstioAuthorizationPolicy extends Manifest {
                 notIpBlocks?: string[];
                 remoteIpBlocks?: string[];
                 notRemoteIpBlocks?: string[];
-              }[];
+              };
             }[];
             to?: {
               operation?: {

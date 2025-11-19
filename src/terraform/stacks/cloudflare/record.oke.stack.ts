@@ -25,6 +25,19 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
     },
   };
 
+  okeDirectRecord = this.provide(DnsRecord, 'okeDirectRecord', () => ({
+    name: `oke-direct.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: false,
+    comment: 'Cloudflare record for OKE direct connection (no proxy)',
+  }));
+
   authentikRecord = this.provide(DnsRecord, 'authentikRecord', () => ({
     name: `authentik.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -49,6 +62,32 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
         .ipAddress,
     proxied: true,
     comment: 'Cloudflare record for Database Client service',
+  }));
+
+  grafanaRecord = this.provide(DnsRecord, 'grafanaRecord', () => ({
+    name: `grafana.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Grafana service',
+  }));
+
+  kialiRecord = this.provide(DnsRecord, 'kialiRecord', () => ({
+    name: `kiali.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Kiali service',
   }));
 
   constructor(

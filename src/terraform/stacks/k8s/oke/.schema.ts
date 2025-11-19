@@ -24,6 +24,7 @@ export const OkeSchema = Joi.object({
         adminUser: Joi.string().required(),
         adminPassword: Joi.string().required(),
       }).required(),
+      workstationClusterServer: Joi.string().required(),
     }).required(),
     nfs: Joi.object({
       sftp: Joi.object({

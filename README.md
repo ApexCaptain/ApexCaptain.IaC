@@ -4,64 +4,44 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 
 ## 🎯 주요 기능
 
-### 1. 멀티 Kubernetes 클러스터 아키텍처 구축
+### 인프라 아키텍처
 
-- Oracle Cloud OKE 클러스터(클라우드)와 On-premise 클러스터를 통합 관리하는 환경 구축
-- Istio 멀티 클러스터 서비스메시 구성 완료 - OKE와 Workstation 클러스터 간 서비스 메시 통합
-- Istio 서비스 메시와 L2TP VPN 프록시를 구현하여 네트워크 격리와 보안을 동시에 확보
+- **멀티 클러스터**: OKE(클라우드) + Workstation(On-premise) 하이브리드 환경
+- **Istio 서비스 메시**: 멀티 클러스터 서비스 메시 통합, Istio Gateway 기반 인그레스
+- **Zero Trust 네트워크**: Bastion 호스트, L2TP VPN 프록시를 통한 네트워크 격리
 
-### 2. 100% 코드 기반 인프라 관리 시스템 개발
+### 인프라 관리
 
-- TypeScript + CDKTF를 활용한 선언적 인프라 정의로 30개 이상의 독립적인 인프라 스택 관리
-- 선택적 스택 배포 시스템 구현 (대화형 CLI 도구 개발)
-- Terraform 상태 파일의 안전한 관리와 버전 관리를 위해 Google Drive 연동 로컬 백엔드, 자동 백업 스크립트 구현, 스택별 독립적인 상태 관리
+- **코드 기반 관리**: TypeScript + CDKTF로 30+ 개의 독립적인 인프라 스택 관리
+- **선택적 배포**: 대화형 CLI 도구를 통한 스택별 배포
+- **상태 관리**: Google Drive 연동 로컬 백엔드, 자동 백업, 스택별 독립 상태 관리
 
-### 3. 종합적인 보안 체계 및 DNS/CDN 관리
+### 보안 및 인증
 
-- Authentik 중앙 인증 처리 시스템 구현 - 멀티 클러스터 환경에서 중앙화된 인증 시스템 구축 (Istio Ingress + Nginx Ingress 통합 지원)
-- OAuth2 Proxy를 통한 GitHub OAuth 인증 시스템 구현
-- Cert-Manager를 활용한 SSL/TLS 인증서 자동 관리 시스템 구축
-- Bastion 호스트를 통한 Zero Trust 네트워크 아키텍처 구현
-- Cloudflare를 활용한 DNS 관리 및 CDN 구성, 방화벽 정책 설정
+- **Authentik**: 멀티 클러스터 중앙 인증 시스템 (Istio Gateway 통합)
+- **Cert-Manager**: SSL/TLS 인증서 자동 관리
+- **Cloudflare**: DNS/CDN 관리 및 Ruleset 기반 방화벽 정책
 
-### 4. 개인 미디어 & 게임 서버 인프라 구축
+### 모니터링 및 관찰성
 
-- Jellyfin 미디어 스트리밍 서버 구축 및 운영
-- qBittorrent 토렌트 관리 시스템 구현
-- 7 Days to Die 게임 서버 운영
-- On-premise Longhorn 분산 스토리지 시스템을 도입하여 HDD/SSD 하이브리드 구성으로 성능과 용량을 최적화
+- **메트릭**: Prometheus + Grafana (양쪽 클러스터)
+- **서비스 메시**: Kiali를 통한 멀티 클러스터 시각화
+- **로그**: Loki(OKE 중앙화) + Promtail(양쪽 클러스터, Workstation → OKE 원격 전송)
+- **Istio 모니터링**: istiod ServiceMonitor, Envoy PodMonitor
 
-### 5. DevOps 도구 및 자동화
+### 애플리케이션
 
-- Prometheus + Grafana 모니터링 스택 구축
-- ArgoCD 기반 GitOps 워크플로우 구축
-
-### 6. 기타 개발 보조 도구
-
-- CloudBeaver 데이터베이스 관리 도구 통합
-- Redis UI 관리 인터페이스 구축
-- Windows 원격 데스크톱 환경 구축
+- **미디어/게임**: Jellyfin, qBittorrent, 7 Days to Die
+- **AI 서비스**: Ollama, Open WebUI
+- **개발 도구**: CloudBeaver, Redis UI, Windows Desktop
+- **DevOps**: ArgoCD GitOps, Longhorn 분산 스토리지
 
 ## 🏗️ 기술 스택
 
-### 핵심 기술
-
-- **CDK for Terraform (CDKTF)** - TypeScript 기반 인프라 정의
-- **Oracle Cloud Infrastructure (OCI)** - 클라우드 플랫폼
-- **Kubernetes** - 컨테이너 오케스트레이션
-- **Istio** - 서비스 메시
-- **ArgoCD** - GitOps 배포 관리
-- **Longhorn** - 분산 스토리지 시스템
-- **MetalLB** - 로드 밸런서
-- **Cloudflare** - DNS 및 CDN 관리
-
-### 개발 도구
-
-- **TypeScript** - 메인 개발 언어
-- **NestJS** - 애플리케이션 프레임워크
-- **Projen** - 프로젝트 자동화 도구
-- **ESLint + Prettier** - 코드 품질 관리
-- **Yarn** - 패키지 관리
+**인프라**: CDKTF, OCI, Kubernetes, Istio, ArgoCD, Longhorn, MetalLB  
+**모니터링**: Prometheus, Grafana, Kiali, Loki, Promtail  
+**보안**: Authentik, Cert-Manager, Cloudflare  
+**개발**: TypeScript, NestJS, Projen, ESLint, Prettier, Yarn
 
 ## 🚀 주요 스크립트
 
@@ -78,31 +58,20 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 | `yarn tf@clean`            | CDKTF 출력 디렉토리 정리      |
 | `yarn terminal`            | 대화형 터미널 도구 v2         |
 
-## 📊 프로젝트 규모
+## 📊 인프라 구성
 
-- **총 스택 수**: 30+ 개의 독립적인 인프라 스택
-- **배포된 애플리케이션**: 20+ 개의 컨테이너화된 서비스
-- **지원 환경**: 클라우드(OCI) + On-premise 하이브리드
-- **자동화 수준**: 100% 코드 기반 인프라 관리
+**OKE (클라우드)**
 
-### 🏗️ 인프라 스택 구성
+- 시스템: ArgoCD, Istio Gateway, Vault, Prometheus+Grafana+Kiali+Loki, Cert-Manager, Authentik
+- 모니터링: istiod ServiceMonitor, Envoy PodMonitor
+- 로그: Loki(중앙화) + Promtail
+- 애플리케이션: CloudBeaver, Redis UI, L2TP VPN Proxy, NFS Server, Dashboard
 
-**Oracle Cloud OKE (클라우드)**
+**Workstation (On-premise)**
 
-- 시스템: ArgoCD, Istio, Vault, Prometheus+Grafana, Cert-Manager, Ingress Controller
-- 애플리케이션: CloudBeaver, Redis UI, OAuth2 Proxy, Home L2TP VPN Proxy, NFS Server, Dashboard
+- 시스템: Istio Gateway, Longhorn, MetalLB, Prometheus+Grafana, Cert-Manager, Authentik Outpost
+- 모니터링: Envoy PodMonitor
+- 로그: Promtail → OKE Loki 원격 전송
+- 애플리케이션: Jellyfin, qBittorrent, 7 Days to Die, Ollama, Open WebUI, Windows Desktop
 
-**On-premise Workstation**
-
-- 시스템: Istio, Longhorn Storage, MetalLB, Prometheus+Grafana, Cert-Manager, Ingress Controller
-- 미디어/게임: Jellyfin, qBittorrent, 7 Days to Die, Game SFTP, NAS SFTP
-- 개발 도구: Windows Desktop, Development Pods
-
-## 🎯 핵심 성과
-
-- **하이브리드 멀티 클러스터** 환경 구축 (OKE + Workstation)
-- **100% 코드 기반** 인프라 관리 (TypeScript + CDKTF)
-- **GitOps 워크플로우** 구현으로 배포 자동화 (ArgoCD 기반)
-- **Zero Trust 네트워크** 아키텍처 구현
-- **분산 스토리지** 시스템 (Longhorn - HDD/SSD 하이브리드)
-- **개인 미디어 & 게임 서버** 통합 관리
+**규모**: 30+ 인프라 스택, 20+ 컨테이너화된 서비스

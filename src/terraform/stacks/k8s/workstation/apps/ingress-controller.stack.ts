@@ -72,7 +72,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
               secretName,
               issuerRef: {
                 name: this.k8sWorkstationAppsCertManagerCRDStack
-                  .letsEncryptStagingClusterIssuer.shared.name,
+                  .letsEncryptProdClusterIssuer.shared.name,
                 kind: 'ClusterIssuer',
               },
               dnsNames: [
@@ -143,7 +143,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         },
 
         extraArgs: {
-          'default-ssl-certificate': `${this.namespace.element.metadata.name}/${this.nginxIngressControllerWildcardStagingCertificate.shared.secretName}`,
+          'default-ssl-certificate': `${this.namespace.element.metadata.name}/${this.nginxIngressControllerWildcardProductionCertificate.shared.secretName}`,
         },
         config: {
           'allow-snippet-annotations': true,

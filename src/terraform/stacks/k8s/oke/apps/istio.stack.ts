@@ -5,8 +5,9 @@ import yaml from 'yaml';
 import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
-import { IstioPeerAuthentication } from '@/common';
+import { IstioPeerAuthentication, OciNetworkProtocol } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
+import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
@@ -58,7 +59,9 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     metadata: {
       name: this.metadata.shared.namespace,
       labels: {
-        'topology.istio.io/network': 'oke',
+        'topology.istio.io/network':
+          this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+            .okeClusterName,
       },
     },
   }));
@@ -89,19 +92,30 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         values: [
           yaml.stringify({
             global: {
-              meshID: 'apex-captain-mesh',
+              meshID:
+                this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                  .meshId,
               externalIstiod: true,
               multiCluster: {
-                clusterName: 'oke',
+                clusterName:
+                  this.globalConfigService.config.terraform.stacks.k8s
+                    .serviceMesh.okeClusterName,
               },
-              network: 'oke',
+              network:
+                this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                  .okeClusterName,
             },
             meshConfig: {
               defaultConfig: {
                 proxyMetadata: {
                   ISTIO_META_DNS_CAPTURE: 'true',
+                  CLUSTER_ID:
+                    this.globalConfigService.config.terraform.stacks.k8s
+                      .serviceMesh.okeClusterName,
                 },
               },
+              trustDomain: 'cluster.local',
+              accessLogFile: '/dev/stdout',
 
               extensionProviders: [
                 {
@@ -149,7 +163,9 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
           values: [
             yaml.stringify({
               name,
-              networkGateway: 'oke',
+              networkGateway:
+                this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                  .okeClusterName,
               service: {
                 type: 'LoadBalancer',
                 loadBalancerIP:
@@ -181,7 +197,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
    * LB 값 아끼려면 이렇게 별도 스크립트 짜는 수밖에 없는듯...
    * 회사에서 쓸 때는 그냥 맘 편하게 LB 하나 더 할당하도록 하자, 그게 더 안전하기도 함
    *
-   * Flextible Load Balancer 사용 시 UDP 포트 사용이 불가능 하므로 TCP만 할당함
+   * Flexible Load Balancer 사용 시 UDP 포트 사용이 불가능 하므로 TCP만 할당함
    * NLB로 변경하면 가능은 한데, NLB는 존재하는 것 만으로도 비용 차지가 발생
    */
   istioEastWestGatewayServicePortPatch = this.provide(
@@ -203,17 +219,57 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         present: boolean;
       }[] = [
         {
-          port: 80,
+          port: this.k8sOkeNetworkStack.loadbalancerPortMappings.httpPort
+            .inbound,
           name: 'http',
-          targetPort: 80,
-          protocol: 'TCP',
+          targetPort:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.httpPort.inbound,
+          protocol:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.httpPort
+              .protocol === OciNetworkProtocol.TCP
+              ? 'TCP'
+              : 'UDP',
           present: true,
         },
         {
-          port: 443,
+          port: this.k8sOkeNetworkStack.loadbalancerPortMappings.httpsPort
+            .inbound,
           name: 'https',
-          targetPort: 443,
-          protocol: 'TCP',
+          targetPort:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.httpsPort.inbound,
+          protocol:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.httpsPort
+              .protocol === OciNetworkProtocol.TCP
+              ? 'TCP'
+              : 'UDP',
+          present: true,
+        },
+        {
+          port: this.k8sOkeNetworkStack.loadbalancerPortMappings
+            .prometheusRemoteWritePort.inbound,
+          name: 'prometheus-remote-write',
+          targetPort:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings
+              .prometheusRemoteWritePort.inbound,
+          protocol:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings
+              .prometheusRemoteWritePort.protocol === OciNetworkProtocol.TCP
+              ? 'TCP'
+              : 'UDP',
+          present: true,
+        },
+        {
+          port: this.k8sOkeNetworkStack.loadbalancerPortMappings
+            .lokiRemoteWritePort.inbound,
+          name: 'loki-remote-write',
+          targetPort:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.lokiRemoteWritePort
+              .inbound,
+          protocol:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.lokiRemoteWritePort
+              .protocol === OciNetworkProtocol.TCP
+              ? 'TCP'
+              : 'UDP',
           present: true,
         },
       ];
@@ -221,7 +277,6 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
       const provisioners = additionalPorts.map<LocalExecProvisioner>(
         ({ port, name, targetPort, protocol, present }) => {
           if (present) {
-            // 포트 추가
             return {
               type: 'local-exec',
               command: dedent`
@@ -308,6 +363,9 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,
+
+    // Global
+    private readonly globalConfigService: GlobalConfigService,
 
     // Stacks
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
