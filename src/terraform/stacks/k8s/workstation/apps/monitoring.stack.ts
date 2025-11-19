@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
+import yaml from 'yaml';
+import { K8S_Oke_Network_Stack } from '../../oke/network.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
+import { Release } from '@lib/terraform/providers/helm/release';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
@@ -34,7 +40,6 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
     },
   };
 
-  /*
   metadata = this.provide(Resource, 'metadata', () => [
     {},
     this.k8sWorkstationSystemStack.applicationMetadata.shared.monitoring,
@@ -43,9 +48,13 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'disabled',
+      },
     },
   }));
 
+  // Helm Charts
   kubePrometheusStackRelease = this.provide(
     Release,
     'kubePrometheusStackRelease',
@@ -57,81 +66,46 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
         namespace: this.namespace.element.metadata.name,
         createNamespace: false,
         values: [
+          // Prometheus
           yaml.stringify({
-            // Grafana: 임시. 추후 OKE 스택으로 통합 예정.
-            grafana: {
-              defaultDashboardsTimezone: Timezone['Asia/Seoul'],
-              adminUser:
-                this.globalConfigService.config.terraform.stacks.k8s.oke.apps
-                  .monitoring.grafana.adminUser,
-              adminPassword:
-                this.globalConfigService.config.terraform.stacks.k8s.oke.apps
-                  .monitoring.grafana.adminPassword,
-
-              sidecar: {
-                datasources: {
-                  enabled: true,
-                  skipTlsVerify: true,
+            prometheus: {
+              enabled: true,
+              prometheusSpec: {
+                externalLabels: {
+                  cluster:
+                    this.globalConfigService.config.terraform.stacks.k8s
+                      .serviceMesh.workstationClusterName,
                 },
-              },
-
-              ingress: {
-                enabled: true,
-                ingressClassName: 'nginx',
-                annotations: {
-                  'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-                  'nginx.ingress.kubernetes.io/rewrite-target': '/',
-                  'nginx.ingress.kubernetes.io/auth-url':
-                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-                      .shared.authUrl,
-                  'nginx.ingress.kubernetes.io/auth-signin':
-                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-                      .shared.authSignin,
-                },
-                hosts: [
-                  this.cloudflareRecordStack.grafanaWorkstationRecord.element
-                    .name,
+                remoteWrite: [
+                  {
+                    url: `https://${this.cloudflareRecordOkeStack.okeDirectRecord.element.name}:${this.k8sOkeNetworkStack.loadbalancerPortMappings.prometheusRemoteWritePort.inbound}/api/v1/write`,
+                  },
                 ],
-              },
-              dashboards: {
-                'node-exporter': {
-                  'node-exporter-full': {
-                    gnetId: 1860,
-                    revision: 36,
-                    datasource: 'Prometheus',
+                resources: {
+                  requests: {
+                    cpu: '500m',
+                    memory: '1024Mi',
                   },
-                },
-                gpu: {
-                  'nvidia-gpu-metrics': {
-                    gnetId: 11578,
-                    revision: 1,
-                    datasource: 'Prometheus',
+                  limits: {
+                    cpu: '1',
+                    memory: '2Gi',
                   },
                 },
               },
-              dashboardProviders: {
-                'dashboardproviders.yaml': {
-                  apiVersion: 1,
-                  providers: [
-                    {
-                      name: 'node-exporter',
-                      folder: 'Node Exporter',
-                      type: 'file',
-                      options: {
-                        path: '/var/lib/grafana/dashboards/node-exporter',
-                      },
-                    },
-                    {
-                      name: 'gpu',
-                      folder: 'GPU',
-                      type: 'file',
-                      options: {
-                        path: '/var/lib/grafana/dashboards/gpu',
-                      },
-                    },
-                  ],
-                },
-              },
+            },
+          }),
+
+          // Grafana
+          yaml.stringify({
+            grafana: {
+              enabled: false,
+            },
+          }),
+
+          // AlertManager
+          yaml.stringify({
+            alertmanager: {
+              enabled: false,
             },
           }),
         ],
@@ -139,25 +113,60 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
     },
   );
 
-  dcgmExporterRelease = this.provide(Release, 'dcgmExporterRelease', () => {
+  lokiStackRelease = this.provide(Release, 'lokiStackRelease', () => {
     return {
-      name: this.metadata.shared.helm.dcgmExporter.name,
-      chart: this.metadata.shared.helm.dcgmExporter.chart,
-      repository: this.metadata.shared.helm.dcgmExporter.repository,
+      name: this.metadata.shared.helm.lokiStack.name,
+      chart: this.metadata.shared.helm.lokiStack.chart,
+      repository: this.metadata.shared.helm.lokiStack.repository,
       namespace: this.namespace.element.metadata.name,
       createNamespace: false,
       values: [
+        // Loki
+        // OKE의 Loki로 전송
         yaml.stringify({
-          serviceMonitor: {
-            additionalLabels: {
-              release: 'kube-prometheus-stack',
+          loki: {
+            enabled: false,
+          },
+        }),
+        // Promtail
+        yaml.stringify({
+          promtail: {
+            enabled: true,
+            config: {
+              clients: [
+                {
+                  url: `https://${this.cloudflareRecordOkeStack.okeDirectRecord.element.name}:${this.k8sOkeNetworkStack.loadbalancerPortMappings.lokiRemoteWritePort.inbound}/loki/api/v1/push`,
+                  external_labels: {
+                    cluster:
+                      this.globalConfigService.config.terraform.stacks.k8s
+                        .serviceMesh.workstationClusterName,
+                  },
+                },
+              ],
             },
+            resources: {
+              requests: {
+                cpu: '200m',
+                memory: '512Mi',
+              },
+              limits: {
+                cpu: '400m',
+                memory: '1Gi',
+              },
+            },
+          },
+        }),
+
+        // Grafana
+        // OKE의 Grafana로 대체
+        yaml.stringify({
+          grafana: {
+            enabled: false,
           },
         }),
       ],
     };
   });
-  */
 
   constructor(
     // Terraform
@@ -169,7 +178,8 @@ export class K8S_Workstation_Apps_Monitoring_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

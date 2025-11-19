@@ -52,8 +52,7 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
       name: id,
       description: dedent`
-        Allow ArgoCD webhooks and all traffic to Blog.
-        Allow access authentik to covered domains.
+        Allow blog traffic, ArgoCD webhooks and Authentik traffic to covered domains.
         Block Authentik access from unknown IPs.
         Otherwise, block countries except Korea and Japan as default.
       `,
@@ -61,7 +60,8 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       phase: 'http_request_firewall_custom',
       rules: [
         {
-          description: 'Allow all traffic to blog',
+          description:
+            'Allow blog traffic, ArgoCD webhooks and Authentik traffic to covered domains',
           enabled: true,
           action: 'skip',
           logging: {
@@ -69,41 +69,19 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
           },
           expression: dedent`
             http.host eq "${this.cloudflareRecordStack.blogRecord.element.name}"
-          `,
-          actionParameters: {
-            ruleset: 'current',
-          },
-        },
-        {
-          description: 'Allow ArgoCD webhooks',
-          enabled: true,
-          action: 'skip',
-          logging: {
-            enabled: true,
-          },
-          expression: dedent`
-            http.host eq "${this.cloudflareRecordStack.argoCdRecord.element.name}"
-            and http.request.uri.path contains "/api/webhook"
-          `,
-          actionParameters: {
-            ruleset: 'current',
-          },
-        },
-        {
-          description: 'Allow Authentik access to covered domains',
-          enabled: true,
-          action: 'skip',
-          logging: {
-            enabled: true,
-          },
-          expression: dedent`
-            http.host eq "${this.cloudflareRecordOkeStack.authentikRecord.element.name}"
-            and (
-              starts_with(http.request.uri.path, "/static")
-              or starts_with(http.request.uri.path, "/ws")
-              or (
-                http.request.uri.query contains "redirect_uri"
-                and ( ${domainsCoveredByAuthentik.map(domain => `http.request.uri.query contains "${domain.element.name}"`).join(' or ')} )
+            or (
+              http.host eq "${this.cloudflareRecordStack.argoCdRecord.element.name}"
+              and http.request.uri.path contains "/api/webhook"
+            )
+            or (
+              http.host eq "${this.cloudflareRecordOkeStack.authentikRecord.element.name}"
+              and (
+                starts_with(http.request.uri.path, "/static")
+                or starts_with(http.request.uri.path, "/ws")
+                or (
+                  http.request.uri.query contains "redirect_uri"
+                  and ( ${domainsCoveredByAuthentik.map(domain => `http.request.uri.query contains "${domain.element.name}"`).join(' or ')} )
+                )
               )
             )
           `,

@@ -4,6 +4,7 @@ import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.st
 import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Oke_Apps_Cloudbeaver_Stack } from './cloudbeaver.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Oke_Apps_Monitoring_Stack } from './monitoring.stack';
 import { AbstractStack } from '@/common';
 import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -30,7 +31,11 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
   };
 
   proxyOutpost = this.provide(Outpost, 'proxyOutpost', () => {
-    const providers = [this.k8sOkeAppsCloudbeaverStack.authentikProxyProvider];
+    const providers = [
+      this.k8sOkeAppsCloudbeaverStack.authentikProxyProvider,
+      this.k8sOkeAppsMonitoringStack.grafanaAuthentikProxyProvider,
+      this.k8sOkeAppsMonitoringStack.kialiAuthentikProxyProvider,
+    ];
     return {
       name: this.k8sOkeAppsIstioStack.istiodRelease.shared
         .okeAuthentikProxyOutpostName,
@@ -58,6 +63,7 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
     private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsCloudbeaverStack: K8S_Oke_Apps_Cloudbeaver_Stack,
+    private readonly k8sOkeAppsMonitoringStack: K8S_Oke_Apps_Monitoring_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

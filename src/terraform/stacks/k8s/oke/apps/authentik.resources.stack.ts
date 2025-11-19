@@ -11,7 +11,6 @@ import { DataAuthentikFlow } from '@lib/terraform/providers/authentik/data-authe
 import { DataAuthentikServiceConnectionKubernetes } from '@lib/terraform/providers/authentik/data-authentik-service-connection-kubernetes';
 import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
 import { ServiceConnectionKubernetes } from '@lib/terraform/providers/authentik/service-connection-kubernetes';
-import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
 export class K8S_Oke_Apps_Authentik_Resources_Stack extends AbstractStack {

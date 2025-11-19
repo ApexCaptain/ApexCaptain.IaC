@@ -35,6 +35,7 @@ export * from './cert-manager.crd.stack';
 
 // monitoring
 export * from './monitoring.stack';
+export * from './monitoring.resources.stack';
 
 // git-ops
 export * from './git-ops.stack';

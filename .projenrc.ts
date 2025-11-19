@@ -246,7 +246,7 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.4.2',
+    'constructs@^10.4.3',
     '@types/lodash',
     'commander',
     'flatley',
@@ -454,6 +454,11 @@ void (async () => {
           },
         },
         k8s: {
+          serviceMesh: {
+            meshId: 'apex-captain-mesh',
+            okeClusterName: 'oke',
+            workstationClusterName: 'workstation',
+          },
           oke: {
             network: {
               remoteCluster: {
@@ -485,6 +490,7 @@ void (async () => {
                   adminPassword:
                     process.env.OKE_MONITORING_APP_GRAFANA_ADMIN_PASSWORD!!,
                 },
+                workstationClusterServer: `https://${process.env.WORKSTATION_COMMON_DOMAIN_IPTIME}:${process.env.WORKSTATION_COMMON_K8S_CONTROL_PLANE_EXTERNAL_PORT}`,
               },
               nfs: {
                 sftp: {

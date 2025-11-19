@@ -1,20 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend, LocalExecProvisioner } from 'cdktf';
-import dedent from 'dedent';
+import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Oke_Network_Stack } from '../../oke/network.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
-import { IstioPeerAuthentication, IstioServiceEntry } from '@/common';
+import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
+import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
+import { ClusterRoleV1 } from '@lib/terraform/providers/kubernetes/cluster-role-v1';
+import { DataKubernetesSecretV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-secret-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
+import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 
@@ -51,10 +55,14 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     metadata: {
       name: this.metadata.shared.namespace,
       labels: {
-        'topology.istio.io/network': 'workstation',
+        'topology.istio.io/network':
+          this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+            .workstationClusterName,
       },
       annotations: {
-        'topology.istio.io/controlPlaneClusters': 'oke',
+        'topology.istio.io/controlPlaneClusters':
+          this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+            .okeClusterName,
       },
     },
   }));
@@ -92,9 +100,13 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
                 .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
                 .ipAddress,
             multiCluster: {
-              clusterName: 'workstation',
+              clusterName:
+                this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                  .workstationClusterName,
             },
-            network: 'workstation',
+            network:
+              this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                .workstationClusterName,
           },
           istiodRemote: {
             istiodRemote: true,
@@ -126,7 +138,9 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
           values: [
             yaml.stringify({
               name,
-              networkGateway: 'workstation',
+              networkGateway:
+                this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
+                  .workstationClusterName,
               service: {
                 type: 'LoadBalancer',
                 loadBalancerIP:
@@ -164,6 +178,88 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
         },
       },
       dependsOn: [this.istioBaseRelease.element],
+    }),
+  );
+
+  kialiRemoteAccessServiceAccount = this.provide(
+    ServiceAccountV1,
+    'kialiRemoteAccessServiceAccount',
+    id => {
+      const name = _.kebabCase(id);
+      return {
+        metadata: {
+          name,
+          namespace: this.namespace.element.metadata.name,
+        },
+        secret: [
+          {
+            name: `${name}-token`,
+          },
+        ],
+      };
+    },
+  );
+
+  kialiRemoteAccessClusterRole = this.provide(
+    ClusterRoleV1,
+    'kialiRemoteAccessClusterRole',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+      },
+      rule: [
+        {
+          apiGroups: ['*'],
+          resources: ['*'],
+          verbs: ['get', 'list', 'watch'],
+        },
+        {
+          nonResourceUrls: ['*'],
+          verbs: ['get'],
+        },
+      ],
+    }),
+  );
+
+  kialiRemoteAccessClusterRoleBinding = this.provide(
+    ClusterRoleBindingV1,
+    'kialiRemoteAccessClusterRoleBinding',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+      },
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: this.kialiRemoteAccessClusterRole.element.metadata.name,
+      },
+      subject: [
+        {
+          kind: 'ServiceAccount',
+          name: this.kialiRemoteAccessServiceAccount.element.metadata.name,
+          namespace: this.namespace.element.metadata.name,
+        },
+      ],
+    }),
+  );
+
+  kialiRemoteAccessServiceAccountSecret = this.provide(
+    SecretV1,
+    'kialiRemoteAccessServiceAccountSecret',
+    () => ({
+      metadata: {
+        name: this.kialiRemoteAccessServiceAccount.element.secret.get(0).name,
+        annotations: {
+          'kubernetes.io/service-account.name':
+            this.kialiRemoteAccessServiceAccount.element.metadata.name,
+        },
+        namespace:
+          this.kialiRemoteAccessServiceAccount.element.metadata.namespace,
+        generateName:
+          this.kialiRemoteAccessServiceAccount.element.secret.get(0).name,
+      },
+      type: 'kubernetes.io/service-account-token',
+      waitForServiceAccountToken: true,
     }),
   );
 

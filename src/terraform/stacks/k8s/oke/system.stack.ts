@@ -124,6 +124,22 @@ export class K8S_Oke_System_Stack extends AbstractStack {
               chart: 'kube-prometheus-stack',
               repository: 'https://prometheus-community.github.io/helm-charts',
             },
+            lokiStack: {
+              name: 'loki-stack',
+              chart: 'loki-stack',
+              repository: 'https://grafana.github.io/helm-charts',
+            },
+          },
+        }),
+
+        kialiOperator: createK8sApplicationMetadata({
+          namespace: 'kiali-operator',
+          helm: {
+            kialiOperator: {
+              name: 'kiali-operator',
+              chart: 'kiali-operator',
+              repository: 'https://kiali.org/helm-charts',
+            },
           },
         }),
 
@@ -158,14 +174,14 @@ export class K8S_Oke_System_Stack extends AbstractStack {
                 },
                 sftp: {
                   portBasedIngressPort:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings
-                      .nfsSftpNodePort.inbound,
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings.nfsSftpPort
+                      .inbound,
                   name: 'sftp',
                   port: 22,
                   targetPort: '22',
                   protocol:
-                    this.k8sOkeNetworkStack.loadbalancerPortMappings
-                      .nfsSftpNodePort.protocol === OciNetworkProtocol.TCP
+                    this.k8sOkeNetworkStack.loadbalancerPortMappings.nfsSftpPort
+                      .protocol === OciNetworkProtocol.TCP
                       ? 'TCP'
                       : 'UDP',
                 },

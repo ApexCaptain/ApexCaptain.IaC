@@ -71,48 +71,64 @@ export class K8S_Oke_Network_Stack extends AbstractStack {
   };
 
   loadbalancerPortMappings = (() => {
-    const httpNodePort = createLoadBalancerPortInfo({
+    const httpPort = createLoadBalancerPortInfo({
       inbound: 80,
     });
 
-    const httpsNodePort = createLoadBalancerPortInfo({
+    const httpsPort = createLoadBalancerPortInfo({
       inbound: 443,
     });
 
-    const nfsSftpNodePort = createLoadBalancerPortInfo({
+    const nfsSftpPort = createLoadBalancerPortInfo({
       inbound: 8022,
       protocol: OciNetworkProtocol.TCP,
       description: 'SFTP port for NFS service',
     });
 
-    const tlsIstiodNodePort = createLoadBalancerPortInfo({
+    const tlsIstiodPort = createLoadBalancerPortInfo({
       inbound: 15012,
       protocol: OciNetworkProtocol.TCP,
       description: 'TLS Istiod port for Istio gateway',
       sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
     });
 
-    const tlsWebhookNodePort = createLoadBalancerPortInfo({
+    const tlsWebhookPort = createLoadBalancerPortInfo({
       inbound: 15017,
       protocol: OciNetworkProtocol.TCP,
       description: 'TLS Webhook port for Istio gateway',
       sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
     });
 
-    const tlsTunnelNodePort = createLoadBalancerPortInfo({
+    const tlsTunnelPort = createLoadBalancerPortInfo({
       inbound: 15443,
       protocol: OciNetworkProtocol.TCP,
       description: 'TLS tunnel port for Istio gateway',
       sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
     });
 
+    const prometheusRemoteWritePort = createLoadBalancerPortInfo({
+      inbound: 9090,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'Prometheus remote write port',
+      sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
+    });
+
+    const lokiRemoteWritePort = createLoadBalancerPortInfo({
+      inbound: 3100,
+      protocol: OciNetworkProtocol.TCP,
+      description: 'Loki remote write port',
+      sourceCidrBlocks: this.config.remoteCluster.sourceCidrBlocks,
+    });
+
     const combination = {
-      httpNodePort,
-      httpsNodePort,
-      nfsSftpNodePort,
-      tlsIstiodNodePort,
-      tlsWebhookNodePort,
-      tlsTunnelNodePort,
+      httpPort,
+      httpsPort,
+      nfsSftpPort,
+      tlsIstiodPort,
+      tlsWebhookPort,
+      tlsTunnelPort,
+      prometheusRemoteWritePort,
+      lokiRemoteWritePort,
     };
 
     const inboundPorts = Object.values(combination).map(

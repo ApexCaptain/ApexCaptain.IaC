@@ -67,6 +67,9 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'enabled',
+      },
     },
   }));
 
@@ -133,125 +136,125 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
     }),
   );
 
-  argoCdRelease = this.provide(Release, 'argoCdRelease', () => {
-    const oauthBypassKeyName = 'X-OAuth-Bypass-Key';
-    const oauthBypassKeyValue = this.oauthBypassKey.element.result;
-    const gitOpsDeployerAccountName = 'gitops-bot';
-    const domain = this.cloudflareRecordStack.argoCdRecord.element.name;
-    return [
-      {
-        name: this.metadata.shared.helm.argoCd.name,
-        chart: this.metadata.shared.helm.argoCd.chart,
-        repository: this.metadata.shared.helm.argoCd.repository,
-        namespace: this.namespace.element.metadata.name,
-        createNamespace: false,
-        values: [
-          yaml.stringify({
-            global: {
-              domain,
-            },
-            server: {
-              // ingress: {
-              //   enabled: false,
-              //   annotations: {
-              //     'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-              //     'nginx.ingress.kubernetes.io/rewrite-target': '/',
-              //     'nginx.ingress.kubernetes.io/auth-url':
-              //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-              //         .shared.authUrl,
-              //     'nginx.ingress.kubernetes.io/auth-signin':
-              //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-              //         .shared.authSignin,
-              //     'nginx.ingress.kubernetes.io/auth-snippet': dedent`
-              //       if ($request_uri ~ "/api/webhook") {
-              //         return 200;
-              //       }
-              //       if ($http_${oauthBypassKeyName.toLowerCase().replace(/-/g, '_')} = "${oauthBypassKeyValue}") {
-              //           return 200;
-              //       }
-              //     `,
-              //   },
-              //   ingressClassName: 'nginx',
-              // },
-            },
-            configs: {
-              cm: {
-                [`accounts.${gitOpsDeployerAccountName}`]: 'apiKey',
-              },
-              rbac: {
-                'policy.csv': dedent`
-                  p, role:deployer, applications, *, */*, allow
-                  p, role:deployer, applicationprojects, get, default, allow
-                  g, ${gitOpsDeployerAccountName}, role:deployer
-                `,
-              },
-              params: {
-                // @Note Cloudflare의 TLS를 사용
-                'server.insecure': true,
-              },
-              secret: {
-                argocdServerAdminPassword: this.config.adminPasswordBcryted,
-                githubSecret: this.gitOpsStack.webHookKey.element.result,
-              },
-            },
-          }),
-        ],
-      },
-      {
-        domain,
-        gitOpsDeployerAccountName,
-        oauthBypassKeyHeader: {
-          name: oauthBypassKeyName,
-          value: oauthBypassKeyValue,
-        },
-      },
-    ];
-  });
+  // argoCdRelease = this.provide(Release, 'argoCdRelease', () => {
+  //   const oauthBypassKeyName = 'X-OAuth-Bypass-Key';
+  //   const oauthBypassKeyValue = this.oauthBypassKey.element.result;
+  //   const gitOpsDeployerAccountName = 'gitops-bot';
+  //   const domain = this.cloudflareRecordStack.argoCdRecord.element.name;
+  //   return [
+  //     {
+  //       name: this.metadata.shared.helm.argoCd.name,
+  //       chart: this.metadata.shared.helm.argoCd.chart,
+  //       repository: this.metadata.shared.helm.argoCd.repository,
+  //       namespace: this.namespace.element.metadata.name,
+  //       createNamespace: false,
+  //       values: [
+  //         yaml.stringify({
+  //           global: {
+  //             domain,
+  //           },
+  //           server: {
+  //             // ingress: {
+  //             //   enabled: false,
+  //             //   annotations: {
+  //             //     'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+  //             //     'nginx.ingress.kubernetes.io/rewrite-target': '/',
+  //             //     'nginx.ingress.kubernetes.io/auth-url':
+  //             //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
+  //             //         .shared.authUrl,
+  //             //     'nginx.ingress.kubernetes.io/auth-signin':
+  //             //       this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
+  //             //         .shared.authSignin,
+  //             //     'nginx.ingress.kubernetes.io/auth-snippet': dedent`
+  //             //       if ($request_uri ~ "/api/webhook") {
+  //             //         return 200;
+  //             //       }
+  //             //       if ($http_${oauthBypassKeyName.toLowerCase().replace(/-/g, '_')} = "${oauthBypassKeyValue}") {
+  //             //           return 200;
+  //             //       }
+  //             //     `,
+  //             //   },
+  //             //   ingressClassName: 'nginx',
+  //             // },
+  //           },
+  //           configs: {
+  //             cm: {
+  //               [`accounts.${gitOpsDeployerAccountName}`]: 'apiKey',
+  //             },
+  //             rbac: {
+  //               'policy.csv': dedent`
+  //                 p, role:deployer, applications, *, */*, allow
+  //                 p, role:deployer, applicationprojects, get, default, allow
+  //                 g, ${gitOpsDeployerAccountName}, role:deployer
+  //               `,
+  //             },
+  //             params: {
+  //               // @Note Cloudflare의 TLS를 사용
+  //               'server.insecure': true,
+  //             },
+  //             secret: {
+  //               argocdServerAdminPassword: this.config.adminPasswordBcryted,
+  //               githubSecret: this.gitOpsStack.webHookKey.element.result,
+  //             },
+  //           },
+  //         }),
+  //       ],
+  //     },
+  //     {
+  //       domain,
+  //       gitOpsDeployerAccountName,
+  //       oauthBypassKeyHeader: {
+  //         name: oauthBypassKeyName,
+  //         value: oauthBypassKeyValue,
+  //       },
+  //     },
+  //   ];
+  // });
 
-  argoCdImageUpdaterRelease = this.provide(
-    Release,
-    'argoCdImageUpdaterRelease',
-    () => {
-      const values = [
-        yaml.stringify({
-          config: {
-            gitCommitUser: 'ArgoCD Image Update Bot by ApexCaptain',
-            gitCommitMail: 'argocd-image-updater@argocd.local',
-            gitCommitTemplate: dedent`
-                build: automatic update of {{ .AppName }}
+  // argoCdImageUpdaterRelease = this.provide(
+  //   Release,
+  //   'argoCdImageUpdaterRelease',
+  //   () => {
+  //     const values = [
+  //       yaml.stringify({
+  //         config: {
+  //           gitCommitUser: 'ArgoCD Image Update Bot by ApexCaptain',
+  //           gitCommitMail: 'argocd-image-updater@argocd.local',
+  //           gitCommitTemplate: dedent`
+  //               build: automatic update of {{ .AppName }}
 
-                {{ range .AppChanges -}}
-                updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
-                {{ end -}}
-            `,
+  //               {{ range .AppChanges -}}
+  //               updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
+  //               {{ end -}}
+  //           `,
 
-            registries: [
-              {
-                name: this.apexCaptainOcirRegistryImagePullSecret.element
-                  .metadata.name,
-                api_url:
-                  this.apexCaptainOcirRegistryImagePullSecret.shared.apiUrl,
-                prefix:
-                  this.apexCaptainOcirRegistryImagePullSecret.shared.registry,
-                ping: 'yes',
-                insecure: 'no',
-                credentials: `pullsecret:${this.namespace.element.metadata.name}/${this.apexCaptainOcirRegistryImagePullSecret.element.metadata.name}`,
-              },
-            ],
-          },
-        }),
-      ];
-      return {
-        dependsOn: [this.argoCdRelease.element],
-        name: this.metadata.shared.helm.argoCdImageUpdater.name,
-        chart: this.metadata.shared.helm.argoCdImageUpdater.chart,
-        repository: this.metadata.shared.helm.argoCdImageUpdater.repository,
-        namespace: this.namespace.element.metadata.name,
-        createNamespace: false,
-        values,
-      };
-    },
-  );
+  //           registries: [
+  //             {
+  //               name: this.apexCaptainOcirRegistryImagePullSecret.element
+  //                 .metadata.name,
+  //               api_url:
+  //                 this.apexCaptainOcirRegistryImagePullSecret.shared.apiUrl,
+  //               prefix:
+  //                 this.apexCaptainOcirRegistryImagePullSecret.shared.registry,
+  //               ping: 'yes',
+  //               insecure: 'no',
+  //               credentials: `pullsecret:${this.namespace.element.metadata.name}/${this.apexCaptainOcirRegistryImagePullSecret.element.metadata.name}`,
+  //             },
+  //           ],
+  //         },
+  //       }),
+  //     ];
+  //     return {
+  //       dependsOn: [this.argoCdRelease.element],
+  //       name: this.metadata.shared.helm.argoCdImageUpdater.name,
+  //       chart: this.metadata.shared.helm.argoCdImageUpdater.chart,
+  //       repository: this.metadata.shared.helm.argoCdImageUpdater.repository,
+  //       namespace: this.namespace.element.metadata.name,
+  //       createNamespace: false,
+  //       values,
+  //     };
+  //   },
+  // );
 
   constructor(
     private readonly terraformAppService: TerraformAppService,

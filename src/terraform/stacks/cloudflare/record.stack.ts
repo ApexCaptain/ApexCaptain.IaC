@@ -105,40 +105,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for OKE Dashboard service',
   }));
 
-  oauth2ProxyAdminRecord = this.provide(
-    DnsRecord,
-    'oauth2ProxyAdminRecord',
-    () => ({
-      name: `oauth2-proxy-admin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-      ttl: 1,
-      type: 'A',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.k8sOkeNetworkStack
-          .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-          .ipAddress,
-      proxied: true,
-      comment: 'Cloudflare record for OAuth2 Proxy Admin service',
-    }),
-  );
-
-  oauth2ProxyContributorRecord = this.provide(
-    DnsRecord,
-    'oauth2ProxyContributorRecord',
-    () => ({
-      name: `oauth2-proxy-contributor.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-      ttl: 1,
-      type: 'A',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.k8sOkeNetworkStack
-          .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-          .ipAddress,
-      proxied: true,
-      comment: 'Cloudflare record for OAuth2 Proxy Contributor service',
-    }),
-  );
-
   filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
     name: `files.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -175,35 +141,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
         .domain.iptime,
     proxied: true,
     comment: 'Cloudflare record for Longhorn service',
-  }));
-
-  grafanaWorkstationRecord = this.provide(
-    DnsRecord,
-    'grafanaWorkstationRecord',
-    () => ({
-      name: `grafana-workstation.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-      ttl: 1,
-      type: 'CNAME',
-      zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-      content:
-        this.globalConfigService.config.terraform.stacks.k8s.workstation.common
-          .domain.iptime,
-      proxied: true,
-      comment: 'Cloudflare record for Grafana Workstation service',
-    }),
-  );
-
-  grafanaOkeRecord = this.provide(DnsRecord, 'grafanaOkeRecord', () => ({
-    name: `grafana-oke.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Grafana OKE service',
   }));
 
   sdtdRecord = this.provide(DnsRecord, 'sdtdRecord', () => ({

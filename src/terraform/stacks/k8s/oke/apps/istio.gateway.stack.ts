@@ -9,7 +9,6 @@ import {
   AbstractStack,
   CertManagerCertificate,
   IstioGateway,
-  IstioServiceEntry,
   IstioVirtualService,
 } from '@/common';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
@@ -163,6 +162,54 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
     },
   );
 
+  // Direct Gateway
+  istioDirectGateway = this.provide(IstioGateway, 'istioDirectGateway', id => {
+    const name = `${this.k8sOkeAppsIstioStack.namespace.element.metadata.name}-${_.kebabCase(id)}`;
+    const gatewayPath = `${this.k8sOkeAppsIstioStack.namespace.element.metadata.name}/${name}`;
+    const lbPortMappings = this.k8sOkeNetworkStack.loadbalancerPortMappings;
+    const httpsPorts = [
+      lbPortMappings.prometheusRemoteWritePort,
+      lbPortMappings.lokiRemoteWritePort,
+    ];
+
+    return [
+      {
+        manifest: {
+          metadata: {
+            name,
+            namespace:
+              this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
+          },
+          spec: {
+            selector: {
+              istio:
+                this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
+                  .istioLabel,
+            },
+            servers: [
+              // HTTPS
+              ...httpsPorts.map(eachPort => ({
+                port: {
+                  number: eachPort.inbound,
+                  name: _.kebabCase(eachPort.description),
+                  protocol: 'HTTPS',
+                },
+                hosts: ['*'],
+                tls: {
+                  mode: 'SIMPLE' as const,
+                  credentialName:
+                    this.istioIngressGatewayWildcardProductionCertificate.shared
+                      .secretName,
+                },
+              })),
+            ],
+          },
+        },
+      },
+      { gatewayPath },
+    ];
+  });
+
   // Cross-Netowrk
   istioCrossNetworkGateway = this.provide(
     IstioGateway,
@@ -270,7 +317,8 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
               {
                 match: [
                   {
-                    port: 15012,
+                    port: this.k8sOkeNetworkStack.loadbalancerPortMappings
+                      .tlsIstiodPort.inbound,
                     sniHosts: ['*'],
                   },
                 ],
@@ -290,7 +338,7 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
                 match: [
                   {
                     port: this.k8sOkeNetworkStack.loadbalancerPortMappings
-                      .tlsWebhookNodePort.inbound,
+                      .tlsWebhookPort.inbound,
                     sniHosts: ['*'],
                   },
                 ],
