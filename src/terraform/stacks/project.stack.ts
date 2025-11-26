@@ -17,11 +17,8 @@ import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';
 import { DataOciObjectstorageNamespace } from '@lib/terraform/providers/oci/data-oci-objectstorage-namespace';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { CertRequest } from '@lib/terraform/providers/tls/cert-request';
-import { LocallySignedCert } from '@lib/terraform/providers/tls/locally-signed-cert';
-import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { SelfSignedCert } from '@lib/terraform/providers/tls/self-signed-cert';
+
 @Injectable()
 export class Project_Stack extends AbstractStack {
   terraform = {

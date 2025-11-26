@@ -403,11 +403,6 @@ void (async () => {
           name: 'argocd',
           source: 'argoproj-labs/argocd',
         },
-        {
-          // https://registry.terraform.io/providers/goauthentik/authentik/latest
-          name: 'authentik',
-          source: 'goauthentik/authentik',
-        },
       ],
     },
     committed: false,
@@ -665,7 +660,7 @@ void (async () => {
       },
     },
   };
-  new IniFile(project, 'env/prod.env', {
+  new IniFile(project, `${constants.paths.dirs.envDir}/prod.env`, {
     obj: flatten(environment, {
       delimiter: '_',
     }),
