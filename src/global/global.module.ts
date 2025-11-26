@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, registerAs } from '@nestjs/config';
-
 import { unflatten } from 'flat';
 import {
   GlobalConfigName,
