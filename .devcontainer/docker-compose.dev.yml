@@ -23,7 +23,7 @@ services:
       # Named Volume
       ## Node Modules
       - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
-      ## Gemini  Config
+      ## Gemini Config
       - ApexCaptain.IaC.Workspace.gemini-config:${CONTAINER_GEMINI_CONFIG_DIR_PATH}
 
 volumes:
