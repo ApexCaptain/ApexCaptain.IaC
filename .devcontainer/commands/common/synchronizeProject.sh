@@ -8,6 +8,9 @@ fi
 echo "🔄 Pulling latest changes from remote repository"
 git pull
 
+echo "🔄 Setting up aliases"
+echo 'alias k=kubectl' >>~/.bashrc
+
 echo "🔄 Installing dependencies"
 yarn
 

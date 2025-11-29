@@ -33,6 +33,9 @@ export * from './vault.stack';
 export * from './argo-cd.stack';
 export * from './argo-cd.resources.stack';
 
+// Metrics Server
+export * from './metrics-server.stack';
+
 // Monitoring
 export * from './monitoring.stack';
 export * from './monitoring.resources.stack';

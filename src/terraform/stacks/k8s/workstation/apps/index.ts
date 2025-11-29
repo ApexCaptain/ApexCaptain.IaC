@@ -25,6 +25,9 @@ export * from './nas.qbittorrent.stack';
 export * from './nas.sftp.stack';
 export * from './nas.stack';
 
+// metrics server
+export * from './metrics-server.stack';
+
 // metallb
 export * from './metallb.stack';
 export * from './metallb.crd.stack';

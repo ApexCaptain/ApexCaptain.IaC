@@ -172,6 +172,17 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
           },
         }),
 
+        metricsServer: createK8sApplicationMetadata({
+          namespace: 'metrics-server',
+          helm: {
+            metricsServer: {
+              name: 'metrics-server',
+              chart: 'metrics-server',
+              repository: 'https://kubernetes-sigs.github.io/metrics-server',
+            },
+          },
+        }),
+
         monitoring: createK8sApplicationMetadata({
           namespace: 'monitoring',
           helm: {
