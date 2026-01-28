@@ -60,6 +60,18 @@ export class Cloudflare_Record_Workstation_Stack extends AbstractStack {
     comment: 'Cloudflare record for Jellyfin service',
   }));
 
+  longhornRecord = this.provide(DnsRecord, 'longhornRecord', () => ({
+    name: `longhorn.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Longhorn service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

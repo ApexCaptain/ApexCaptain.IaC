@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { K8S_Workstation_Apps_Nas_Qbittorrent_Stack } from './nas.qbittorrent.stack';
 import { K8S_Workstation_Apps_Windows_Stack } from './windows.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
@@ -43,6 +44,7 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
     const providers = [
       this.k8sWorkstationWindowsStack.authentikProxyProvider,
       this.k8sWorkstationNasQbittorrentStack.qbittorrentAuthentikProxyProvider,
+      this.k8sWorkstationLonghornStack.longhornAuthentikProxyProvider,
     ];
     return {
       name: this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource
@@ -76,6 +78,7 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
           rule: [
             this.cloudflareRecordWorkstationStack.windowsRecord.element.name,
             this.cloudflareRecordWorkstationStack.torrentRecord.element.name,
+            this.cloudflareRecordWorkstationStack.longhornRecord.element.name,
           ].map(host => ({
             host,
             http: {
@@ -117,6 +120,7 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
 
     private readonly k8sWorkstationWindowsStack: K8S_Workstation_Apps_Windows_Stack,
     private readonly k8sWorkstationNasQbittorrentStack: K8S_Workstation_Apps_Nas_Qbittorrent_Stack,
+    private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
