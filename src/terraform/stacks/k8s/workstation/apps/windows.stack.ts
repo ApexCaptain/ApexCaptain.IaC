@@ -392,48 +392,6 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     },
   }));
 
-  /*
-    authorizationPolicy = this.provide(
-    IstioAuthorizationPolicy,
-    'authorizationPolicy',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace:
-            this.k8sWorkstationAppsIstioStack.namespace.element.metadata.name,
-        },
-        spec: {
-          selector: {
-            matchLabels: {
-              istio: 'gateway',
-            },
-          },
-          action: 'CUSTOM' as const,
-          provider: {
-            name: this.k8sWorkstationAppsIstioStack.istiodRelease.shared
-              .authentikProxyProviderName,
-          },
-          rules: [
-            {
-              to: [
-                {
-                  operation: {
-                    hosts: [
-                      this.cloudflareRecordWorkstationStack.windowsRecord
-                        .element.name,
-                    ],
-                    notPaths: ['/websockify'],
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      },
-    }),
-  */
-
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

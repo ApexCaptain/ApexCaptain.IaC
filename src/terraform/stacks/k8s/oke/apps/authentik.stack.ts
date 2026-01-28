@@ -288,6 +288,13 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
                     secretName: this.redisPasswordSecret.element.metadata.name,
                   },
                 },
+                {
+                  name: 'shm',
+                  emptyDir: {
+                    medium: 'Memory',
+                    sizeLimit: '512Mi',
+                  },
+                },
               ],
               volumeMounts: [
                 {
@@ -299,6 +306,10 @@ export class K8S_Oke_Apps_Authentik_Stack extends AbstractStack {
                   name: redisCredSecretName,
                   mountPath: redisCredSecretMountPath,
                   readOnly: true,
+                },
+                {
+                  name: 'shm',
+                  mountPath: '/dev/shm',
                 },
               ],
             },
