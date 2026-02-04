@@ -12,7 +12,7 @@ echo "🔄 Setting up aliases"
 echo 'alias k=kubectl' >>~/.bashrc
 
 echo "🔄 Installing dependencies"
-yarn
+corepack yarn
 
 echo "🔄 Initializing Projen"
 yarn projen
