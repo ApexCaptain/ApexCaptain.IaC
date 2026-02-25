@@ -22,6 +22,7 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { K8S_Workstation_K8S_Stack } from './k8s/workstation/k8s.stack';
 
 @Injectable()
 export class GitOps_Stack extends AbstractStack {
@@ -38,8 +39,13 @@ export class GitOps_Stack extends AbstractStack {
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -213,6 +219,7 @@ export class GitOps_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(terraformAppService.cdktfApp, GitOps_Stack.name, 'GitOps Stack');

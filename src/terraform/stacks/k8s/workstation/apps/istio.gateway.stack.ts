@@ -6,6 +6,7 @@ import { AbstractStack, IstioGateway } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Istio_Gateway_Stack extends AbstractStack {
@@ -16,8 +17,13 @@ export class K8S_Workstation_Apps_Istio_Gateway_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -66,6 +72,7 @@ export class K8S_Workstation_Apps_Istio_Gateway_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
   ) {
     super(

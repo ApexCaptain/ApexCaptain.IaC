@@ -19,6 +19,7 @@ import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
@@ -29,8 +30,13 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       authentik: this.provide(
         AuthentikProvider,
@@ -407,6 +413,7 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,

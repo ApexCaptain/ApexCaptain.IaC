@@ -27,7 +27,6 @@ CONTAINER_GEMINI_CONFIG_DIR_PATH=/home/vscode/.gemini
 
 # Unonymous Volume Arguments
 CONTAINER_KUBE_CONFIG_DIR_PATH=${containerWorkspaceFolder}/.kube
-CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH=${containerWorkspaceFolder}/.kube/workstation.config
 
 # Kubernetes Arguments
 KUBECONFIG=${containerWorkspaceFolder}/.kube/workstation.config

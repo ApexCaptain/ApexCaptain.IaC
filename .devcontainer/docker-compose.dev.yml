@@ -5,9 +5,15 @@ services:
     image: mcr.microsoft.com/devcontainers/base:dev-noble
 
     environment:
+      # Timezone
       TZ: 'Asia/Seoul'
+      # CDKTF Telemetry 전송 비활성화
+      CHECKPOINT_DISABLE: true
+      # Dev Container 환경 변수
       IS_DEV_CONTAINER: true
+      # Auto Sync 활성화
       ENABLE_AUTO_SYNC: true
+      # 소유자를 변경할 디렉토리 경로 (복수 지정시 Space 구분)
       DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_GEMINI_CONFIG_DIR_PATH}
 
     env_file:

@@ -1,6 +1,12 @@
 import Joi from '@hapi/joi';
 
 export const WorkstationSchema = Joi.object({
+  k8s: Joi.object({
+    certificateAuthorityData: Joi.string().required(),
+    clientCertificateData: Joi.string().required(),
+    clientKeyData: Joi.string().required(),
+    server: Joi.string().required(),
+  }).required(),
   common: Joi.object({
     defaultCalcioIpv4IpPoolsCidrBlock: Joi.string().required(),
     nordLynxPrivateKey: Joi.string().required(),

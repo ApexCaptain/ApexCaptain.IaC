@@ -29,6 +29,7 @@ import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
@@ -44,8 +45,13 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
 
       authentik: this.provide(
@@ -401,6 +407,7 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,

@@ -27,6 +27,7 @@ import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 // yarn tf@deploy:single K8S_Workstation_Apps_Game_7dtd_Stack --auto-approve && sleep 10 && kubectl logs deployment/game-sdtd-deployment -n game -f
 @Injectable()
@@ -38,8 +39,13 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -594,6 +600,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsIstioGatewayStack: K8S_Workstation_Apps_Istio_Gateway_Stack,
     private readonly k8sWorkstationAppsGameStack: K8S_Workstation_Apps_Game_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,

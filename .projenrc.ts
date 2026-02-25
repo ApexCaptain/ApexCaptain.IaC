@@ -533,6 +533,17 @@ void (async () => {
             },
           },
           workstation: {
+            k8s: {
+              certificateAuthorityData:
+                process.env
+                  .WORKSTATION_K8S_KUBECONFIG_CERTIFICATE_AUTHORITY_DATA!!,
+              clientCertificateData:
+                process.env
+                  .WORKSTATION_K8S_KUBECONFIG_CLIENT_CERTIFICATE_DATA!!,
+              clientKeyData:
+                process.env.WORKSTATION_K8S_KUBECONFIG_CLIENT_KEY_DATA!!,
+              server: process.env.WORKSTATION_K8S_KUBECONFIG_SERVER!!,
+            },
             common: {
               workstationIpv4Ip: workstationIpAddress,
               defaultCalcioIpv4IpPoolsCidrBlock:
@@ -634,14 +645,6 @@ void (async () => {
             ApexCaptain: {
               owner: process.env.APEX_CAPTAIN_GITHUB_OWNER!!,
               token: process.env.APEX_CAPTAIN_GITHUB_PAT!!,
-            },
-          },
-          kubernetes: {
-            ApexCaptain: {
-              workstation: {
-                configPath:
-                  process.env.CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH!!,
-              },
             },
           },
 

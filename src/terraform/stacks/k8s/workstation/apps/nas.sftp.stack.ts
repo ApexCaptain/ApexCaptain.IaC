@@ -20,6 +20,7 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
@@ -33,8 +34,13 @@ export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       local: this.provide(LocalProvider, 'localProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
     },
@@ -332,6 +338,7 @@ export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
   ) {
     super(

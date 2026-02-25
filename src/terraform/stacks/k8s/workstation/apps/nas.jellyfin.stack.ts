@@ -12,6 +12,7 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
@@ -22,15 +23,18 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
           configPath:
-            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
-              .configPath,
-          insecure: true,
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -170,6 +174,7 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsNasStack: K8S_Workstation_Apps_Nas_Stack,
     private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,

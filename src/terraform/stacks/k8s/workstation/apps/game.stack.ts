@@ -13,6 +13,7 @@ import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/per
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
@@ -27,8 +28,13 @@ export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -232,6 +238,7 @@ export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,

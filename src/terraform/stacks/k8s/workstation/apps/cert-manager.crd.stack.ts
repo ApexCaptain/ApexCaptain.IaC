@@ -2,14 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
-import { CertManagerCertificate, CertManagerClusterIssuer } from '@/common';
+import { CertManagerClusterIssuer } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { DataKubernetesSecretV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-secret-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_CertManager_CRD_Stack extends AbstractStack {
@@ -20,8 +19,13 @@ export class K8S_Workstation_Apps_CertManager_CRD_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -126,8 +130,8 @@ export class K8S_Workstation_Apps_CertManager_CRD_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsCertManagerStack: K8S_Workstation_Apps_CertManager_Stack,
-    private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

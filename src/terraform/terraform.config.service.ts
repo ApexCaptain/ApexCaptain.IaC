@@ -56,39 +56,6 @@ export class TerraformConfigService {
       },
     };
 
-    const kubernetes = {
-      ApexCaptain: {
-        workstation: (
-          config?: Partial<
-            Omit<KubernetesProviderConfig, 'configPath' | 'insecure'>
-          >,
-        ): KubernetesProviderConfig => {
-          return {
-            configPath:
-              this.config.providers.kubernetes.ApexCaptain.workstation
-                .configPath,
-            insecure: true,
-            ...config,
-          };
-        },
-      },
-    };
-
-    const helm = {
-      ApexCaptain: {
-        workstation: (): HelmProviderConfig => {
-          return {
-            kubernetes: {
-              configPath:
-                this.config.providers.kubernetes.ApexCaptain.workstation
-                  .configPath,
-              insecure: true,
-            },
-          };
-        },
-      },
-    };
-
     const oci = {
       ApexCaptain: (): OciProviderConfig => {
         return {
@@ -109,10 +76,6 @@ export class TerraformConfigService {
       cloudflare,
 
       github,
-
-      kubernetes,
-
-      helm,
 
       oci,
     };
