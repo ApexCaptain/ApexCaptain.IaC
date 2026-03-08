@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_CertManager_Stack } from './cert-manager.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { CertManagerClusterIssuer } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_CertManager_CRD_Stack extends AbstractStack {

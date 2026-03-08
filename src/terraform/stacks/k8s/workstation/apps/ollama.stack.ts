@@ -5,6 +5,7 @@ import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -18,7 +19,6 @@ import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { StringResource } from '@lib/terraform/providers/random/string-resource';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Ollama_Stack extends AbstractStack {

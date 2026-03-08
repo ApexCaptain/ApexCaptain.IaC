@@ -6,6 +6,7 @@ import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Workstation_Apps_Nas_Stack } from './nas.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from '../../oke/apps/authentik.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
@@ -19,7 +20,6 @@ import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {

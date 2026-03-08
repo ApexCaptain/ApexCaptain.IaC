@@ -3,11 +3,11 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Workstation_Apps_Monitoring_Stack } from './monitoring.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack, MonitoringPodMonitor } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Monitoring_Resources_Stack extends AbstractStack {

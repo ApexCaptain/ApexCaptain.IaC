@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import { K8S_Workstation_Apps_Longhorn_Stack } from '../apps/longhorn.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -11,7 +12,6 @@ import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_DevPods_ApexCaptain_Stack extends AbstractStack {

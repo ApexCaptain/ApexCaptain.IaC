@@ -5,6 +5,7 @@ import yaml from 'yaml';
 import { K8S_Oke_Network_Stack } from '../../oke/network.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -21,7 +22,6 @@ import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { ServiceAccountV1 } from '@lib/terraform/providers/kubernetes/service-account-v1';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {

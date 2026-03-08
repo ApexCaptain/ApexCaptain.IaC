@@ -6,6 +6,7 @@ import _ from 'lodash';
 import Timezone from 'timezone-enum';
 import { K8S_Workstation_Apps_Game_Stack } from './game.stack';
 import { K8S_Workstation_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import {
   AbstractStack,
   DeathPenaltyMode,
@@ -27,7 +28,6 @@ import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 // yarn tf@deploy:single K8S_Workstation_Apps_Game_7dtd_Stack --auto-approve && sleep 10 && kubectl logs deployment/game-sdtd-deployment -n game -f
 @Injectable()

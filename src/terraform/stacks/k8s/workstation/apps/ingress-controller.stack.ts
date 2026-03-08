@@ -5,7 +5,8 @@ import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
-import { CertManagerCertificate } from '@/common';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
+import { CertManagerCertificate, K8sApplicationMetadata } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
@@ -17,7 +18,6 @@ import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack {
@@ -160,29 +160,31 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
       udp: {},
     };
 
-    // Object.values(
-    //   this.k8sWorkstationSystemStack.applicationMetadata.shared,
-    // ).forEach(eachMetadata => {
-    //   const services =
-    //     eachMetadata.services as K8sApplicationMetadata['services'];
-    //   if (!services) return;
-    //   const namespace = eachMetadata.namespace;
-    //   Object.values(services).forEach(eachService => {
-    //     if (!eachService.ports) return;
-    //     Object.values(eachService.ports)
-    //       .filter(eachPort => eachPort.portBasedIngressPort)
-    //       .forEach(eachPort => {
-    //         const target = `${namespace}/${eachService.name}:${eachPort.port}`;
-    //         if (eachPort.protocol?.toUpperCase() === 'UDP') {
-    //           values.udp[`${eachPort.portBasedIngressPort!!.toString()}`] =
-    //             target;
-    //         } else {
-    //           values.tcp[`${eachPort.portBasedIngressPort!!.toString()}`] =
-    //             target;
-    //         }
-    //       });
-    //   });
-    // });
+    Object.values(
+      this.k8sWorkstationSystemStack.applicationMetadata.shared,
+    ).forEach(eachMetadata => {
+      if ('services' in eachMetadata) {
+        const services =
+          eachMetadata.services as K8sApplicationMetadata['services'];
+        if (!services) return;
+        const namespace = eachMetadata.namespace;
+        Object.values(services).forEach(eachService => {
+          if (!eachService.ports) return;
+          Object.values(eachService.ports)
+            .filter(eachPort => eachPort.portBasedIngressPort)
+            .forEach(eachPort => {
+              const target = `${namespace}/${eachService.name}:${eachPort.port}`;
+              if (eachPort.protocol?.toUpperCase() === 'UDP') {
+                values.udp[`${eachPort.portBasedIngressPort!!.toString()}`] =
+                  target;
+              } else {
+                values.tcp[`${eachPort.portBasedIngressPort!!.toString()}`] =
+                  target;
+              }
+            });
+        });
+      }
+    });
 
     return {
       name: this.metadata.shared.helm.ingressController.name,

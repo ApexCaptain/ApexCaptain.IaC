@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import yaml from 'yaml';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -14,7 +15,6 @@ import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_CertManager_Stack extends AbstractStack {

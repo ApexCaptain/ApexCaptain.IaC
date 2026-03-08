@@ -5,6 +5,7 @@ import yaml from 'yaml';
 import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Workstation_Apps_Nas_Stack } from './nas.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack, IstioAuthorizationPolicy } from '@/common';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -12,7 +13,6 @@ import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
-import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 
 @Injectable()
 export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {

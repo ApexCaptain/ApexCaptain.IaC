@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
 import { Cloudflare_Record_Stack } from './cloudflare/record.stack';
+import { K8S_Workstation_K8S_Stack } from './k8s/workstation/k8s.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Branch } from '@lib/terraform/providers/github/branch';
@@ -22,7 +23,6 @@ import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
 import { PrivateKey } from '@lib/terraform/providers/tls/private-key';
 import { TlsProvider } from '@lib/terraform/providers/tls/provider';
-import { K8S_Workstation_K8S_Stack } from './k8s/workstation/k8s.stack';
 
 @Injectable()
 export class GitOps_Stack extends AbstractStack {
