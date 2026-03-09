@@ -235,42 +235,45 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
   authorizationPolicy = this.provide(
     IstioAuthorizationPolicy,
     'authorizationPolicy',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace: this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
-        },
-        spec: {
-          selector: {
-            matchLabels: {
-              istio:
-                this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
-                  .istioLabel,
+    id => {
+      return {
+        manifest: {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace:
+              this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
+          },
+          spec: {
+            selector: {
+              matchLabels: {
+                istio:
+                  this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
+                    .istioLabel,
+              },
             },
-          },
-          action: 'CUSTOM' as const,
-          provider: {
-            name: this.k8sOkeAppsIstioStack.istiodRelease.shared
-              .okeAuthentikProxyProviderName,
-          },
-          rules: [
-            {
-              to: [
-                {
-                  operation: {
-                    hosts: [
-                      this.cloudflareRecordOkeStack.dbRecord.element.name,
-                    ],
-                    notPaths: ['/api/graphql'],
+            action: 'CUSTOM' as const,
+            provider: {
+              name: this.k8sOkeAppsIstioStack.istiodRelease.shared
+                .okeAuthentikProxyProviderName,
+            },
+            rules: [
+              {
+                to: [
+                  {
+                    operation: {
+                      hosts: [
+                        this.cloudflareRecordOkeStack.dbRecord.element.name,
+                      ],
+                      notPaths: ['/api/graphql'],
+                    },
                   },
-                },
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          },
         },
-      },
-    }),
+      };
+    },
   );
 
   constructor(

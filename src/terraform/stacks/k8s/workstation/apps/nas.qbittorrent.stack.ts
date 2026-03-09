@@ -367,11 +367,18 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
               .shared.authUrl,
           'nginx.ingress.kubernetes.io/auth-signin': `https://${this.cloudflareRecordWorkstationStack.torrentRecord.element.name}${this.k8sWorkstationAppsAuthentikStack.workstationOutpostResource.shared.authSigninPostfix}`,
           'nginx.ingress.kubernetes.io/auth-response-headers': dedent`
-            Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-entitlements,X-authentik-email,X-authentik-name,X-authentik-uid
-          `,
+                Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-entitlements,X-authentik-email,X-authentik-name,X-authentik-uid
+              `,
           'nginx.ingress.kubernetes.io/auth-snippet': dedent`
-            proxy_set_header X-Forwarded-Host $http_host;
-          `,
+                proxy_set_header X-Forwarded-Host $http_host;
+              `,
+          'nginx.ingress.kubernetes.io/whitelist-source-range': [
+            this.globalConfigService.config.terraform.externalIpCidrBlocks
+              .apexCaptainHomeIpv4,
+            this.globalConfigService.config.terraform.externalIpCidrBlocks
+              .nayuntechCorpIpv4,
+          ].join(','),
+          'nginx.ingress.kubernetes.io/configuration-snippet': 'satisfy any;',
         },
       },
       spec: {

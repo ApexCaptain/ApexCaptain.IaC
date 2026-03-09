@@ -107,6 +107,14 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
                 'nginx.ingress.kubernetes.io/auth-snippet': dedent`
                   proxy_set_header X-Forwarded-Host $http_host;
                 `,
+                'nginx.ingress.kubernetes.io/whitelist-source-range': [
+                  this.globalConfigService.config.terraform.externalIpCidrBlocks
+                    .apexCaptainHomeIpv4,
+                  this.globalConfigService.config.terraform.externalIpCidrBlocks
+                    .nayuntechCorpIpv4,
+                ].join(','),
+                'nginx.ingress.kubernetes.io/configuration-snippet':
+                  'satisfy any;',
               },
             },
 
