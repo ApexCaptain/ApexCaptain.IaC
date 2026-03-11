@@ -19,7 +19,6 @@ import { Resource } from '@lib/terraform/providers/null/resource';
 import { BastionBastion } from '@lib/terraform/providers/oci/bastion-bastion';
 import { BastionSession } from '@lib/terraform/providers/oci/bastion-session';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { Integer as RandomInteger } from '@lib/terraform/providers/random/integer';
 import { RandomProvider } from '@lib/terraform/providers/random/provider';
 import { TimeProvider } from '@lib/terraform/providers/time/provider';
 import { StaticResource } from '@lib/terraform/providers/time/static-resource';
@@ -28,6 +27,8 @@ import { TlsProvider } from '@lib/terraform/providers/tls/provider';
 
 @Injectable()
 export class K8S_Oke_Bastion_Stack extends AbstractStack {
+  config = this.globalConfigService.config.terraform.stacks.k8s.oke.bastion;
+
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -123,20 +124,6 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     };
   });
 
-  okeBastionSessionTunnelPort = this.provide(
-    RandomInteger,
-    'okeBastionSessionTunnelPort',
-    () => ({
-      min: 10000,
-      max: 65535,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 10,
-        }).toString(),
-      },
-    }),
-  );
-
   okeBastionSessionContainerImage = this.provide(
     DockerImage,
     'okeBastionSessionContainerImage',
@@ -169,7 +156,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
           'ssh',
           '-o StrictHostKeyChecking=no',
           '-N -D',
-          `0.0.0.0:${this.okeBastionSessionTunnelPort.element.result}`,
+          `0.0.0.0:${this.config.sessionTunnelPort}`,
           `${this.okeBastionSession.element.id}@host.bastion.${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com`,
         ].join(' '),
       ],

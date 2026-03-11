@@ -186,7 +186,7 @@ export interface Context {
 /**
  * Kubeconfig 설정
  */
-export interface Kubeconfig {
+export interface KubeConfig {
   /**
    * API 버전 (일반적으로 'v1')
    */

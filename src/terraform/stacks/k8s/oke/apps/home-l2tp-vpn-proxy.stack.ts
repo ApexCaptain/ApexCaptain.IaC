@@ -2,7 +2,7 @@ import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { AbstractStack } from '@/common';
@@ -40,11 +40,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
     },
@@ -264,7 +260,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
   ) {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Apps_CertManager_Stack } from './cert-manager.stack';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { AbstractStack, CertManagerClusterIssuer } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare/zone.stack';
@@ -23,11 +23,7 @@ export class K8S_Oke_Apps_CertManager_CRD_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
     },
@@ -134,7 +130,7 @@ export class K8S_Oke_Apps_CertManager_CRD_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeAppsCertManagerStack: K8S_Oke_Apps_CertManager_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
   ) {
     super(

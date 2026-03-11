@@ -5,7 +5,7 @@ import dedent from 'dedent';
 import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -59,20 +59,12 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
@@ -586,7 +578,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     // Stacks
     private readonly projectStack: Project_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {

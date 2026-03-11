@@ -118,19 +118,6 @@ export class Cloudflare_Record_Stack extends AbstractStack {
     comment: 'Cloudflare record for OKE Files Browser service',
   }));
 
-  argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
-    name: `argo-cd.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Argo CD service',
-  }));
-
   sdtdRecord = this.provide(DnsRecord, 'sdtdRecord', () => ({
     name: `7dtd.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,

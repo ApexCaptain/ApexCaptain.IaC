@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_Apps_ArgoCd_Stack } from './argo-cd.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -28,58 +28,54 @@ export class K8S_Oke_Apps_GitOps_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
     },
   };
 
-  numberPlanet = this.provide(Resource, 'numberPlanet', idPrefix => {
-    const namespace = this.provide(
-      NamespaceV1,
-      `${idPrefix}-namespace`,
-      id => ({
-        metadata: {
-          name: _.kebabCase(id),
-          labels: {
-            'istio-injection': 'enabled',
-          },
-        },
-      }),
-    );
+  // numberPlanet = this.provide(Resource, 'numberPlanet', idPrefix => {
+  //   const namespace = this.provide(
+  //     NamespaceV1,
+  //     `${idPrefix}-namespace`,
+  //     id => ({
+  //       metadata: {
+  //         name: _.kebabCase(id),
+  //         labels: {
+  //           'istio-injection': 'enabled',
+  //         },
+  //       },
+  //     }),
+  //   );
 
-    const imagePullSecret = this.provide(
-      SecretV1,
-      `${idPrefix}-imagePullSecret`,
-      id => ({
-        metadata: {
-          name: _.kebabCase(id),
-          namespace: namespace.element.metadata.name,
-        },
-        data: this.k8sOkeAppsArgoCdStack.apexCaptainOcirRegistryImagePullSecret
-          .element.data,
-        type: this.k8sOkeAppsArgoCdStack.apexCaptainOcirRegistryImagePullSecret
-          .element.type,
-      }),
-    );
+  //   const imagePullSecret = this.provide(
+  //     SecretV1,
+  //     `${idPrefix}-imagePullSecret`,
+  //     id => ({
+  //       metadata: {
+  //         name: _.kebabCase(id),
+  //         namespace: namespace.element.metadata.name,
+  //       },
+  //       data: this.k8sOkeAppsArgoCdStack.apexCaptainOcirRegistryImagePullSecret
+  //         .element.data,
+  //       type: this.k8sOkeAppsArgoCdStack.apexCaptainOcirRegistryImagePullSecret
+  //         .element.type,
+  //     }),
+  //   );
 
-    this.provide(
-      DefaultServiceAccountV1,
-      `${idPrefix}-defaultServiceAccount`,
-      () => ({
-        metadata: {
-          namespace: namespace.element.metadata.name,
-        },
-        imagePullSecret: [{ name: imagePullSecret.element.metadata.name }],
-      }),
-    );
+  //   this.provide(
+  //     DefaultServiceAccountV1,
+  //     `${idPrefix}-defaultServiceAccount`,
+  //     () => ({
+  //       metadata: {
+  //         namespace: namespace.element.metadata.name,
+  //       },
+  //       imagePullSecret: [{ name: imagePullSecret.element.metadata.name }],
+  //     }),
+  //   );
 
-    return [{}, { namespace }];
-  });
+  //   return [{}, { namespace }];
+  // });
 
   constructor(
     private readonly terraformAppService: TerraformAppService,
@@ -88,7 +84,7 @@ export class K8S_Oke_Apps_GitOps_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeAppsArgoCdStack: K8S_Oke_Apps_ArgoCd_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

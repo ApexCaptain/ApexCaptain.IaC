@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
+import { K8S_Oke_Apps_ArgoCd_Stack } from './argo-cd.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Oke_Apps_Cloudbeaver_Stack } from './cloudbeaver.stack';
@@ -35,6 +36,7 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
       this.k8sOkeAppsCloudbeaverStack.authentikProxyProvider,
       this.k8sOkeAppsMonitoringStack.grafanaAuthentikProxyProvider,
       this.k8sOkeAppsMonitoringStack.kialiAuthentikProxyProvider,
+      this.k8sOkeAppsArgoCdStack.authentikProxyProvider,
     ];
     return {
       name: this.k8sOkeAppsIstioStack.istiodRelease.shared
@@ -64,6 +66,7 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
     private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsCloudbeaverStack: K8S_Oke_Apps_Cloudbeaver_Stack,
     private readonly k8sOkeAppsMonitoringStack: K8S_Oke_Apps_Monitoring_Stack,
+    private readonly k8sOkeAppsArgoCdStack: K8S_Oke_Apps_ArgoCd_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

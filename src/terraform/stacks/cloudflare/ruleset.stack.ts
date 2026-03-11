@@ -52,7 +52,9 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
       name: id,
       description: dedent`
-        Allow blog traffic, ArgoCD webhooks and Authentik traffic to covered domains.
+        Allow blog traffic.
+        Allow ArgoCD webhooks.
+        Allow Authentik static and websocket.
         Block Authentik access from unknown IPs.
         Otherwise, block countries except Korea and Japan as default.
       `,
@@ -70,7 +72,7 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
           expression: dedent`
             http.host eq "${this.cloudflareRecordStack.blogRecord.element.name}"
             or (
-              http.host eq "${this.cloudflareRecordStack.argoCdRecord.element.name}"
+              http.host eq "${this.cloudflareRecordOkeStack.argoCdRecord.element.name}"
               and http.request.uri.path contains "/api/webhook"
             )
             or (

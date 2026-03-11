@@ -18,14 +18,17 @@
     "postprojen": "cdktf get && yarn tf@backup",
     "tf@build": "cdktf synth",
     "tf@deploy": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --parallelism 20",
+    "posttf@deploy": "yarn tf@merge-kube-config",
     "tf@deploy:single": "cdktf deploy --outputs-file ./cdktf.out.json --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies",
+    "posttf@deploy:single": "yarn tf@merge-kube-config",
     "pretf@deploy:selection": "cdktf synth",
     "tf@deploy:selection": "ts-node ./scripts/tf-deploy-selection.script.ts -c cdktf.out",
+    "posttf@deploy:selection": "yarn tf@merge-kube-config",
+    "tf@merge-kube-config": "ts-node scripts/merge-kube-config.script.ts",
     "tf@plan": "cdktf diff",
     "tf@clean": "rm -rf cdktf.out",
     "tf@install": "find ./cdktf.out/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd \"{}\" && terraform init || true'",
-    "tf@backup": "ts-node ./scripts/backup-tfstate.script.ts",
-    "terminal": "ts-node ./scripts/terminal-v2.script.ts"
+    "tf@backup": "ts-node ./scripts/backup-tfstate.script.ts"
   },
   "author": {
     "name": "ApexCaptain",

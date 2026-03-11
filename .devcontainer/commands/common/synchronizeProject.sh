@@ -10,6 +10,8 @@ git pull
 
 echo "🔄 Setting up aliases"
 echo 'alias k=kubectl' >>~/.bashrc
+echo 'alias h=helm' >>~/.bashrc
+echo 'alias d=docker' >>~/.bashrc
 
 echo "🔄 Installing dependencies"
 corepack yarn

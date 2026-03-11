@@ -239,6 +239,25 @@ export class Ocir_Stack extends AbstractStack {
       ];
     },
   );
+
+  priceQuestContainerRepository = this.provide(
+    ArtifactsContainerRepository,
+    'priceQuestContainerRepository',
+    () => {
+      const name = 'price-quest';
+      return [
+        {
+          compartmentId: this.ocirCompartment.element.id,
+          displayName: name,
+          isPublic: false,
+        },
+        {
+          accessUrl: `${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.ocir.io/${this.projectStack.dataOciObjectstorageNamespace.element.namespace}/${name}`,
+        },
+      ];
+    },
+  );
+
   constructor(
     // Terraform
     private readonly terraformAppService: TerraformAppService,

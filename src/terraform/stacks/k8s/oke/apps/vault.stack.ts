@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import dedent from 'dedent';
 import yaml from 'yaml';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
@@ -49,20 +49,12 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -204,8 +196,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
             'bash',
             '-c',
             dedent`
-            export HTTPS_PROXY=${this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5}
-            export KUBECONFIG=${this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath}
+            export KUBECONFIG=${this.k8sOkeK8SStack.kubeConfigFile.element.filename}
             TARGET_NAMESPACE=${this.namespace.element.metadata.name}
             TARGET_POD_NAME=${this.release.shared.initialVaultPodName}
             TARGET_CONTAINER_NAME=${this.release.shared.containerName}
@@ -339,7 +330,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     // Stacks
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
   ) {

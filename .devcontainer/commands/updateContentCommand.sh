@@ -33,9 +33,5 @@ install_npm_packages() {
 export -f install_oci install_helm install_npm_packages
 parallel --jobs 10 ::: install_oci install_helm install_npm_packages
 
-echo "🔄 Copying kubeconfig files"
-mkdir -p $CONTAINER_KUBE_CONFIG_DIR_PATH
-cp $CONTAINER_SECRETS_DIR_PATH/k8s/* $CONTAINER_KUBE_CONFIG_DIR_PATH
-
 echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh

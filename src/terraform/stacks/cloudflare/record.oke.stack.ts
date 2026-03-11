@@ -90,6 +90,19 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
     comment: 'Cloudflare record for Kiali service',
   }));
 
+  argoCdRecord = this.provide(DnsRecord, 'argoCdRecord', () => ({
+    name: `argo-cd.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Argo CD service',
+  }));
+
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,

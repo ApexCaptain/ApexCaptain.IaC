@@ -31,6 +31,7 @@ export * from './vault.stack';
 
 // Argo CD
 export * from './argo-cd.stack';
+export * from './argo-rollouts.stack';
 export * from './argo-cd.resources.stack';
 
 // Metrics Server
@@ -45,3 +46,6 @@ export * from './git-ops.stack';
 
 // Kiali Operator
 export * from './kiali-operator.stack';
+
+// Price Quest
+export * from './price-quest.stack';
