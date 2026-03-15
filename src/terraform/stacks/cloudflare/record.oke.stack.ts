@@ -64,6 +64,19 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
     comment: 'Cloudflare record for Database Client service',
   }));
 
+  filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
+    name: `files.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for OKE Files Browser service',
+  }));
+
   grafanaRecord = this.provide(DnsRecord, 'grafanaRecord', () => ({
     name: `grafana.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,
@@ -101,6 +114,19 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
         .ipAddress,
     proxied: true,
     comment: 'Cloudflare record for Argo CD service',
+  }));
+
+  vaultRecord = this.provide(DnsRecord, 'vaultRecord', () => ({
+    name: `vault.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'A',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.k8sOkeNetworkStack
+        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
+        .ipAddress,
+    proxied: true,
+    comment: 'Cloudflare record for Vault service',
   }));
 
   constructor(

@@ -1,16 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import dedent from 'dedent';
+import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
 import { K8S_Oke_K8S_Stack } from '../k8s.stack';
-import { AbstractStack } from '@/common';
+import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.stack';
+import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Oke_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
+import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
+import {
+  AbstractStack,
+  createExpirationInterval,
+  IstioAuthorizationPolicy,
+  IstioVirtualService,
+} from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare';
+import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { Application as AuthentikApplication } from '@lib/terraform/providers/authentik/application';
+import { AuthentikProvider } from '@lib/terraform/providers/authentik/provider';
+import { ProviderProxy } from '@lib/terraform/providers/authentik/provider-proxy';
 import { DataExternal } from '@lib/terraform/providers/external/data-external';
 import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
@@ -22,9 +35,12 @@ import { Resource } from '@lib/terraform/providers/null/resource';
 import { KmsKey } from '@lib/terraform/providers/oci/kms-key';
 import { KmsVault } from '@lib/terraform/providers/oci/kms-vault';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import { VaultProviderConfig } from '@lib/terraform/providers/vault/provider';
-
-// Testing vault...
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
+import { StringResource } from '@lib/terraform/providers/random/string-resource';
+import {
+  VaultProvider,
+  VaultProviderConfig,
+} from '@lib/terraform/providers/vault/provider';
 
 @Injectable()
 export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
@@ -38,12 +54,13 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
       oci: this.provide(OciProvider, 'ociProvider', () =>
         this.terraformConfigService.providers.oci.ApexCaptain(),
       ),
-      // vault: this.provide(
-      //   VaultProvider,
-      //   'vaultProvider',
-      //   () => this.cdktfVaultProviderConfig.shared,
-      // ),
+      vault: this.provide(
+        VaultProvider,
+        'vaultProvider',
+        () => this.cdktfVaultProviderConfig.shared,
+      ),
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
+      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       external: this.provide(ExternalProvider, 'externalProvider', () => ({})),
       kubernetes: this.provide(
         KubernetesProvider,
@@ -57,6 +74,12 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
           configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
+      authentik: this.provide(
+        AuthentikProvider,
+        'authentikProvider',
+        () =>
+          this.k8sOkeAppsAuthentikStack.authentikProviderConfig.shared.config,
+      ),
     },
   };
 
@@ -92,14 +115,22 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
   namespace = this.provide(NamespaceV1, 'namespace', () => ({
     metadata: {
       name: this.metadata.shared.namespace,
+      labels: {
+        'istio-injection': 'enabled',
+      },
     },
   }));
 
   release = this.provide(Release, 'release', () => {
+    const oauthBypassKeyName = 'X-OAuth-Bypass-Key';
+    const oauthBypassKeyValue = this.oauthBypassKey.element.result;
+    const domain = this.cloudflareRecordOkeStack.vaultRecord.element.name;
     const initialVaultPodName = 'vault-0';
+    const serviceName = 'vault';
+    const servicePort = 8200;
+    const clusterPort = 8201;
     const containerName = 'vault';
     const internalDataPath = '/vault/data';
-    const host = this.cloudflareRecordStack.vaultRecord.element.name;
 
     return [
       {
@@ -117,32 +148,6 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
                 storageClass:
                   this.k8sOkeAppsNfsStack.release.shared.storageClassName,
               },
-              /*
-              ingress: {
-                enabled: false,
-                annotations: {
-                  'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-                  'nginx.ingress.kubernetes.io/rewrite-target': '/',
-                  'nginx.ingress.kubernetes.io/auth-url':
-                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-                      .shared.authUrl,
-                  'nginx.ingress.kubernetes.io/auth-signin':
-                    this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease
-                      .shared.authSignin,
-                  'nginx.ingress.kubernetes.io/auth-snippet': dedent`
-                    if ($request_uri ~ "/v1") {
-                      return 200;
-                    }
-                  `,
-                },
-                ingressClassName: 'nginx',
-                hosts: [
-                  {
-                    host,
-                  },
-                ],
-              },
-              */
 
               /**
                * @note
@@ -152,32 +157,38 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
               standalone: {
                 enabled: true,
                 config: dedent`
-                ui = true
+                  ui = true
 
-                listener "tcp" {
-                  tls_disable = 1
-                  address = "[::]:8200"
-                  cluster_address = "[::]:8201"
-                }
+                  listener "tcp" {
+                    tls_disable = 1
+                    address = "[::]:${servicePort}"
+                    cluster_address = "[::]:${clusterPort}"
+                  }
 
-                storage "file" {
-                  path = "${internalDataPath}"
-                }
+                  storage "file" {
+                    path = "${internalDataPath}"
+                  }
 
-                seal "ocikms" {
-                  key_id               = "${this.vaultKmsKey.element.id}"
-                  crypto_endpoint      = "${this.vaultKmsVault.element.cryptoEndpoint}"
-                  management_endpoint  = "${this.vaultKmsVault.element.managementEndpoint}"
-                }
-              `,
+                  seal "ocikms" {
+                    key_id               = "${this.vaultKmsKey.element.id}"
+                    crypto_endpoint      = "${this.vaultKmsVault.element.cryptoEndpoint}"
+                    management_endpoint  = "${this.vaultKmsVault.element.managementEndpoint}"
+                  }
+                `,
               },
             },
           }),
         ],
       },
       {
-        host,
         initialVaultPodName,
+        domain,
+        oauthBypassKeyHeader: {
+          name: oauthBypassKeyName,
+          value: oauthBypassKeyValue,
+        },
+        serviceName,
+        servicePort,
         containerName,
       },
     ];
@@ -248,77 +259,139 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
     },
   );
 
+  oauthBypassKey = this.provide(StringResource, 'argoCdBypassKey', () => ({
+    length: 32,
+    special: false,
+    keepers: {
+      expirationDate: createExpirationInterval({
+        days: 30,
+      }).toString(),
+    },
+  }));
+
+  virtualService = this.provide(IstioVirtualService, 'virtualService', id => ({
+    manifest: {
+      metadata: {
+        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+        namespace: this.namespace.element.metadata.name,
+      },
+      spec: {
+        hosts: [this.release.shared.domain],
+        gateways: [
+          this.k8sOkeAppsIstioGatewayStack.istioIngressGateway.shared
+            .gatewayPath,
+        ],
+        http: [
+          {
+            route: [
+              {
+                destination: {
+                  host: this.release.shared.serviceName,
+                  port: {
+                    number: this.release.shared.servicePort,
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  }));
+
+  authentikProxyProvider = this.provide(
+    ProviderProxy,
+    'authentikProxyProvider',
+    id => ({
+      name: _.startCase(`${this.metadata.shared.namespace}-${id}`),
+      mode: 'forward_single',
+      internalHost: `http://${this.release.shared.serviceName}.${this.namespace.element.metadata.name}.svc.cluster.local`,
+      externalHost: `https://${this.release.shared.domain}`,
+      authorizationFlow:
+        this.k8sOkeAppsAuthentikResourcesStack
+          .dataDefaultProviderAuthorizationImplicitConsent.element.id,
+      invalidationFlow:
+        this.k8sOkeAppsAuthentikResourcesStack.dataDefaultInvalidationFlow
+          .element.id,
+    }),
+  );
+
+  authentikApplication = this.provide(
+    AuthentikApplication,
+    'authentikApplication',
+    id => ({
+      name: _.startCase(`${this.metadata.shared.namespace}-${id}`),
+      slug: _.kebabCase(`${this.metadata.shared.namespace}-${id}`),
+      protocolProvider: Fn.tonumber(this.authentikProxyProvider.element.id),
+    }),
+  );
+
+  authorizationPolicy = this.provide(
+    IstioAuthorizationPolicy,
+    'authorizationPolicy',
+    id => {
+      return {
+        manifest: {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace:
+              this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
+          },
+          spec: {
+            selector: {
+              matchLabels: {
+                istio:
+                  this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
+                    .istioLabel,
+              },
+            },
+            action: 'CUSTOM' as const,
+            provider: {
+              name: this.k8sOkeAppsIstioStack.istiodRelease.shared
+                .okeAuthentikProxyProviderName,
+            },
+            rules: [
+              {
+                to: [
+                  {
+                    operation: {
+                      hosts: [this.release.shared.domain],
+                    },
+                  },
+                ],
+                when: [
+                  {
+                    key: `request.headers[${this.release.shared.oauthBypassKeyHeader.name}]`,
+                    notValues: [this.release.shared.oauthBypassKeyHeader.value],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      };
+    },
+  );
+
   cdktfVaultProviderConfig = this.provide(
     Resource,
     'cdktfVaultProviderConfig',
     () => {
       const vaultProviderConfig: VaultProviderConfig = {
-        address: `https://${this.release.shared.host}`,
+        address: `https://${this.release.shared.domain}`,
         token: this.generateDynamicCdktfToken.element.result.lookup(
           this.generateDynamicCdktfToken.shared.tokenKey,
         ),
+        headers: [
+          {
+            name: this.release.shared.oauthBypassKeyHeader.name,
+            value: this.release.shared.oauthBypassKeyHeader.value,
+          },
+        ],
       };
       return [{}, vaultProviderConfig];
     },
   );
-
-  ///////////////////////////////////////////////////////////////////////
-
-  // Vault
-  // testMount = this.provide(Mount, 'testMount', () => ({
-  //   path: 'test',
-  //   type: 'kv',
-  //   options: {
-  //     version: '2',
-  //   },
-  // }));
-
-  // testKvSecretBackendV2 = this.provide(
-  //   KvSecretBackendV2,
-  //   'testKvSecretBackendV2',
-  //   () => ({
-  //     mount: this.testMount.element.path,
-  //     maxVersions: 5,
-  //     deleteVersionAfter: 12600,
-  //     casRequired: false,
-  //   }),
-  // );
-
-  // testKvSecretV2 = this.provide(KvSecretV2, 'testKvSecretV2', () => ({
-  //   mount: this.testMount.element.path,
-  //   name: 'test',
-  //   deleteAllVersions: true,
-  //   dataJson: Fn.jsonencode({
-  //     some: 'value',
-  //   }),
-  //   customMetadata: {
-  //     maxVersions: 5,
-  //     data: {
-  //       foo: 'bar',
-  //     },
-  //   },
-  // }));
-
-  // testPolicy = this.provide(Policy, 'testPolicy', () => ({
-  //   name: 'test',
-  //   policy: dedent`
-  //     path "test/data/*" {
-  //       capabilities = ["read"]
-  //     }
-  //   `,
-  // }));
-
-  // // OIDC
-  // oidcAuthBackend = this.provide(AuthBackend, 'oidcAuthBackend', () => ({
-  //   type: 'oidc',
-  // }));
-
-  /*
-    @ToDo
-    1. auth backend / method
-    2. secret engine
-    3. audit backend
-  */
 
   constructor(
     // Global
@@ -329,10 +402,14 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,
+    private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
+    private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
+    private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
+    private readonly k8sOkeAppsIstioGatewayStack: K8S_Oke_Apps_Istio_Gateway_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

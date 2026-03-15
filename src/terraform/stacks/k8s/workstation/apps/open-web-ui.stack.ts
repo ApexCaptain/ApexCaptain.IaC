@@ -47,122 +47,122 @@ export class K8S_Workstation_Apps_OpenWebUi_Stack extends AbstractStack {
     },
   };
 
-  metadata = this.provide(Resource, 'metadata', () => [
-    {},
-    this.k8sWorkstationSystemStack.applicationMetadata.shared.openWebUi,
-  ]);
+  // metadata = this.provide(Resource, 'metadata', () => [
+  //   {},
+  //   this.k8sWorkstationSystemStack.applicationMetadata.shared.openWebUi,
+  // ]);
 
-  namespace = this.provide(NamespaceV1, 'namespace', () => ({
-    metadata: {
-      name: this.metadata.shared.namespace,
-      labels: {
-        'istio-injection': 'enabled',
-      },
-    },
-  }));
+  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
+  //   metadata: {
+  //     name: this.metadata.shared.namespace,
+  //     labels: {
+  //       'istio-injection': 'enabled',
+  //     },
+  //   },
+  // }));
 
-  openWebUiPersistentVolumeClaim = this.provide(
-    PersistentVolumeClaimV1,
-    'openWebUiPersistentVolumeClaim',
-    id => ({
-      metadata: {
-        name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-        namespace: this.namespace.element.metadata.name,
-      },
-      spec: {
-        storageClass:
-          this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
-            .metadata.name,
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: '2Gi',
-          },
-        },
-      },
-      lifecycle: {
-        preventDestroy: true,
-      },
-    }),
-  );
+  // openWebUiPersistentVolumeClaim = this.provide(
+  //   PersistentVolumeClaimV1,
+  //   'openWebUiPersistentVolumeClaim',
+  //   id => ({
+  //     metadata: {
+  //       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+  //       namespace: this.namespace.element.metadata.name,
+  //     },
+  //     spec: {
+  //       storageClass:
+  //         this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+  //           .metadata.name,
+  //       accessModes: ['ReadWriteOnce'],
+  //       resources: {
+  //         requests: {
+  //           storage: '2Gi',
+  //         },
+  //       },
+  //     },
+  //     lifecycle: {
+  //       preventDestroy: true,
+  //     },
+  //   }),
+  // );
 
-  openWebUiRelease = this.provide(Release, 'openWebUiRelease', () => {
-    const ollamaRelease = this.k8sWorkstationAppsOllamaStack.ollamaRelease;
+  // openWebUiRelease = this.provide(Release, 'openWebUiRelease', () => {
+  //   const ollamaRelease = this.k8sWorkstationAppsOllamaStack.ollamaRelease;
 
-    return {
-      name: this.metadata.shared.helm.openWebui.name,
-      chart: this.metadata.shared.helm.openWebui.chart,
-      repository: this.metadata.shared.helm.openWebui.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      values: [
-        yaml.stringify({
-          // Ollama
-          ollama: {
-            enabled: false,
-          },
-          ollamaUrls: [
-            `http://${ollamaRelease.shared.serviceName}.${this.k8sWorkstationAppsOllamaStack.namespace.element.metadata.name}:${ollamaRelease.shared.servicePort}`,
-          ],
+  //   return {
+  //     name: this.metadata.shared.helm.openWebui.name,
+  //     chart: this.metadata.shared.helm.openWebui.chart,
+  //     repository: this.metadata.shared.helm.openWebui.repository,
+  //     namespace: this.namespace.element.metadata.name,
+  //     createNamespace: false,
+  //     values: [
+  //       yaml.stringify({
+  //         // Ollama
+  //         ollama: {
+  //           enabled: false,
+  //         },
+  //         ollamaUrls: [
+  //           `http://${ollamaRelease.shared.serviceName}.${this.k8sWorkstationAppsOllamaStack.namespace.element.metadata.name}:${ollamaRelease.shared.servicePort}`,
+  //         ],
 
-          tika: {
-            enabled: true,
-          },
-          livenessProbe: {
-            httpGet: {
-              path: '/health',
-              port: 'http',
-            },
-            failureThreshold: 1,
-            periodSeconds: 10,
-          },
-          readinessProbe: {
-            httpGet: {
-              path: '/health/db',
-              port: 'http',
-            },
-            failureThreshold: 1,
-            periodSeconds: 10,
-          },
-          startupProbe: {
-            httpGet: {
-              path: '/health',
-              port: 'http',
-            },
-            failureThreshold: 20,
-            periodSeconds: 5,
-            initialDelaySeconds: 30,
-          },
-          /*
-          ingress: {
-            enabled: false,
-            class: 'nginx',
-            annotations: {
-              'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-              'nginx.ingress.kubernetes.io/rewrite-target': '/',
-              'nginx.ingress.kubernetes.io/auth-url':
-                this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-                  .authUrl,
-            },
-            host: this.cloudflareRecordStack.aiRecord.element.name,
-          },
-          */
+  //         tika: {
+  //           enabled: true,
+  //         },
+  //         livenessProbe: {
+  //           httpGet: {
+  //             path: '/health',
+  //             port: 'http',
+  //           },
+  //           failureThreshold: 1,
+  //           periodSeconds: 10,
+  //         },
+  //         readinessProbe: {
+  //           httpGet: {
+  //             path: '/health/db',
+  //             port: 'http',
+  //           },
+  //           failureThreshold: 1,
+  //           periodSeconds: 10,
+  //         },
+  //         startupProbe: {
+  //           httpGet: {
+  //             path: '/health',
+  //             port: 'http',
+  //           },
+  //           failureThreshold: 20,
+  //           periodSeconds: 5,
+  //           initialDelaySeconds: 30,
+  //         },
+  //         /*
+  //         ingress: {
+  //           enabled: false,
+  //           class: 'nginx',
+  //           annotations: {
+  //             'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
+  //             'nginx.ingress.kubernetes.io/rewrite-target': '/',
+  //             'nginx.ingress.kubernetes.io/auth-url':
+  //               this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
+  //                 .authUrl,
+  //           },
+  //           host: this.cloudflareRecordStack.aiRecord.element.name,
+  //         },
+  //         */
 
-          // SSO
-          // @ToDo 추후 OIDC 연동해야 함, Ingress oauth2 proxy는 제거
-          sso: {
-            enabled: false,
-          },
+  //         // SSO
+  //         // @ToDo 추후 OIDC 연동해야 함, Ingress oauth2 proxy는 제거
+  //         sso: {
+  //           enabled: false,
+  //         },
 
-          // Persistence
-          persistence: {
-            existingClaim:
-              this.openWebUiPersistentVolumeClaim.element.metadata.name,
-          },
-        }),
-      ],
-    };
-  });
+  //         // Persistence
+  //         persistence: {
+  //           existingClaim:
+  //             this.openWebUiPersistentVolumeClaim.element.metadata.name,
+  //         },
+  //       }),
+  //     ],
+  //   };
+  // });
 
   constructor(
     // Terraform

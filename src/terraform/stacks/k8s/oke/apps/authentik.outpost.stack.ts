@@ -6,6 +6,8 @@ import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
 import { K8S_Oke_Apps_Cloudbeaver_Stack } from './cloudbeaver.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Oke_Apps_Monitoring_Stack } from './monitoring.stack';
+import { K8S_Oke_Apps_Nfs_File_Browser_Stack } from './nfs.file-browser.stack';
+import { K8S_Oke_Apps_Vault_Stack } from './vault.stack';
 import { AbstractStack } from '@/common';
 import { Cloudflare_Record_Oke_Stack } from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -37,6 +39,8 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
       this.k8sOkeAppsMonitoringStack.grafanaAuthentikProxyProvider,
       this.k8sOkeAppsMonitoringStack.kialiAuthentikProxyProvider,
       this.k8sOkeAppsArgoCdStack.authentikProxyProvider,
+      this.k8sOkeAppsNfsFileBrowserStack.authentikProxyProvider,
+      this.k8sOkeAppsVaultStack.authentikProxyProvider,
     ];
     return {
       name: this.k8sOkeAppsIstioStack.istiodRelease.shared
@@ -67,6 +71,8 @@ export class K8S_Oke_Apps_Authentik_Outpost_Stack extends AbstractStack {
     private readonly k8sOkeAppsCloudbeaverStack: K8S_Oke_Apps_Cloudbeaver_Stack,
     private readonly k8sOkeAppsMonitoringStack: K8S_Oke_Apps_Monitoring_Stack,
     private readonly k8sOkeAppsArgoCdStack: K8S_Oke_Apps_ArgoCd_Stack,
+    private readonly k8sOkeAppsNfsFileBrowserStack: K8S_Oke_Apps_Nfs_File_Browser_Stack,
+    private readonly k8sOkeAppsVaultStack: K8S_Oke_Apps_Vault_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

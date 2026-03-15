@@ -83,6 +83,12 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         dependsOn: [this.istioBaseRelease.element],
         values: [
           yaml.stringify({
+            resources: {
+              requests: {
+                cpu: '50m',
+                memory: '200Mi',
+              },
+            },
             global: {
               meshID:
                 this.globalConfigService.config.terraform.stacks.k8s.serviceMesh

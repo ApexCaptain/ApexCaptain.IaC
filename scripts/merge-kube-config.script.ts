@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { KoconutArray } from 'koconut';
 import yaml from 'yaml';
 import { KubeConfig } from '../src/common/interfaces/kubeconfig.interface';
 
-const mergeKubeConfigScript = () => {
+const mergeKubeConfigScript = async () => {
   const generatedKubeConfigs = fs
     .readdirSync(process.env.KUBE_CONFIG_DIR_NAME!!)
     .filter(eachKubeConfigfile => eachKubeConfigfile.endsWith('.yaml'))
@@ -19,13 +20,21 @@ const mergeKubeConfigScript = () => {
     apiVersion: 'v1',
     kind: 'Config',
     preferences: {},
-    clusters: generatedKubeConfigs.flatMap(
-      eachKubeConfig => eachKubeConfig.clusters,
-    ),
-    contexts: generatedKubeConfigs.flatMap(
-      eachKubeConfig => eachKubeConfig.contexts,
-    ),
-    users: generatedKubeConfigs.flatMap(eachKubeConfig => eachKubeConfig.users),
+    clusters: await KoconutArray.from(
+      generatedKubeConfigs.flatMap(eachKubeConfig => eachKubeConfig.clusters),
+    )
+      .distinctBy(eachCluster => eachCluster.name)
+      .yield(),
+    contexts: await KoconutArray.from(
+      generatedKubeConfigs.flatMap(eachKubeConfig => eachKubeConfig.contexts),
+    )
+      .distinctBy(eachContext => eachContext.name)
+      .yield(),
+    users: await KoconutArray.from(
+      generatedKubeConfigs.flatMap(eachKubeConfig => eachKubeConfig.users),
+    )
+      .distinctBy(eachUser => eachUser.name)
+      .yield(),
   };
 
   const targetKubeConfigFilePath = process.env.KUBECONFIG!!;
@@ -57,4 +66,4 @@ const mergeKubeConfigScript = () => {
 
   fs.writeFileSync(targetKubeConfigFilePath, yaml.stringify(finalKubeConfig));
 };
-mergeKubeConfigScript();
+void mergeKubeConfigScript();

@@ -261,10 +261,11 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
               },
             }),
 
-            // Grafana
+            // @ToDO Grafana 잠시 비활성화
             yaml.stringify({
               grafana: {
-                enabled: true,
+                enabled: false,
+
                 defaultDashboardsTimezone: Timezone['Asia/Seoul'],
                 adminUser: this.config.grafana.adminUser,
                 adminPassword: this.config.grafana.adminPassword,

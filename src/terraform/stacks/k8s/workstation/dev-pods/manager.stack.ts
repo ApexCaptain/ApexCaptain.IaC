@@ -1,19 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
-import { K8S_Workstation_K8S_Stack } from './k8s.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
+import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { Labels } from '@lib/terraform/providers/kubernetes/labels';
+import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
+import { Resource } from '@lib/terraform/providers/null/resource';
 
 @Injectable()
-export class K8S_Workstation_NodeMeta_Stack extends AbstractStack {
-  config =
-    this.globalConfigService.config.terraform.stacks.k8s.workstation.nodeMeta;
-
+export class K8S_Workstation_DevPods_Manager_Stack extends AbstractStack {
   terraform = {
     backend: this.backend(LocalBackend, () =>
       this.terraformConfigService.backends.localBackend.secrets({
@@ -33,17 +32,6 @@ export class K8S_Workstation_NodeMeta_Stack extends AbstractStack {
     },
   };
 
-  node0Labels = this.provide(Labels, 'node0Labels', () => ({
-    apiVersion: 'v1',
-    kind: 'Node',
-    metadata: {
-      name: this.config.node0.name,
-    },
-    labels: {
-      'sysbox-install': 'yes',
-    },
-  }));
-
   constructor(
     // Global
     private readonly globalConfigService: GlobalConfigService,
@@ -54,11 +42,12 @@ export class K8S_Workstation_NodeMeta_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
+    private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
-      K8S_Workstation_NodeMeta_Stack.name,
-      'Node meta stack for workstation k8s',
+      K8S_Workstation_DevPods_Manager_Stack.name,
+      'Dev-pods Manager stack for workstation k8s',
     );
   }
 }

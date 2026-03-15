@@ -44,7 +44,6 @@ export const TerraformSchema = Joi.object({
         }).required(),
       }).required(),
     }).required(),
-    generatedScriptLibDirRelativePath: Joi.string().required(),
   }).required(),
 
   stacks: StacksSchema,

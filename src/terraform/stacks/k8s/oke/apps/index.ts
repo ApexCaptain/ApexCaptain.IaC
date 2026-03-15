@@ -19,6 +19,7 @@ export * from './istio.gateway.stack';
 
 // NFS
 export * from './nfs.stack';
+export * from './nfs.file-browser.stack';
 
 // Cloudbeaver
 export * from './cloudbeaver.stack';

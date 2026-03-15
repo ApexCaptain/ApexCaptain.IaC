@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { LocalBackend, TerraformIterator } from 'cdktf';
 import { K8S_Workstation_K8S_Stack } from './k8s.stack';
 import { K8S_Workstation_NodeMeta_Stack } from './node-meta.stack';
 import { AbstractStack, createK8sApplicationMetadata } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { DataKubernetesNamespace } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace';
+import { DataHttp } from '@lib/terraform/providers/http/data-http';
+import { HttpProvider } from '@lib/terraform/providers/http/provider';
+import { DataKubectlFileDocuments } from '@lib/terraform/providers/kubectl/data-kubectl-file-documents';
+import { Manifest } from '@lib/terraform/providers/kubectl/manifest';
+import { KubectlProvider } from '@lib/terraform/providers/kubectl/provider';
+import { DataKubernetesNamespaceV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace-v1';
 import { DataKubernetesService } from '@lib/terraform/providers/kubernetes/data-kubernetes-service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
@@ -29,14 +34,22 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
         }),
       ),
+      kubectl: this.provide(KubectlProvider, 'kubectlProvider', () => ({
+        configPath: this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+      })),
+      http: this.provide(HttpProvider, 'httpProvider', () => ({})),
     },
   };
 
-  dataNamespace = this.provide(DataKubernetesNamespace, 'namespace', () => ({
-    metadata: {
-      name: 'kube-system',
-    },
-  }));
+  dataNamespace = this.provide(
+    DataKubernetesNamespaceV1,
+    'dataNamespace',
+    () => ({
+      metadata: {
+        name: 'kube-system',
+      },
+    }),
+  );
 
   dataKubernetesDashboardService = this.provide(
     DataKubernetesService,
@@ -52,6 +65,43 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
         servicePort: 443,
       },
     ],
+  );
+
+  /**
+   * @See https://github.com/nestybox/sysbox/blob/master/docs/user-guide/install-k8s.md
+   */
+  dataSysboxInstallationManifest = this.provide(
+    DataHttp,
+    'dataSysboxInstallationManifest',
+    () => ({
+      url: 'https://raw.githubusercontent.com/nestybox/sysbox/master/sysbox-k8s-manifests/sysbox-install.yaml',
+    }),
+  );
+
+  dataSysboxInstallaionFileDocuments = this.provide(
+    DataKubectlFileDocuments,
+    'dataSysboxInstallaionFileDocuments',
+    () => ({
+      content: this.dataSysboxInstallationManifest.element.responseBody,
+    }),
+  );
+
+  installSysboxManifest = this.provide(
+    Manifest,
+    'installSysboxManifest',
+    () => {
+      const runimeClassName = 'sysbox-runc';
+      const manifestsSimpleIterator = TerraformIterator.fromList(
+        this.dataSysboxInstallaionFileDocuments.element.documents,
+      );
+      return [
+        {
+          forEach: manifestsSimpleIterator,
+          yamlBody: manifestsSimpleIterator.value,
+        },
+        { runimeClassName },
+      ];
+    },
   );
 
   metallbPorts = (() => {
@@ -70,6 +120,9 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       game7dtdGamePort2: 26901,
       game7dtdGamePort3: 26902,
       gameSftp: 10023,
+
+      // Wink
+      winkSsh: 10024,
 
       // Windows
       windowsRdp: 60000,
@@ -107,6 +160,21 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               chart: 'authentik-remote-cluster',
               name: 'authentik-remote-cluster',
               repository: 'https://charts.goauthentik.io/',
+            },
+          },
+        }),
+        coder: createK8sApplicationMetadata({
+          namespace: 'coder',
+          helm: {
+            postgresql: {
+              name: 'postgresql',
+              chart: 'postgresql',
+              repository: 'https://charts.bitnami.com/bitnami',
+            },
+            coder: {
+              name: 'coder',
+              chart: 'coder',
+              repository: 'https://helm.coder.com/v2',
             },
           },
         }),
@@ -367,6 +435,27 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
               name: 'open-webui',
               chart: 'open-webui',
               repository: 'https://helm.openwebui.com/',
+            },
+          },
+        }),
+
+        wink: createK8sApplicationMetadata({
+          namespace: 'wink',
+          services: {
+            wink: {
+              labels: {
+                app: 'wink',
+              },
+              name: 'wink',
+              ports: {
+                ssh: {
+                  portBasedIngressPort: this.metallbPorts.winkSsh,
+                  name: 'ssh',
+                  port: 22,
+                  targetPort: '22',
+                  protocol: 'TCP',
+                },
+              },
             },
           },
         }),

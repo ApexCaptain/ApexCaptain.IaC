@@ -51,3 +51,6 @@ export * from './ollama.stack';
 
 // open-web-ui
 export * from './open-web-ui.stack';
+
+// workspace
+export * from './wink';

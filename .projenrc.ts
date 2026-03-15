@@ -64,13 +64,13 @@ const constants = (() => {
   const scriptDir = 'scripts';
   const kubeConfigDirPath = '.kube';
   const libDir = 'lib';
-  const generatedScriptLibDir = path.join(scriptDir, 'generated');
   const envDir = 'env';
   const keysDir = 'keys';
   const secretsDir = '.secrets';
   const tmpDir = 'tmp';
   const cursorDir = '.cursor';
 
+  const cdktfLibDir = path.join(libDir, 'terraform');
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
@@ -87,8 +87,8 @@ const constants = (() => {
       scriptDir,
       kubeConfigDirPath,
       libDir,
-      generatedScriptLibDir,
       envDir,
+      cdktfLibDir,
       cdktfOutDir,
       keysDir,
       secretsDir,
@@ -124,11 +124,7 @@ const project = new typescript.TypeScriptAppProject({
     tsconfigPath: './tsconfig.dev.json',
     dirs: [constants.paths.dirs.srcDir],
     devdirs: [constants.paths.dirs.scriptDir],
-    ignorePatterns: [
-      '/**/node_modules/*',
-      `${constants.paths.dirs.libDir}/`,
-      `${constants.paths.dirs.generatedScriptLibDir}/`,
-    ],
+    ignorePatterns: ['/**/node_modules/*', `${constants.paths.dirs.libDir}/`],
     prettier: true,
   },
   projenrcTs: true,
@@ -215,7 +211,6 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.keysDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
-    `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
   ],
   deps: [
@@ -246,13 +241,14 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.4.3',
+    'constructs@^10.4.4',
     '@types/lodash',
     'commander',
     'flatley',
     'fuzzy',
     '@inquirer/prompts',
     'inquirer-autocomplete-standalone',
+    'koconut',
   ],
 });
 
@@ -268,8 +264,9 @@ void (async () => {
   project.addScripts({
     // Projen Hooks
     postprojen: dedent`
-      cdktf get && \
-      yarn tf@backup`,
+      yarn tf@install && \
+      yarn tf@backup
+    `,
 
     // Terraform
     'tf@build': 'cdktf synth',
@@ -287,7 +284,8 @@ void (async () => {
     'tf@merge-kube-config': 'ts-node scripts/merge-kube-config.script.ts',
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
-    'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
+    'tf@upgrade': 'cdktf get --force',
+    'tf@install': `cdktf get && find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
     'tf@backup': 'ts-node ./scripts/backup-tfstate.script.ts',
 
     // Terminal
@@ -325,7 +323,7 @@ void (async () => {
   new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {
       output: constants.paths.dirs.cdktfOutDir,
-      codeMakerOutput: path.join(constants.paths.dirs.libDir, 'terraform'),
+      codeMakerOutput: constants.paths.dirs.cdktfLibDir,
       sendCrashReports: false,
       app: 'yarn nest start',
       language: 'typescript',
@@ -377,6 +375,11 @@ void (async () => {
           name: 'vault',
           source: 'hashicorp/vault',
         },
+        {
+          // https://registry.terraform.io/providers/hashicorp/http/latest
+          name: 'http',
+          source: 'hashicorp/http',
+        },
 
         // Partners
         {
@@ -410,6 +413,11 @@ void (async () => {
           // https://registry.terraform.io/providers/argoproj-labs/argocd/latest
           name: 'argocd',
           source: 'argoproj-labs/argocd',
+        },
+        {
+          // https://registry.terraform.io/providers/gavinbunney/kubectl/latest
+          name: 'kubectl',
+          source: 'gavinbunney/kubectl',
         },
       ],
     },
@@ -569,6 +577,18 @@ void (async () => {
                 `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
               ).toString(),
             },
+            devPods: {
+              kubeConfigDirPath: path.join(
+                process.env.CONTAINER_SECRETS_DIR_PATH ??
+                  path.join(project.outdir, '.secrets'),
+                '.kube',
+              ),
+            },
+            nodeMeta: {
+              node0: {
+                name: process.env.WORKSTATION_NODE_0_NAME!!,
+              },
+            },
             apps: {
               metallb: {
                 loadbalancerIpRange:
@@ -630,6 +650,9 @@ void (async () => {
                 username: process.env.WORKSTATION_APPS_WINDOWS_USERNAME!!,
                 password: process.env.WORKSTATION_APPS_WINDOWS_PASSWORD!!,
               },
+              wink: {
+                userName: process.env.WORKSTATION_APPS_WINK_USERNAME!!,
+              },
             },
           },
         },
@@ -671,8 +694,6 @@ void (async () => {
             },
           },
         },
-        generatedScriptLibDirRelativePath:
-          constants.paths.dirs.generatedScriptLibDir,
       },
     },
   };

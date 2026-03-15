@@ -45,7 +45,7 @@
     },
     {
       "name": "constructs",
-      "version": "^10.4.3",
+      "version": "^10.4.4",
       "type": "build"
     },
     {
@@ -79,6 +79,10 @@
     },
     {
       "name": "inquirer-autocomplete-standalone",
+      "type": "build"
+    },
+    {
+      "name": "koconut",
       "type": "build"
     },
     {

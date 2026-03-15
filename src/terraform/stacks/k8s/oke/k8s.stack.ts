@@ -1,3 +1,4 @@
+import cluster from 'cluster';
 import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
@@ -12,7 +13,6 @@ import { File } from '@lib/terraform/providers/local/file';
 import { LocalProvider } from '@lib/terraform/providers/local/provider';
 import { DataOciContainerengineClusterKubeConfig } from '@lib/terraform/providers/oci/data-oci-containerengine-cluster-kube-config';
 import { OciProvider } from '@lib/terraform/providers/oci/provider';
-import cluster from 'cluster';
 
 @Injectable()
 export class K8S_Oke_K8S_Stack extends AbstractStack {
