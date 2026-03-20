@@ -153,7 +153,7 @@ export class K8S_Oke_Apps_ArgoCd_Stack extends AbstractStack {
             },
             redisSecretInit: {
               podAnnotations: {
-                'sidecar.istio.io/inject': 'false',
+                'sidecar.istio.io/inject': false.toString(),
               },
             },
             configs: {

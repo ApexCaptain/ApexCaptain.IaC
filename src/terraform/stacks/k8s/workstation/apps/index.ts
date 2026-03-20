@@ -2,6 +2,10 @@
 export * from './authentik.stack';
 export * from './authentik.outpost.stack';
 
+// coder
+export * from './coder.stack';
+export * from './coder.resources.stack';
+
 // dashboard
 export * from './dashboard.stack';
 
@@ -53,4 +57,4 @@ export * from './ollama.stack';
 export * from './open-web-ui.stack';
 
 // workspace
-export * from './wink';
+export * from './wink.stack';

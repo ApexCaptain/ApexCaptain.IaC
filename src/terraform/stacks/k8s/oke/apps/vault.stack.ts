@@ -251,7 +251,7 @@ export class K8S_Oke_Apps_Vault_Stack extends AbstractStack {
             newToken=$( $execCommand -- cat $TARGET_CDKTF_TOKEN_PATH | jq -r '.auth.client_token' )
 
             echo '{"${tokenKey}" : "'$newToken'"}'
-        `,
+            `,
           ],
         },
         { tokenKey },

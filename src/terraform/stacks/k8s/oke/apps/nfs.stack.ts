@@ -13,7 +13,7 @@ import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
-import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
+import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
@@ -236,7 +236,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     },
   }));
 
-  sftpConfigMap = this.provide(ConfigMap, 'sftpConfigMap', id => ({
+  sftpConfigMap = this.provide(ConfigMapV1, 'sftpConfigMap', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
@@ -410,7 +410,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
                   env: [
                     {
                       name: 'FB_NOAUTH',
-                      value: 'true',
+                      value: true.toString(),
                     },
                     {
                       name: 'FB_DATABASE',

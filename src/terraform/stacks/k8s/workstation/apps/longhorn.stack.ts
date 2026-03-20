@@ -6,6 +6,7 @@ import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from '../../oke/apps/authentik.stack';
 import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
@@ -91,7 +92,9 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           yaml.stringify({
             ingress: {
               enabled: true,
-              ingressClassName: 'nginx',
+              ingressClassName:
+                this.k8sWorkstationAppsIngressControllerStack.release.shared
+                  .ingressClassName,
               host: this.cloudflareRecordWorkstationStack.longhornRecord.element
                 .name,
               annotations: {
@@ -226,7 +229,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       metadata: {
         name: _.kebabCase(id),
         annotations: {
-          'storageclass.kubernetes.io/is-default-class': 'true',
+          'storageclass.kubernetes.io/is-default-class': true.toString(),
         },
       },
       storageProvisioner: 'driver.longhorn.io',
@@ -276,11 +279,13 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Longhorn_Stack.name,
       'Longhorn stack for workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

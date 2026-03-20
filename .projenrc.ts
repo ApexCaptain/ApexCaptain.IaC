@@ -241,7 +241,7 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.4.4',
+    'constructs@^10.5.1',
     '@types/lodash',
     'commander',
     'flatley',
@@ -249,6 +249,8 @@ const project = new typescript.TypeScriptAppProject({
     '@inquirer/prompts',
     'inquirer-autocomplete-standalone',
     'koconut',
+    'puppeteer',
+    'wait',
   ],
 });
 
@@ -396,6 +398,11 @@ void (async () => {
           // https://registry.terraform.io/providers/oracle/oci/latest
           name: 'oci',
           source: 'oracle/oci',
+        },
+        {
+          // https://registry.terraform.io/providers/coder/coderd/latest
+          name: 'coderd',
+          source: 'coder/coderd',
         },
 
         // Community
@@ -598,7 +605,40 @@ void (async () => {
                     .WORKSTATION_METALLB_LOADBALANCER_ISTIO_CROSS_NETWORK_LB_IP!!,
                 ingressControllerIp:
                   process.env
-                    .WORKSTATION_METALLB_LOADBALANCER_NGINS_INGRESS_CONTROLLER_LB_IP!!,
+                    .WORKSTATION_METALLB_LOADBALANCER_NGINX_INGRESS_CONTROLLER_LB_IP!!,
+                coderIp:
+                  process.env.WORKSTATION_METALLB_LOADBALANCER_CODER_LB_IP!!,
+              },
+              coder: {
+                githubOauth2: {
+                  clientId:
+                    process.env
+                      .GITHUB_APEX_CAPTAIN_CODER_OAUTH2_APP_CLEINT_ID!!,
+                  clientSecret:
+                    process.env
+                      .GITHUB_APEX_CAPTAIN_CODER_OAUTH2_APP_CLEINT_SECRET!!,
+                },
+                adminUser: {
+                  username: process.env.WORKSTATION_APPS_CODER_ADMIN_USERNAME!!,
+                  fullName:
+                    process.env.WORKSTATION_APPS_CODER_ADMIN_FULL_NAME!!,
+                  email: process.env.WORKSTATION_APPS_CODER_ADMIN_EMAIL!!,
+                  password: process.env.WORKSTATION_APPS_CODER_ADMIN_PASSWORD!!,
+                  tokenName:
+                    process.env.WORKSTATION_APPS_CODER_ADMIN_TOKEN_NAME!!,
+                  refreshTokenBeforeExpirationHours: 2,
+                  storedTokenSecretFileName:
+                    process.env
+                      .WORKSTATION_APPS_CODER_ADMIN_STORED_TOKEN_SECRET_FILE_NAME!!,
+                },
+                users: {
+                  apexCaptain: {
+                    username:
+                      process.env.WORKSTATION_APPS_CODER_APEXCAPTAIN_USERNAME!!,
+                    email:
+                      process.env.WORKSTATION_APPS_CODER_APEXCAPTAIN_EMAIL!!,
+                  },
+                },
               },
               longhorn: {
                 nodes: [

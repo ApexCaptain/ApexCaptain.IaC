@@ -48,6 +48,18 @@ export class Cloudflare_Record_Workstation_Stack extends AbstractStack {
     comment: 'Cloudflare record for Qbittorrent service',
   }));
 
+  coderRecord = this.provide(DnsRecord, 'coderRecord', () => ({
+    name: `coder.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
+    ttl: 1,
+    type: 'CNAME',
+    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
+    content:
+      this.globalConfigService.config.terraform.stacks.k8s.workstation.common
+        .domain.iptime,
+    proxied: true,
+    comment: 'Cloudflare record for Coder service',
+  }));
+
   jellyfinRecord = this.provide(DnsRecord, 'jellyfinRecord', () => ({
     name: `jellyfin.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,

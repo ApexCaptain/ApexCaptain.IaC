@@ -464,7 +464,7 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
           name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
           namespace: this.namespace.element.metadata.name,
           labels: {
-            'kiali.io/multiCluster': 'true',
+            'kiali.io/multiCluster': true.toString(),
           },
           annotations: {
             'kiali.io/cluster': targetClusterName,

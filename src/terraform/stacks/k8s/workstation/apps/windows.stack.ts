@@ -6,6 +6,7 @@ import dedent from 'dedent';
 import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import {
   K8S_Oke_Apps_Authentik_Resources_Stack,
@@ -376,7 +377,9 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
       },
     },
     spec: {
-      ingressClassName: 'nginx',
+      ingressClassName:
+        this.k8sWorkstationAppsIngressControllerStack.release.shared
+          .ingressClassName,
       rule: [
         {
           host: this.cloudflareRecordWorkstationStack.windowsRecord.element
@@ -419,6 +422,7 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -426,5 +430,6 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
       'Windows stack for workstation k8s',
     );
     this.addDependency(this.k8sWorkstationLonghornStack);
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

@@ -9,7 +9,7 @@ import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
-import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
+import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { ServiceV1 } from '@lib/terraform/providers/kubernetes/service-v1';
@@ -93,7 +93,7 @@ export class K8S_Workstation_Apps_Nas_Sftp_Stack extends AbstractStack {
     ];
   });
 
-  sftpAuthConfigMap = this.provide(ConfigMap, 'sftpAuthConfigMap', id => ({
+  sftpAuthConfigMap = this.provide(ConfigMapV1, 'sftpAuthConfigMap', id => ({
     metadata: {
       name: `${this.k8sWorkstationAppsNasStack.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace:

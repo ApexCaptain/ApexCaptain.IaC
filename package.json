@@ -47,7 +47,7 @@
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "commander": "^13.1.0",
-    "constructs": "^10.4.4",
+    "constructs": "^10.5.1",
     "eslint": "^8",
     "eslint-config-prettier": "^9.1.2",
     "eslint-import-resolver-typescript": "^3.10.1",
@@ -59,8 +59,10 @@
     "koconut": "^1.0.167",
     "prettier": "^3.8.1",
     "projen": "^0.99.20",
+    "puppeteer": "^24.39.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wait": "^0.4.2"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",

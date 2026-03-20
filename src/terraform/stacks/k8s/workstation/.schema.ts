@@ -23,6 +23,28 @@ export const WorkstationSchema = Joi.object({
       loadbalancerIpRange: Joi.string().required(),
       istioCrossNetworkGatewayIp: Joi.string().required(),
       ingressControllerIp: Joi.string().required(),
+      coderIp: Joi.string().required(),
+    }).required(),
+    coder: Joi.object({
+      adminUser: Joi.object({
+        username: Joi.string().required(),
+        fullName: Joi.string().required(),
+        email: Joi.string().email().required(),
+        password: Joi.string().required(),
+        tokenName: Joi.string().required(),
+        refreshTokenBeforeExpirationHours: Joi.number().required(),
+        storedTokenSecretFileName: Joi.string().required(),
+      }).required(),
+      users: Joi.object({
+        apexCaptain: Joi.object({
+          username: Joi.string().required(),
+          email: Joi.string().email().required(),
+        }).required(),
+      }).required(),
+      githubOauth2: Joi.object({
+        clientId: Joi.string().required(),
+        clientSecret: Joi.string().required(),
+      }).required(),
     }).required(),
     longhorn: Joi.object({
       nodes: Joi.array()

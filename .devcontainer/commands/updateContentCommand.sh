@@ -30,8 +30,13 @@ install_npm_packages() {
         @google/gemini-cli
 }
 
-export -f install_oci install_helm install_npm_packages
-parallel --jobs 10 ::: install_oci install_helm install_npm_packages
+install_coder_cli() {
+    echo "🔄 Installing Coder CLI"
+    curl -L https://coder.com/install.sh | sh
+}
+
+export -f install_oci install_helm install_npm_packages install_coder_cli
+parallel --jobs 10 ::: install_oci install_helm install_npm_packages install_coder_cli
 
 echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh

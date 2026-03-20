@@ -3,7 +3,7 @@ services:
     container_name: apex_captain_iac_devcon_workspace
     # Base On Ubuntu Noble
     image: mcr.microsoft.com/devcontainers/base:dev-noble
-
+    shm_size: '1gb'
     environment:
       # Timezone
       TZ: 'Asia/Seoul'

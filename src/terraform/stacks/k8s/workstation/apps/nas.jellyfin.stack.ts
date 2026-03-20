@@ -77,7 +77,7 @@ export class K8S_Workstation_Apps_NAS_Jellyfin_Stack extends AbstractStack {
             ingress: {
               enabled: true,
               annotations: {
-                'nginx.ingress.kubernetes.io/service-upstream': 'true',
+                'nginx.ingress.kubernetes.io/service-upstream': true.toString(),
                 'nginx.ingress.kubernetes.io/upstream-vhost': `${serviceName}.${this.k8sWorkstationAppsNasStack.namespace.element.metadata.name}.svc.cluster.local`,
               },
               className: 'nginx',

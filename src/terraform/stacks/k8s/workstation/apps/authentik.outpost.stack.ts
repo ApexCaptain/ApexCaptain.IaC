@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { K8S_Workstation_Apps_Nas_Qbittorrent_Stack } from './nas.qbittorrent.stack';
 import { K8S_Workstation_Apps_Windows_Stack } from './windows.stack';
@@ -80,7 +81,9 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
               .name,
         },
         spec: {
-          ingressClassName: 'nginx',
+          ingressClassName:
+            this.k8sWorkstationAppsIngressControllerStack.release.shared
+              .ingressClassName,
           rule: [
             this.cloudflareRecordWorkstationStack.windowsRecord.element.name,
             this.cloudflareRecordWorkstationStack.torrentRecord.element.name,
@@ -128,11 +131,13 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
     private readonly k8sWorkstationWindowsStack: K8S_Workstation_Apps_Windows_Stack,
     private readonly k8sWorkstationNasQbittorrentStack: K8S_Workstation_Apps_Nas_Qbittorrent_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Authentik_Outpost_Stack.name,
       'Authentik Outpost stack for Workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

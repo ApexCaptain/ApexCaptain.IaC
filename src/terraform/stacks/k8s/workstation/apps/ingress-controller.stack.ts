@@ -122,6 +122,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
   );
 
   release = this.provide(Release, 'release', () => {
+    const ingressClassName = 'nginx';
     const values = {
       controller: {
         service: {
@@ -133,7 +134,9 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
           },
           externalTrafficPolicy: 'Local',
         },
-
+        ingressClassResource: {
+          name: ingressClassName,
+        },
         podAnnotations: {
           'traffic.sidecar.istio.io/excludeInboundPorts': '80,443',
           'traffic.sidecar.istio.io/includeInboundPorts': '',
@@ -141,7 +144,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         admissionWebhooks: {
           patch: {
             podAnnotations: {
-              'sidecar.istio.io/inject': 'false',
+              'sidecar.istio.io/inject': false.toString(),
             },
           },
         },
@@ -152,8 +155,8 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         config: {
           'allow-snippet-annotations': true,
           'annotations-risk-level': 'Critical',
-          'use-forwarded-headers': 'true',
-          'compute-full-forwarded-for': 'true',
+          'use-forwarded-headers': true.toString(),
+          'compute-full-forwarded-for': true.toString(),
         },
       },
       tcp: {},
@@ -186,15 +189,18 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
       }
     });
 
-    return {
-      name: this.metadata.shared.helm.ingressController.name,
-      chart: this.metadata.shared.helm.ingressController.chart,
-      repository: this.metadata.shared.helm.ingressController.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      forceUpdate: true,
-      values: [yaml.stringify(values)],
-    };
+    return [
+      {
+        name: this.metadata.shared.helm.ingressController.name,
+        chart: this.metadata.shared.helm.ingressController.chart,
+        repository: this.metadata.shared.helm.ingressController.repository,
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        forceUpdate: true,
+        values: [yaml.stringify(values)],
+      },
+      { ingressClassName },
+    ];
   });
 
   constructor(

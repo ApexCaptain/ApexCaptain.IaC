@@ -122,7 +122,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
                   numTrustedProxies: 1,
                 },
                 proxyMetadata: {
-                  ISTIO_META_DNS_CAPTURE: 'true',
+                  ISTIO_META_DNS_CAPTURE: true.toString(),
                   CLUSTER_ID:
                     this.globalConfigService.config.terraform.stacks.k8s
                       .serviceMesh.okeClusterName,

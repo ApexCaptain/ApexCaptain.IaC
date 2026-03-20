@@ -11,7 +11,8 @@ import { DataKubectlFileDocuments } from '@lib/terraform/providers/kubectl/data-
 import { Manifest } from '@lib/terraform/providers/kubectl/manifest';
 import { KubectlProvider } from '@lib/terraform/providers/kubectl/provider';
 import { DataKubernetesNamespaceV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-namespace-v1';
-import { DataKubernetesService } from '@lib/terraform/providers/kubernetes/data-kubernetes-service';
+import { DataKubernetesServiceV1 } from '@lib/terraform/providers/kubernetes/data-kubernetes-service-v1';
+
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
@@ -52,7 +53,7 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
   );
 
   dataKubernetesDashboardService = this.provide(
-    DataKubernetesService,
+    DataKubernetesServiceV1,
     'dataKubernetesDashboardService',
     () => [
       {
