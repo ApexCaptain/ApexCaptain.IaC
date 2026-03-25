@@ -206,6 +206,8 @@ export class ExternalGenerateCoderAdminToken extends ExternalProgram<
       () => (navigator as any).clipboard.readText() as Promise<string>,
     );
 
+    this.log(`Session token: ${sessionToken}`);
+
     const prevToken = (
       JSON.parse(
         execSync(

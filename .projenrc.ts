@@ -69,6 +69,7 @@ const constants = (() => {
   const secretsDir = '.secrets';
   const tmpDir = 'tmp';
   const cursorDir = '.cursor';
+  const assetsDir = 'assets';
 
   const cdktfLibDir = path.join(libDir, 'terraform');
   const cdktfOutDir = 'cdktf.out';
@@ -94,6 +95,7 @@ const constants = (() => {
       secretsDir,
       tmpDir,
       cursorDir,
+      assetsDir,
     },
     files: {
       cdktfConfigFilePath,
@@ -606,8 +608,6 @@ void (async () => {
                 ingressControllerIp:
                   process.env
                     .WORKSTATION_METALLB_LOADBALANCER_NGINX_INGRESS_CONTROLLER_LB_IP!!,
-                coderIp:
-                  process.env.WORKSTATION_METALLB_LOADBALANCER_CODER_LB_IP!!,
               },
               coder: {
                 githubOauth2: {
@@ -639,6 +639,12 @@ void (async () => {
                       process.env.WORKSTATION_APPS_CODER_APEXCAPTAIN_EMAIL!!,
                   },
                 },
+                templateAssetsRelativeDirPath: path.join(
+                  constants.paths.dirs.assetsDir,
+                  'static',
+                  'coder',
+                  'templates',
+                ),
               },
               longhorn: {
                 nodes: [
@@ -796,7 +802,6 @@ void (async () => {
               terminal: 'command',
               ssh: 'command',
               external: 'admin',
-              'dev-pods': 'development',
             }),
           },
         },

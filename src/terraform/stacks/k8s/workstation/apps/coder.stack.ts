@@ -19,6 +19,8 @@ import { DataExternal } from '@lib/terraform/providers/external/data-external';
 import { ExternalProvider } from '@lib/terraform/providers/external/provider';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
+import { ClusterRoleBindingV1 } from '@lib/terraform/providers/kubernetes/cluster-role-binding-v1';
+import { ClusterRoleV1 } from '@lib/terraform/providers/kubernetes/cluster-role-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { SecretV1 } from '@lib/terraform/providers/kubernetes/secret-v1';
@@ -70,6 +72,12 @@ export class K8S_Workstation_Apps_Coder_Stack extends AbstractStack {
       labels: {
         'istio-injection': 'enabled',
       },
+    },
+  }));
+
+  sysboxUbuntuNamespace = this.provide(NamespaceV1, 'sysboxUbuntuNs', id => ({
+    metadata: {
+      name: `${this.metadata.shared.namespace}-${_.kebabCase(id)}`,
     },
   }));
 
@@ -203,6 +211,7 @@ export class K8S_Workstation_Apps_Coder_Stack extends AbstractStack {
       this.cloudflareRecordWorkstationStack.coderRecord.element.name;
     const coderPodLabelKey = 'app.kubernetes.io/name';
     const coderPodLabelValue = 'coder';
+    const serviceAccountName = 'coder';
 
     return [
       {
@@ -309,7 +318,7 @@ export class K8S_Workstation_Apps_Coder_Stack extends AbstractStack {
                 },
               ],
               service: {
-                loadBalancerIP: this.k8sWorkstationMetallbStack.config.coderIp,
+                type: 'ClusterIP',
               },
               ingress: {
                 enable: true,
@@ -317,6 +326,28 @@ export class K8S_Workstation_Apps_Coder_Stack extends AbstractStack {
                   this.k8sWorkstationAppsIngressControllerStack.release.shared
                     .ingressClassName,
                 host: domain,
+              },
+              serviceAccount: {
+                name: serviceAccountName,
+                extraRules: [
+                  {
+                    apiGroups: [''],
+                    resources: ['configmaps', 'services'],
+                    verbs: [
+                      'create',
+                      'delete',
+                      'get',
+                      'list',
+                      'patch',
+                      'update',
+                    ],
+                  },
+                ],
+                workspaceNamespaces: [
+                  {
+                    name: this.sysboxUbuntuNamespace.element.metadata.name,
+                  },
+                ],
               },
             },
           }),
@@ -326,9 +357,47 @@ export class K8S_Workstation_Apps_Coder_Stack extends AbstractStack {
         domain,
         coderPodLabelKey,
         coderPodLabelValue,
+        serviceAccountName,
       },
     ];
   });
+
+  coderClusterRole = this.provide(ClusterRoleV1, 'coderClusterRole', id => ({
+    metadata: {
+      name: _.kebabCase(id),
+    },
+    rule: [
+      {
+        // Allow Coder to use CRD
+        apiGroups: ['apiextensions.k8s.io'],
+        resources: ['customresourcedefinitions'],
+        verbs: ['get', 'list', 'watch'],
+      },
+    ],
+  }));
+
+  coderClusterRoleBinding = this.provide(
+    ClusterRoleBindingV1,
+    'coderClusterRoleBinding',
+    id => ({
+      metadata: {
+        name: _.kebabCase(id),
+      },
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: this.coderClusterRole.element.metadata.name,
+      },
+      subject: [
+        {
+          kind: 'ServiceAccount',
+          name: this.coderRelease.shared.serviceAccountName,
+          namespace: this.namespace.element.metadata.name,
+        },
+      ],
+      dependsOn: [this.coderRelease.element],
+    }),
+  );
 
   generateCoderAdminToken = this.provide(
     DataExternal,

@@ -1,11 +1,18 @@
+import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import _ from 'lodash';
 import { K8S_Workstation_Apps_Coder_Stack } from './coder.stack';
-import { AbstractStack } from '@/common';
+import { K8S_Workstation_System_Stack } from '../system.stack';
+import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
+import { AbstractStack, createExpirationInterval } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CoderdProvider } from '@lib/terraform/providers/coderd/provider';
+import { Template } from '@lib/terraform/providers/coderd/template';
 import { User } from '@lib/terraform/providers/coderd/user';
+import { Integer } from '@lib/terraform/providers/random/integer';
+import { RandomProvider } from '@lib/terraform/providers/random/provider';
 
 @Injectable()
 export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
@@ -16,6 +23,7 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
       }),
     ),
     providers: {
+      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       coderd: this.provide(
         CoderdProvider,
         'coderdProvider',
@@ -25,11 +33,79 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
     },
   };
 
+  // Users
   apexCaptainUser = this.provide(User, 'apexCaptainUser', () => ({
     email: this.k8sWorkstationAppsCoderStack.config.users.apexCaptain.email,
     username:
       this.k8sWorkstationAppsCoderStack.config.users.apexCaptain.username,
     loginType: 'github',
+    suspended: false,
+  }));
+
+  // Templates
+  sysboxUbuntuSocks5ProxyPort = this.provide(
+    Integer,
+    'sysboxUbuntuSocks5ProxyPort',
+    () => ({
+      min: 10000,
+      max: 65535,
+      keepers: {
+        expirationDate: createExpirationInterval({
+          days: 10,
+        }).toString(),
+      },
+    }),
+  );
+
+  sysboxUbuntuTemplate = this.provide(Template, 'sysboxUbuntuTemplate', id => ({
+    name: id,
+    displayName: 'Ubuntu with Sysbox-runc',
+    description:
+      'Sysbox-runc based Ubuntu DevContainer(dind) workspace template',
+    icon: '/icon/ubuntu.svg',
+    versions: [
+      {
+        directory: path.join(
+          process.cwd(),
+          this.k8sWorkstationAppsCoderStack.config
+            .templateAssetsRelativeDirPath,
+          'sysbox-ubuntu',
+        ),
+        active: true,
+        tfVars: [
+          {
+            name: 'use_kubeconfig',
+            value: false.toString(),
+          },
+          {
+            name: 'namespace',
+            value:
+              this.k8sWorkstationAppsCoderStack.sysboxUbuntuNamespace.element
+                .metadata.name,
+          },
+          {
+            name: 'runtime_class_name',
+            value:
+              this.k8sWorkstationSystemStack.installSysboxManifest.shared
+                .runimeClassName,
+          },
+          {
+            name: 'storage_class_name',
+            value:
+              this.k8sWorkstationLonghornStack.longhornSsdStorageClass.element
+                .metadata.name,
+          },
+          {
+            name: 'socks5_proxy_port',
+            value: `${this.sysboxUbuntuSocks5ProxyPort.element.result}`,
+          },
+          {
+            name: 'workspace_directory_name',
+            value: 'Workspace',
+          },
+        ],
+      },
+    ],
   }));
 
   constructor(
@@ -39,6 +115,8 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sWorkstationAppsCoderStack: K8S_Workstation_Apps_Coder_Stack,
+    private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

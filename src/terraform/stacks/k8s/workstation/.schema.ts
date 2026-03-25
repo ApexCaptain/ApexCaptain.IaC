@@ -23,7 +23,6 @@ export const WorkstationSchema = Joi.object({
       loadbalancerIpRange: Joi.string().required(),
       istioCrossNetworkGatewayIp: Joi.string().required(),
       ingressControllerIp: Joi.string().required(),
-      coderIp: Joi.string().required(),
     }).required(),
     coder: Joi.object({
       adminUser: Joi.object({
@@ -45,6 +44,7 @@ export const WorkstationSchema = Joi.object({
         clientId: Joi.string().required(),
         clientSecret: Joi.string().required(),
       }).required(),
+      templateAssetsRelativeDirPath: Joi.string().required(),
     }).required(),
     longhorn: Joi.object({
       nodes: Joi.array()

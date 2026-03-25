@@ -56,7 +56,7 @@ export class Cloudflare_Record_Workstation_Stack extends AbstractStack {
     content:
       this.globalConfigService.config.terraform.stacks.k8s.workstation.common
         .domain.iptime,
-    proxied: true,
+    proxied: false,
     comment: 'Cloudflare record for Coder service',
   }));
 
@@ -68,7 +68,7 @@ export class Cloudflare_Record_Workstation_Stack extends AbstractStack {
     content:
       this.globalConfigService.config.terraform.stacks.k8s.workstation.common
         .domain.iptime,
-    proxied: true,
+    proxied: false,
     comment: 'Cloudflare record for Jellyfin service',
   }));
 
