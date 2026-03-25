@@ -6,6 +6,9 @@ export const OkeSchema = Joi.object({
       sourceCidrBlocks: Joi.array().items(Joi.string()).required(),
     }).required(),
   }).required(),
+  bastion: Joi.object({
+    sessionTunnelPort: Joi.number().min(10000).max(65535).required(),
+  }).required(),
   apps: Joi.object({
     argoCd: Joi.object({
       adminPassword: Joi.string().required(),

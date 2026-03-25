@@ -18,6 +18,8 @@ export class IstioEnvoyFilter extends Manifest {
           workloadSelector?: {
             labels?: Record<string, string>;
           };
+          /** Alternative to workloadSelector for Gateway API (mutually exclusive). Istio 1.22+ */
+          targetRefs?: { group?: string; kind?: string; name?: string }[];
           configPatches?: {
             applyTo?:
               | 'INVALID'
@@ -47,14 +49,21 @@ export class IstioEnvoyFilter extends Manifest {
                       name?: string;
                     };
                   };
+                  /** SNI match (e.g. gateway filterChain) */
+                  sni?: string;
                 };
                 name?: string;
                 portNumber?: number;
+                portName?: string;
+                /** For applyTo: LISTENER_FILTER — filter name to match */
+                listenerFilter?: string;
               };
               routeConfiguration?: {
                 name?: string;
                 vhost?: {
                   name?: string;
+                  /** Virtual host domain (e.g. 'foo.com') */
+                  domainName?: string;
                   route?: {
                     name?: string;
                     action?: 'ANY' | 'ROUTE' | 'REDIRECT' | 'DIRECT_RESPONSE';
@@ -69,7 +78,15 @@ export class IstioEnvoyFilter extends Manifest {
               };
             };
             patch?: {
-              operation?: 'INVALID' | 'MERGE' | 'ADD' | 'REMOVE' | 'REPLACE';
+              operation?:
+                | 'INVALID'
+                | 'MERGE'
+                | 'ADD'
+                | 'REMOVE'
+                | 'REPLACE'
+                | 'INSERT_BEFORE'
+                | 'INSERT_AFTER'
+                | 'INSERT_FIRST';
               value?: Record<string, any>;
               filterClass?: 'UNSPECIFIED' | 'AUTHN' | 'AUTHZ' | 'STATS';
             };

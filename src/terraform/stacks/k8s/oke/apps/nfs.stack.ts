@@ -1,23 +1,20 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
-import dedent from 'dedent';
 import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
-import { Cloudflare_Record_Stack } from '@/terraform/stacks/cloudflare/record.stack';
 import { Project_Stack } from '@/terraform/stacks/project.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { HelmProvider } from '@lib/terraform/providers/helm/provider';
 import { Release } from '@lib/terraform/providers/helm/release';
-import { ConfigMap } from '@lib/terraform/providers/kubernetes/config-map';
+import { ConfigMapV1 } from '@lib/terraform/providers/kubernetes/config-map-v1';
 import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
-import { IngressV1 } from '@lib/terraform/providers/kubernetes/ingress-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PersistentVolumeClaimV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-claim-v1';
 import { PersistentVolumeV1 } from '@lib/terraform/providers/kubernetes/persistent-volume-v1';
@@ -59,20 +56,12 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
@@ -247,7 +236,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     },
   }));
 
-  sftpConfigMap = this.provide(ConfigMap, 'sftpConfigMap', id => ({
+  sftpConfigMap = this.provide(ConfigMapV1, 'sftpConfigMap', id => ({
     metadata: {
       name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
       namespace: this.namespace.element.metadata.name,
@@ -421,7 +410,7 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
                   env: [
                     {
                       name: 'FB_NOAUTH',
-                      value: 'true',
+                      value: true.toString(),
                     },
                     {
                       name: 'FB_DATABASE',
@@ -586,9 +575,8 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     // Stacks
     private readonly projectStack: Project_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

@@ -30,12 +30,13 @@ install_npm_packages() {
         @google/gemini-cli
 }
 
-export -f install_oci install_helm install_npm_packages
-parallel --jobs 10 ::: install_oci install_helm install_npm_packages
+install_coder_cli() {
+    echo "🔄 Installing Coder CLI"
+    curl -L https://coder.com/install.sh | sh
+}
 
-echo "🔄 Copying kubeconfig files"
-mkdir -p $CONTAINER_KUBE_CONFIG_DIR_PATH
-cp $CONTAINER_SECRETS_DIR_PATH/k8s/* $CONTAINER_KUBE_CONFIG_DIR_PATH
+export -f install_oci install_helm install_npm_packages install_coder_cli
+parallel --jobs 10 ::: install_oci install_helm install_npm_packages install_coder_cli
 
 echo "🔄 Start synchronization"
 ./.devcontainer/commands/common/synchronizeProject.sh

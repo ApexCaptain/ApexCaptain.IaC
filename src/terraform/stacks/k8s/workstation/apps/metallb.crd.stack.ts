@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { MetallbIpAddressPool, MetallbL2Advertisement } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -18,8 +19,13 @@ export class K8S_Workstation_Apps_Metallb_CRD_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -74,6 +80,7 @@ export class K8S_Workstation_Apps_Metallb_CRD_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsMetallbStack: K8S_Workstation_Apps_Metallb_Stack,
   ) {
     super(

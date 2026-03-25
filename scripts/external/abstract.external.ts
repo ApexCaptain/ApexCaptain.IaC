@@ -53,12 +53,11 @@ export abstract class ExternalProgram<
   protected abstract execute(): Promise<T_Output>;
 
   protected log(message: any, level: 'info' | 'error' = 'info') {
+    if (!this.option.calledFromTerraform) console.log(message);
     const timestamp = moment()
       .tz('Asia/Shanghai')
       .format('YYYY-MM-DD HH:mm:ss');
     const logMessage = `[ ${level} ][ ${timestamp}] : ${JSON.stringify(message, null, 2)}`;
-
-    if (!this.option.calledFromTerraform) console.log(logMessage);
     if (!fs.existsSync(ExternalProgram.logDirPath)) {
       fs.mkdirSync(ExternalProgram.logDirPath, { recursive: true });
     }

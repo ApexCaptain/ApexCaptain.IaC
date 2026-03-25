@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Apps_ArgoCd_Stack } from './argo-cd.stack';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { GitOps_Stack } from '@/terraform/stacks/git-ops.stack';
@@ -14,6 +14,7 @@ import {
   ArgocdProvider,
   ArgocdProviderConfig,
 } from '@lib/terraform/providers/argocd/provider';
+import { Repository } from '@lib/terraform/providers/argocd/repository';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
@@ -35,14 +36,10 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
-      /*
+
       argocd: this.provide(ArgocdProvider, 'argocdProvider', () => ({
         serverAddr: `${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.domain}:443`,
         username: 'admin',
@@ -52,11 +49,9 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
           `${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.oauthBypassKeyHeader.name}: ${this.k8sOkeAppsArgoCdStack.argoCdRelease.shared.oauthBypassKeyHeader.value}`,
         ],
       })),
-      */
     },
   };
 
-  /*
   workstationCluster = this.provide(
     ArgocdCluster,
     'workstationCluster',
@@ -110,7 +105,12 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
       return [{}, argoCdProviderConfig];
     },
   );
-  */
+
+  gitOpsRepository = this.provide(Repository, 'gitOpsRepository', () => ({
+    name: this.gitOpsStack.gitOpsGithubRepository.element.name,
+    repo: this.gitOpsStack.gitOpsGithubRepository.element.sshCloneUrl,
+    sshPrivateKey: this.gitOpsStack.deployKeyPrivateKey.element.privateKeyPem,
+  }));
 
   constructor(
     private readonly terraformAppService: TerraformAppService,
@@ -119,7 +119,7 @@ export class K8S_Oke_Apps_ArgoCd_Resources_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeAppsArgoCdStack: K8S_Oke_Apps_ArgoCd_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly gitOpsStack: GitOps_Stack,
   ) {
     super(

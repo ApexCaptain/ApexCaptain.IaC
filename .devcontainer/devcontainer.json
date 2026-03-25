@@ -16,6 +16,16 @@
     "ghcr.io/devcontainers-extra/features/vault-asdf:2": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "installDockerBuildx": false
+    },
+    "ghcr.io/kreemer/features/chrometesting:1": {},
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "webPort": 6080
+    }
+  },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "Desktop-Lite"
     }
   },
   // Custom

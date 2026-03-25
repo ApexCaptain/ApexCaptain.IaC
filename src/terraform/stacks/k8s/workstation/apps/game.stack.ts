@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -27,8 +28,13 @@ export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -232,6 +238,7 @@ export class K8S_Workstation_Apps_Game_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sWorkstationAppsIstioStack: K8S_Workstation_Apps_Istio_Stack,

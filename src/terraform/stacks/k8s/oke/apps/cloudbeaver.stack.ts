@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
@@ -9,6 +8,7 @@ import { K8S_Oke_Apps_HomeL2tpVpnProxy_Stack } from './home-l2tp-vpn-proxy.stack
 import { K8S_Oke_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
 import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import {
   AbstractStack,
   IstioAuthorizationPolicy,
@@ -46,11 +46,7 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
 
@@ -235,42 +231,45 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
   authorizationPolicy = this.provide(
     IstioAuthorizationPolicy,
     'authorizationPolicy',
-    id => ({
-      manifest: {
-        metadata: {
-          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-          namespace: this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
-        },
-        spec: {
-          selector: {
-            matchLabels: {
-              istio:
-                this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
-                  .istioLabel,
+    id => {
+      return {
+        manifest: {
+          metadata: {
+            name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+            namespace:
+              this.k8sOkeAppsIstioStack.namespace.element.metadata.name,
+          },
+          spec: {
+            selector: {
+              matchLabels: {
+                istio:
+                  this.k8sOkeAppsIstioStack.istioEastWestGatewayRelease.shared
+                    .istioLabel,
+              },
             },
-          },
-          action: 'CUSTOM' as const,
-          provider: {
-            name: this.k8sOkeAppsIstioStack.istiodRelease.shared
-              .okeAuthentikProxyProviderName,
-          },
-          rules: [
-            {
-              to: [
-                {
-                  operation: {
-                    hosts: [
-                      this.cloudflareRecordOkeStack.dbRecord.element.name,
-                    ],
-                    notPaths: ['/api/graphql'],
+            action: 'CUSTOM' as const,
+            provider: {
+              name: this.k8sOkeAppsIstioStack.istiodRelease.shared
+                .okeAuthentikProxyProviderName,
+            },
+            rules: [
+              {
+                to: [
+                  {
+                    operation: {
+                      hosts: [
+                        this.cloudflareRecordOkeStack.dbRecord.element.name,
+                      ],
+                      notPaths: ['/api/graphql'],
+                    },
                   },
-                },
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          },
         },
-      },
-    }),
+      };
+    },
   );
 
   constructor(
@@ -281,7 +280,7 @@ export class K8S_Oke_Apps_Cloudbeaver_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,

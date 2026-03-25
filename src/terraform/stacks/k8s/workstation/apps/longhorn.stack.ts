@@ -6,8 +6,10 @@ import _ from 'lodash';
 import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from '../../oke/apps/authentik.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare/record.workstation.stack';
@@ -41,8 +43,13 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
       external: this.provide(ExternalProvider, 'externalProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       authentik: this.provide(
         AuthentikProvider,
@@ -53,9 +60,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
           configPath:
-            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
-              .configPath,
-          insecure: true,
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -87,7 +92,9 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
           yaml.stringify({
             ingress: {
               enabled: true,
-              ingressClassName: 'nginx',
+              ingressClassName:
+                this.k8sWorkstationAppsIngressControllerStack.release.shared
+                  .ingressClassName,
               host: this.cloudflareRecordWorkstationStack.longhornRecord.element
                 .name,
               annotations: {
@@ -103,6 +110,12 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
                 'nginx.ingress.kubernetes.io/auth-snippet': dedent`
                   proxy_set_header X-Forwarded-Host $http_host;
                 `,
+                'nginx.ingress.kubernetes.io/whitelist-source-range': [
+                  this.globalConfigService.config.terraform.externalIpCidrBlocks
+                    .apexCaptainHomeIpv4,
+                ].join(','),
+                'nginx.ingress.kubernetes.io/configuration-snippet':
+                  'satisfy any;',
               },
             },
 
@@ -194,7 +207,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
               dedent`
                 ts-node ${path.join(process.cwd(), 'scripts', 'external', 'manage-longhorn-node.external.ts')} \
                   --called-from-terraform \
-                  --kubeconfig ${this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation().configPath} \
+                  --kubeconfig ${this.k8sWorkstationK8SStack.kubeConfigFile.element.filename} \
                   --namespace ${this.namespace.element.metadata.name} \
                   --node ${eachNodeInfo.name} \
                   --disks '${JSON.stringify(disks)}'
@@ -216,7 +229,7 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
       metadata: {
         name: _.kebabCase(id),
         annotations: {
-          'storageclass.kubernetes.io/is-default-class': 'true',
+          'storageclass.kubernetes.io/is-default-class': true.toString(),
         },
       },
       storageProvisioner: 'driver.longhorn.io',
@@ -260,16 +273,19 @@ export class K8S_Workstation_Apps_Longhorn_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Longhorn_Stack.name,
       'Longhorn stack for workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

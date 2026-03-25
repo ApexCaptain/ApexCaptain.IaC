@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend, LocalExecProvisioner } from 'cdktf';
 import dedent from 'dedent';
 import yaml from 'yaml';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { IstioPeerAuthentication, OciNetworkProtocol } from '@/common';
@@ -31,20 +31,12 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -91,6 +83,12 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
         dependsOn: [this.istioBaseRelease.element],
         values: [
           yaml.stringify({
+            resources: {
+              requests: {
+                cpu: '50m',
+                memory: '200Mi',
+              },
+            },
             global: {
               meshID:
                 this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
@@ -104,11 +102,27 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
               network:
                 this.globalConfigService.config.terraform.stacks.k8s.serviceMesh
                   .okeClusterName,
+              // 클러스터 전체 사이드카 기본 리소스 (injection 되는 모든 Pod에 적용)
+              proxy: {
+                resources: {
+                  requests: {
+                    cpu: '50m',
+                    memory: '128Mi',
+                  },
+                  limits: {
+                    cpu: '1',
+                    memory: '256Mi',
+                  },
+                },
+              },
             },
             meshConfig: {
               defaultConfig: {
+                gatewayTopology: {
+                  numTrustedProxies: 1,
+                },
                 proxyMetadata: {
-                  ISTIO_META_DNS_CAPTURE: 'true',
+                  ISTIO_META_DNS_CAPTURE: true.toString(),
                   CLUSTER_ID:
                     this.globalConfigService.config.terraform.stacks.k8s
                       .serviceMesh.okeClusterName,
@@ -205,9 +219,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
     'istioEastWestGatewayServicePortPatch',
     () => {
       const kubeConfigPath =
-        this.k8sOkeEndpointStack.okeEndpointSource.shared.kubeConfigFilePath;
-      const proxyUrl =
-        this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5;
+        this.k8sOkeK8SStack.kubeConfigFile.element.filename;
       const serviceName = this.istioEastWestGatewayRelease.shared.name;
       const namespace = this.namespace.element.metadata.name;
 
@@ -290,7 +302,6 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
               `,
               environment: {
                 KUBECONFIG: kubeConfigPath,
-                HTTPS_PROXY: proxyUrl,
               },
             };
           } else {
@@ -322,7 +333,6 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
               `,
               environment: {
                 KUBECONFIG: kubeConfigPath,
-                HTTPS_PROXY: proxyUrl,
               },
             };
           }
@@ -369,7 +379,7 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
 
     // Stacks
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
   ) {
     super(

@@ -34,14 +34,6 @@ export const TerraformSchema = Joi.object({
         }).required(),
       }).required(),
 
-      kubernetes: Joi.object({
-        ApexCaptain: Joi.object({
-          workstation: Joi.object({
-            configPath: Joi.string().required(),
-          }).required(),
-        }).required(),
-      }).required(),
-
       oci: Joi.object({
         ApexCaptain: Joi.object({
           userOcid: Joi.string().required(),
@@ -52,7 +44,6 @@ export const TerraformSchema = Joi.object({
         }).required(),
       }).required(),
     }).required(),
-    generatedScriptLibDirRelativePath: Joi.string().required(),
   }).required(),
 
   stacks: StacksSchema,

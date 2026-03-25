@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { AbstractStack } from '@/common';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
@@ -24,14 +25,18 @@ export class K8S_Workstation_Apps_Authentik_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
           configPath:
-            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
-              .configPath,
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
           insecure: true,
         },
       })),
@@ -115,6 +120,7 @@ export class K8S_Workstation_Apps_Authentik_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
   ) {

@@ -11,6 +11,9 @@ SECRETS_DIR_PATH=$HOME/google-drive/secrets
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
 KEYS_DIR_PATH=$containerWorkspaceFolder/keys
 MERGED_ENV_FILE_PATH=.devcontainer/.env
+KUBE_CONFIG_DIR_NAME=.kube
+KUBE_CONFIG_DIR_PATH=${containerWorkspaceFolder}/${KUBE_CONFIG_DIR_NAME}
+KUBE_CONFIG_FILE_PATH=${KUBE_CONFIG_DIR_PATH}/config
 
 
 # Create docker-compose.deb.yml arg
@@ -25,13 +28,13 @@ containerWorkspaceFolderBasename=$containerWorkspaceFolderBasename
 CONTAINER_NODE_MODULES_DIR_PATH=${containerWorkspaceFolder}/node_modules
 CONTAINER_GEMINI_CONFIG_DIR_PATH=/home/vscode/.gemini
 
-# Unonymous Volume Arguments
-CONTAINER_KUBE_CONFIG_DIR_PATH=${containerWorkspaceFolder}/.kube
-CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH=${containerWorkspaceFolder}/.kube/workstation.config
-
 # Kubernetes Arguments
-KUBECONFIG=${containerWorkspaceFolder}/.kube/workstation.config
+KUBE_CONFIG_DIR_NAME=$KUBE_CONFIG_DIR_NAME
+KUBE_CONFIG_DIR_PATH=$KUBE_CONFIG_DIR_PATH
+KUBE_CONFIG_FILE_PATH=$KUBE_CONFIG_FILE_PATH
+KUBECONFIG=$KUBE_CONFIG_FILE_PATH
 
+# Secrets Arguments
 HOST_SECRETS_DIR_PATH=$SECRETS_DIR_PATH
 CONTAINER_SECRETS_DIR_PATH=$containerWorkspaceFolder/.secrets
 OCI_CLI_CONFIG_FILE=$KEYS_DIR_PATH/oci.config

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
-import { K8S_Oke_Endpoint_Stack } from './endpoint.stack';
+import { K8S_Oke_K8S_Stack } from './k8s.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
 import { Project_Stack } from '../../project.stack';
 import {
@@ -33,22 +33,9 @@ export class K8S_Oke_System_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
-      helm: this.provide(HelmProvider, 'helmProvider', () => ({
-        kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
-        },
-      })),
     },
   };
 
@@ -77,6 +64,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
   applicationMetadata = this.provide(Resource, 'applicationMetadata', () => {
     return [
       {},
+
       {
         authentik: createK8sApplicationMetadata({
           namespace: 'authentik',
@@ -111,6 +99,17 @@ export class K8S_Oke_System_Stack extends AbstractStack {
             argoCdImageUpdater: {
               name: 'argocd-image-updater',
               chart: 'argocd-image-updater',
+              repository: 'https://argoproj.github.io/argo-helm',
+            },
+          },
+        }),
+
+        argoRollouts: createK8sApplicationMetadata({
+          namespace: 'argo-rollouts',
+          helm: {
+            argoCdRollout: {
+              name: 'argo-rollouts',
+              chart: 'argo-rollouts',
               repository: 'https://argoproj.github.io/argo-helm',
             },
           },
@@ -298,6 +297,27 @@ export class K8S_Oke_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        priceQuest: createK8sApplicationMetadata({
+          namespace: 'price-quest',
+          services: {
+            priceQuest: {
+              name: 'price-quest',
+              labels: {
+                app: 'price-quest',
+              },
+              ports: {
+                priceQuest: {
+                  name: 'price-quest',
+                  port: 8080,
+                  targetPort: '8080',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
+
         redisUi: createK8sApplicationMetadata({
           namespace: 'redis-ui',
           services: {
@@ -327,7 +347,7 @@ export class K8S_Oke_System_Stack extends AbstractStack {
 
     // Stacks
     private readonly projectStack: Project_Stack,
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {

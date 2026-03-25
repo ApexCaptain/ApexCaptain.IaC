@@ -100,7 +100,7 @@ export class Project_Stack extends AbstractStack {
       filter: [
         {
           name: 'is_home_region',
-          values: ['true'],
+          values: [true.toString()],
         },
       ],
       tenancyId: this.dataRootOciTenancy.element.id,

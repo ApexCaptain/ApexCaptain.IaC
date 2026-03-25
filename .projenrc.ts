@@ -64,13 +64,14 @@ const constants = (() => {
   const scriptDir = 'scripts';
   const kubeConfigDirPath = '.kube';
   const libDir = 'lib';
-  const generatedScriptLibDir = path.join(scriptDir, 'generated');
   const envDir = 'env';
   const keysDir = 'keys';
   const secretsDir = '.secrets';
   const tmpDir = 'tmp';
   const cursorDir = '.cursor';
+  const assetsDir = 'assets';
 
+  const cdktfLibDir = path.join(libDir, 'terraform');
   const cdktfOutDir = 'cdktf.out';
 
   const cdktfConfigFilePath = 'cdktf.json';
@@ -87,13 +88,14 @@ const constants = (() => {
       scriptDir,
       kubeConfigDirPath,
       libDir,
-      generatedScriptLibDir,
       envDir,
+      cdktfLibDir,
       cdktfOutDir,
       keysDir,
       secretsDir,
       tmpDir,
       cursorDir,
+      assetsDir,
     },
     files: {
       cdktfConfigFilePath,
@@ -124,11 +126,7 @@ const project = new typescript.TypeScriptAppProject({
     tsconfigPath: './tsconfig.dev.json',
     dirs: [constants.paths.dirs.srcDir],
     devdirs: [constants.paths.dirs.scriptDir],
-    ignorePatterns: [
-      '/**/node_modules/*',
-      `${constants.paths.dirs.libDir}/`,
-      `${constants.paths.dirs.generatedScriptLibDir}/`,
-    ],
+    ignorePatterns: ['/**/node_modules/*', `${constants.paths.dirs.libDir}/`],
     prettier: true,
   },
   projenrcTs: true,
@@ -215,7 +213,6 @@ const project = new typescript.TypeScriptAppProject({
     `/${constants.paths.dirs.envDir}`,
     `/${constants.paths.dirs.keysDir}`,
     `/${constants.paths.dirs.cdktfOutDir}`,
-    `/${constants.paths.dirs.generatedScriptLibDir}`,
     `/${constants.paths.dirs.tmpDir}`,
   ],
   deps: [
@@ -246,13 +243,16 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.4.3',
+    'constructs@^10.5.1',
     '@types/lodash',
     'commander',
     'flatley',
     'fuzzy',
     '@inquirer/prompts',
     'inquirer-autocomplete-standalone',
+    'koconut',
+    'puppeteer',
+    'wait',
   ],
 });
 
@@ -268,22 +268,32 @@ void (async () => {
   project.addScripts({
     // Projen Hooks
     postprojen: dedent`
-      cdktf get && \
-      yarn tf@backup`,
+      yarn tf@install && \
+      yarn tf@backup
+    `,
 
     // Terraform
     'tf@build': 'cdktf synth',
+
     'tf@deploy': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --parallelism 20`,
+    'posttf@deploy': 'yarn tf@merge-kube-config',
+
     'tf@deploy:single': `cdktf deploy --outputs-file ./${constants.paths.files.cdktfOutFilePath} --outputs-file-include-sensitive-outputs --ignore-missing-stack-dependencies`,
+    'posttf@deploy:single': 'yarn tf@merge-kube-config',
+
     'pretf@deploy:selection': `cdktf synth`,
     'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
+    'posttf@deploy:selection': 'yarn tf@merge-kube-config',
+
+    'tf@merge-kube-config': 'ts-node scripts/merge-kube-config.script.ts',
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
-    'tf@install': `find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
+    'tf@upgrade': 'cdktf get --force',
+    'tf@install': `cdktf get && find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
     'tf@backup': 'ts-node ./scripts/backup-tfstate.script.ts',
 
     // Terminal
-    terminal: 'ts-node ./scripts/terminal-v2.script.ts',
+    // terminal: 'ts-node ./scripts/terminal-v2.script.ts',
   });
 
   // Oci Private Key
@@ -317,7 +327,7 @@ void (async () => {
   new JsonFile(project, constants.paths.files.cdktfConfigFilePath, {
     obj: {
       output: constants.paths.dirs.cdktfOutDir,
-      codeMakerOutput: path.join(constants.paths.dirs.libDir, 'terraform'),
+      codeMakerOutput: constants.paths.dirs.cdktfLibDir,
       sendCrashReports: false,
       app: 'yarn nest start',
       language: 'typescript',
@@ -369,6 +379,11 @@ void (async () => {
           name: 'vault',
           source: 'hashicorp/vault',
         },
+        {
+          // https://registry.terraform.io/providers/hashicorp/http/latest
+          name: 'http',
+          source: 'hashicorp/http',
+        },
 
         // Partners
         {
@@ -386,6 +401,11 @@ void (async () => {
           name: 'oci',
           source: 'oracle/oci',
         },
+        {
+          // https://registry.terraform.io/providers/coder/coderd/latest
+          name: 'coderd',
+          source: 'coder/coderd',
+        },
 
         // Community
         {
@@ -402,6 +422,11 @@ void (async () => {
           // https://registry.terraform.io/providers/argoproj-labs/argocd/latest
           name: 'argocd',
           source: 'argoproj-labs/argocd',
+        },
+        {
+          // https://registry.terraform.io/providers/gavinbunney/kubectl/latest
+          name: 'kubectl',
+          source: 'gavinbunney/kubectl',
         },
       ],
     },
@@ -459,6 +484,11 @@ void (async () => {
               remoteCluster: {
                 sourceCidrBlocks: [`${workstationIpAddress}/32`],
               },
+            },
+            bastion: {
+              sessionTunnelPort: Number(
+                process.env.OKE_BASTION_SESSION_TUNNEL_PORT!!,
+              ),
             },
             apps: {
               argoCd: {
@@ -533,6 +563,17 @@ void (async () => {
             },
           },
           workstation: {
+            k8s: {
+              certificateAuthorityData:
+                process.env
+                  .WORKSTATION_K8S_KUBECONFIG_CERTIFICATE_AUTHORITY_DATA!!,
+              clientCertificateData:
+                process.env
+                  .WORKSTATION_K8S_KUBECONFIG_CLIENT_CERTIFICATE_DATA!!,
+              clientKeyData:
+                process.env.WORKSTATION_K8S_KUBECONFIG_CLIENT_KEY_DATA!!,
+              server: process.env.WORKSTATION_K8S_KUBECONFIG_SERVER!!,
+            },
             common: {
               workstationIpv4Ip: workstationIpAddress,
               defaultCalcioIpv4IpPoolsCidrBlock:
@@ -545,6 +586,18 @@ void (async () => {
                 `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
               ).toString(),
             },
+            devPods: {
+              kubeConfigDirPath: path.join(
+                process.env.CONTAINER_SECRETS_DIR_PATH ??
+                  path.join(project.outdir, '.secrets'),
+                '.kube',
+              ),
+            },
+            nodeMeta: {
+              node0: {
+                name: process.env.WORKSTATION_NODE_0_NAME!!,
+              },
+            },
             apps: {
               metallb: {
                 loadbalancerIpRange:
@@ -554,7 +607,44 @@ void (async () => {
                     .WORKSTATION_METALLB_LOADBALANCER_ISTIO_CROSS_NETWORK_LB_IP!!,
                 ingressControllerIp:
                   process.env
-                    .WORKSTATION_METALLB_LOADBALANCER_NGINS_INGRESS_CONTROLLER_LB_IP!!,
+                    .WORKSTATION_METALLB_LOADBALANCER_NGINX_INGRESS_CONTROLLER_LB_IP!!,
+              },
+              coder: {
+                githubOauth2: {
+                  clientId:
+                    process.env
+                      .GITHUB_APEX_CAPTAIN_CODER_OAUTH2_APP_CLEINT_ID!!,
+                  clientSecret:
+                    process.env
+                      .GITHUB_APEX_CAPTAIN_CODER_OAUTH2_APP_CLEINT_SECRET!!,
+                },
+                adminUser: {
+                  username: process.env.WORKSTATION_APPS_CODER_ADMIN_USERNAME!!,
+                  fullName:
+                    process.env.WORKSTATION_APPS_CODER_ADMIN_FULL_NAME!!,
+                  email: process.env.WORKSTATION_APPS_CODER_ADMIN_EMAIL!!,
+                  password: process.env.WORKSTATION_APPS_CODER_ADMIN_PASSWORD!!,
+                  tokenName:
+                    process.env.WORKSTATION_APPS_CODER_ADMIN_TOKEN_NAME!!,
+                  refreshTokenBeforeExpirationHours: 2,
+                  storedTokenSecretFileName:
+                    process.env
+                      .WORKSTATION_APPS_CODER_ADMIN_STORED_TOKEN_SECRET_FILE_NAME!!,
+                },
+                users: {
+                  apexCaptain: {
+                    username:
+                      process.env.WORKSTATION_APPS_CODER_APEXCAPTAIN_USERNAME!!,
+                    email:
+                      process.env.WORKSTATION_APPS_CODER_APEXCAPTAIN_EMAIL!!,
+                  },
+                },
+                templateAssetsRelativeDirPath: path.join(
+                  constants.paths.dirs.assetsDir,
+                  'static',
+                  'coder',
+                  'templates',
+                ),
               },
               longhorn: {
                 nodes: [
@@ -606,6 +696,9 @@ void (async () => {
                 username: process.env.WORKSTATION_APPS_WINDOWS_USERNAME!!,
                 password: process.env.WORKSTATION_APPS_WINDOWS_PASSWORD!!,
               },
+              wink: {
+                userName: process.env.WORKSTATION_APPS_WINK_USERNAME!!,
+              },
             },
           },
         },
@@ -636,14 +729,6 @@ void (async () => {
               token: process.env.APEX_CAPTAIN_GITHUB_PAT!!,
             },
           },
-          kubernetes: {
-            ApexCaptain: {
-              workstation: {
-                configPath:
-                  process.env.CONTAINER_WORKSTATION_KUBE_CONFIG_FILE_PATH!!,
-              },
-            },
-          },
 
           oci: {
             ApexCaptain: {
@@ -655,8 +740,6 @@ void (async () => {
             },
           },
         },
-        generatedScriptLibDirRelativePath:
-          constants.paths.dirs.generatedScriptLibDir,
       },
     },
   };
@@ -719,7 +802,6 @@ void (async () => {
               terminal: 'command',
               ssh: 'command',
               external: 'admin',
-              'dev-pods': 'development',
             }),
           },
         },

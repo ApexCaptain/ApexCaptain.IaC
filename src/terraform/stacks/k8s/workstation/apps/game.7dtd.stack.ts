@@ -6,6 +6,7 @@ import _ from 'lodash';
 import Timezone from 'timezone-enum';
 import { K8S_Workstation_Apps_Game_Stack } from './game.stack';
 import { K8S_Workstation_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import {
   AbstractStack,
   DeathPenaltyMode,
@@ -38,8 +39,13 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -594,6 +600,7 @@ export class K8S_Workstation_Apps_Game_7dtd_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationAppsIstioGatewayStack: K8S_Workstation_Apps_Istio_Gateway_Stack,
     private readonly k8sWorkstationAppsGameStack: K8S_Workstation_Apps_Game_Stack,
     private readonly cloudflareRecordStack: Cloudflare_Record_Stack,

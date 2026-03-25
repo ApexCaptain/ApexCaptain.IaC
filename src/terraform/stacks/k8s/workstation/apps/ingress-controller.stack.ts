@@ -5,7 +5,8 @@ import yaml from 'yaml';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_CertManager_CRD_Stack } from './cert-manager.crd.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
-import { CertManagerCertificate } from '@/common';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
+import { CertManagerCertificate, K8sApplicationMetadata } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
@@ -28,15 +29,18 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
           configPath:
-            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
-              .configPath,
-          insecure: true,
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -118,6 +122,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
   );
 
   release = this.provide(Release, 'release', () => {
+    const ingressClassName = 'nginx';
     const values = {
       controller: {
         service: {
@@ -129,7 +134,9 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
           },
           externalTrafficPolicy: 'Local',
         },
-
+        ingressClassResource: {
+          name: ingressClassName,
+        },
         podAnnotations: {
           'traffic.sidecar.istio.io/excludeInboundPorts': '80,443',
           'traffic.sidecar.istio.io/includeInboundPorts': '',
@@ -137,7 +144,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         admissionWebhooks: {
           patch: {
             podAnnotations: {
-              'sidecar.istio.io/inject': 'false',
+              'sidecar.istio.io/inject': false.toString(),
             },
           },
         },
@@ -148,47 +155,52 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
         config: {
           'allow-snippet-annotations': true,
           'annotations-risk-level': 'Critical',
-          'use-forwarded-headers': 'true',
-          'compute-full-forwarded-for': 'true',
+          'use-forwarded-headers': true.toString(),
+          'compute-full-forwarded-for': true.toString(),
         },
       },
       tcp: {},
       udp: {},
     };
 
-    // Object.values(
-    //   this.k8sWorkstationSystemStack.applicationMetadata.shared,
-    // ).forEach(eachMetadata => {
-    //   const services =
-    //     eachMetadata.services as K8sApplicationMetadata['services'];
-    //   if (!services) return;
-    //   const namespace = eachMetadata.namespace;
-    //   Object.values(services).forEach(eachService => {
-    //     if (!eachService.ports) return;
-    //     Object.values(eachService.ports)
-    //       .filter(eachPort => eachPort.portBasedIngressPort)
-    //       .forEach(eachPort => {
-    //         const target = `${namespace}/${eachService.name}:${eachPort.port}`;
-    //         if (eachPort.protocol?.toUpperCase() === 'UDP') {
-    //           values.udp[`${eachPort.portBasedIngressPort!!.toString()}`] =
-    //             target;
-    //         } else {
-    //           values.tcp[`${eachPort.portBasedIngressPort!!.toString()}`] =
-    //             target;
-    //         }
-    //       });
-    //   });
-    // });
+    Object.values(
+      this.k8sWorkstationSystemStack.applicationMetadata.shared,
+    ).forEach(eachMetadata => {
+      if ('services' in eachMetadata) {
+        const services =
+          eachMetadata.services as K8sApplicationMetadata['services'];
+        if (!services) return;
+        const namespace = eachMetadata.namespace;
+        Object.values(services).forEach(eachService => {
+          if (!eachService.ports) return;
+          Object.values(eachService.ports)
+            .filter(eachPort => eachPort.portBasedIngressPort)
+            .forEach(eachPort => {
+              const target = `${namespace}/${eachService.name}:${eachPort.port}`;
+              if (eachPort.protocol?.toUpperCase() === 'UDP') {
+                values.udp[`${eachPort.portBasedIngressPort!!.toString()}`] =
+                  target;
+              } else {
+                values.tcp[`${eachPort.portBasedIngressPort!!.toString()}`] =
+                  target;
+              }
+            });
+        });
+      }
+    });
 
-    return {
-      name: this.metadata.shared.helm.ingressController.name,
-      chart: this.metadata.shared.helm.ingressController.chart,
-      repository: this.metadata.shared.helm.ingressController.repository,
-      namespace: this.namespace.element.metadata.name,
-      createNamespace: false,
-      forceUpdate: true,
-      values: [yaml.stringify(values)],
-    };
+    return [
+      {
+        name: this.metadata.shared.helm.ingressController.name,
+        chart: this.metadata.shared.helm.ingressController.chart,
+        repository: this.metadata.shared.helm.ingressController.repository,
+        namespace: this.namespace.element.metadata.name,
+        createNamespace: false,
+        forceUpdate: true,
+        values: [yaml.stringify(values)],
+      },
+      { ingressClassName },
+    ];
   });
 
   constructor(
@@ -200,6 +212,7 @@ export class K8S_Workstation_Apps_IngressController_Stack extends AbstractStack 
     private readonly globalConfigService: GlobalConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sWorkstationAppsMetallbStack: K8S_Workstation_Apps_Metallb_Stack,
     private readonly k8sWorkstationAppsCertManagerCRDStack: K8S_Workstation_Apps_CertManager_CRD_Stack,

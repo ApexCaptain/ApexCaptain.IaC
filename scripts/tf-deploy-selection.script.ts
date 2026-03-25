@@ -11,9 +11,23 @@ const params = new Command('tf-deploy-selection')
   .addOption(
     new Option('-c, --cdktf-out <path>', 'The path to the cdktf out directory'),
   )
+  .addOption(
+    new Option('-f, --force', 'Force deploy the selected stacks').default(
+      false,
+    ),
+  )
+  .addOption(
+    new Option('-a, --auto-approve', 'Auto approve the deployment').default(
+      false,
+    ),
+  )
   .parse();
 
-const option = params.opts<{ cdktfOut: string }>();
+const option = params.opts<{
+  cdktfOut: string;
+  force: boolean;
+  autoApprove: boolean;
+}>();
 const targetStack: string | undefined = params.args[0];
 const manifestFilePath = path.join(option.cdktfOut, 'manifest.json');
 
@@ -89,29 +103,35 @@ const getStackDependencies = (targetStacks: string[]) => {
 };
 const deployTargetStacks = async (targetStacks: string[]) => {
   const dependencies = getStackDependencies(targetStacks);
-  const includeDependencies =
-    dependencies.length > 0
-      ? await confirm({
-          message: dedent`
-      The following stacks are dependencies of the selected stacks:
+  const autoApprove = option.autoApprove;
 
+  const includeDependencies = await (async () => {
+    if (dependencies.length === 0) return false;
+    if (option.force) return true;
 
-      ${dependencies.join('\n')}
+    return confirm({
+      message: dedent`
+        The following stacks are dependencies of the selected stacks:
+  
+        ${dependencies.join('\n')}
+  
+        Do you want to include them in the deployment?
+      `,
+      default: true,
+    });
+  })();
 
-      
-      Do you want to include them in the deployment?
-    `,
-          default: true,
-        })
-      : true;
   const finalStacks = includeDependencies
     ? [...targetStacks, ...dependencies]
     : targetStacks;
   try {
     execSync(
-      `yarn tf@deploy ${finalStacks.join(' ')} ${
-        includeDependencies ? '' : '--ignore-missing-stack-dependencies'
-      }`,
+      `yarn tf@deploy ${finalStacks.join(' ')} ${[
+        includeDependencies ? undefined : '--ignore-missing-stack-dependencies',
+        autoApprove ? '--auto-approve' : undefined,
+      ]
+        .filter(each => each !== undefined)
+        .join(' ')}`,
       {
         stdio: 'inherit',
       },

@@ -3,7 +3,6 @@ import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import Timezone from 'timezone-enum';
 import yaml from 'yaml';
-import { K8S_Oke_Endpoint_Stack } from '../endpoint.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from './authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from './authentik.stack';
@@ -12,6 +11,7 @@ import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
 import { K8S_Oke_Apps_KialiOperator_Stack } from './kiali-operator.stack';
 import { K8S_Oke_Apps_Nfs_Stack } from './nfs.stack';
 import { K8S_Workstation_Apps_Istio_Stack } from '../../workstation/apps/istio.stack';
+import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_Network_Stack } from '../network.stack';
 import {
   AbstractStack,
@@ -51,20 +51,12 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
         KubernetesProvider,
         'kubernetesProvider',
         () => ({
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
-          proxyUrl:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared.proxyUrl.socks5,
-          configPath:
-            this.k8sOkeEndpointStack.okeEndpointSource.shared
-              .kubeConfigFilePath,
+          configPath: this.k8sOkeK8SStack.kubeConfigFile.element.filename,
         },
       })),
       authentik: this.provide(
@@ -269,10 +261,11 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
               },
             }),
 
-            // Grafana
+            // @ToDO Grafana 잠시 비활성화
             yaml.stringify({
               grafana: {
-                enabled: true,
+                enabled: false,
+
                 defaultDashboardsTimezone: Timezone['Asia/Seoul'],
                 adminUser: this.config.grafana.adminUser,
                 adminPassword: this.config.grafana.adminPassword,
@@ -471,7 +464,7 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
           name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
           namespace: this.namespace.element.metadata.name,
           labels: {
-            'kiali.io/multiCluster': 'true',
+            'kiali.io/multiCluster': true.toString(),
           },
           annotations: {
             'kiali.io/cluster': targetClusterName,
@@ -833,7 +826,7 @@ export class K8S_Oke_Apps_Monitoring_Stack extends AbstractStack {
     private readonly globalConfigService: GlobalConfigService,
 
     // Stacks
-    private readonly k8sOkeEndpointStack: K8S_Oke_Endpoint_Stack,
+    private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
     private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeAppsNfsStack: K8S_Oke_Apps_Nfs_Stack,

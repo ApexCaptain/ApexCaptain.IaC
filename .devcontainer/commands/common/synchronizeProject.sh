@@ -10,9 +10,11 @@ git pull
 
 echo "🔄 Setting up aliases"
 echo 'alias k=kubectl' >>~/.bashrc
+echo 'alias h=helm' >>~/.bashrc
+echo 'alias d=docker' >>~/.bashrc
 
 echo "🔄 Installing dependencies"
-yarn
+corepack yarn
 
 echo "🔄 Initializing Projen"
 yarn projen
@@ -21,6 +23,6 @@ echo "🔄 Building cdktf project"
 yarn tf@build
 
 echo "🔄 Installing terraform providers"
-yarn tf@install
+yarn tf@upgrade && yarn tf@install
 
 echo "✅ Synchronization is complete"

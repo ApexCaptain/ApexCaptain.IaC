@@ -5,6 +5,7 @@ import yaml from 'yaml';
 import { K8S_Oke_Network_Stack } from '../../oke/network.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Metallb_Stack } from './metallb.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { IstioPeerAuthentication } from '@/common';
 import { AbstractStack } from '@/common/abstract/abstract.stack';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
@@ -32,15 +33,18 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
       helm: this.provide(HelmProvider, 'helmProvider', () => ({
         kubernetes: {
           configPath:
-            this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation()
-              .configPath,
-          insecure: true,
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
         },
       })),
     },
@@ -272,6 +276,7 @@ export class K8S_Workstation_Apps_Istio_Stack extends AbstractStack {
     private readonly globalConfigService: GlobalConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
     private readonly k8sWorkstationAppsMetallbStack: K8S_Workstation_Apps_Metallb_Stack,

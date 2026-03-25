@@ -45,7 +45,7 @@
     },
     {
       "name": "constructs",
-      "version": "^10.4.3",
+      "version": "^10.5.1",
       "type": "build"
     },
     {
@@ -82,6 +82,10 @@
       "type": "build"
     },
     {
+      "name": "koconut",
+      "type": "build"
+    },
+    {
       "name": "prettier",
       "type": "build"
     },
@@ -90,11 +94,19 @@
       "type": "build"
     },
     {
+      "name": "puppeteer",
+      "type": "build"
+    },
+    {
       "name": "ts-node",
       "type": "build"
     },
     {
       "name": "typescript",
+      "type": "build"
+    },
+    {
+      "name": "wait",
       "type": "build"
     },
     {

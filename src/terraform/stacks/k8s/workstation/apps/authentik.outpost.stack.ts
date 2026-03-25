@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { K8S_Workstation_Apps_Nas_Qbittorrent_Stack } from './nas.qbittorrent.stack';
 import { K8S_Workstation_Apps_Windows_Stack } from './windows.stack';
 import { K8S_Oke_Apps_Authentik_Resources_Stack } from '../../oke/apps/authentik.resources.stack';
 import { K8S_Oke_Apps_Authentik_Stack } from '../../oke/apps/authentik.stack';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import {
   Cloudflare_Record_Oke_Stack,
@@ -34,8 +36,13 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
         () =>
           this.k8sOkeAppsAuthentikStack.authentikProviderConfig.shared.config,
       ),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -74,7 +81,9 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
               .name,
         },
         spec: {
-          ingressClassName: 'nginx',
+          ingressClassName:
+            this.k8sWorkstationAppsIngressControllerStack.release.shared
+              .ingressClassName,
           rule: [
             this.cloudflareRecordWorkstationStack.windowsRecord.element.name,
             this.cloudflareRecordWorkstationStack.torrentRecord.element.name,
@@ -112,6 +121,7 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
@@ -121,11 +131,13 @@ export class K8S_Workstation_Apps_Authentik_Outpost_Stack extends AbstractStack 
     private readonly k8sWorkstationWindowsStack: K8S_Workstation_Apps_Windows_Stack,
     private readonly k8sWorkstationNasQbittorrentStack: K8S_Workstation_Apps_Nas_Qbittorrent_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
       K8S_Workstation_Apps_Authentik_Outpost_Stack.name,
       'Authentik Outpost stack for Workstation k8s',
     );
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }

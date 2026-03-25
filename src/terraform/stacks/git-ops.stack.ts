@@ -3,7 +3,8 @@ import { LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { TerraformAppService } from '../terraform.app.service';
 import { TerraformConfigService } from '../terraform.config.service';
-import { Cloudflare_Record_Stack } from './cloudflare/record.stack';
+import { Cloudflare_Record_Oke_Stack } from './cloudflare/record.oke.stack';
+import { K8S_Workstation_K8S_Stack } from './k8s/workstation/k8s.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Branch } from '@lib/terraform/providers/github/branch';
@@ -38,8 +39,13 @@ export class GitOps_Stack extends AbstractStack {
       random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       tls: this.provide(TlsProvider, 'tlsProvider', () => ({})),
       time: this.provide(TimeProvider, 'timeProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
     },
   };
@@ -75,7 +81,7 @@ export class GitOps_Stack extends AbstractStack {
     }),
   );
 
-  deployKeyPrivateKy = this.provide(PrivateKey, 'deployKeyPrivateKy', () => ({
+  deployKeyPrivateKey = this.provide(PrivateKey, 'deployKeyPrivateKy', () => ({
     algorithm: 'RSA',
     rsaBits: 4096,
     lifecycle: {
@@ -88,7 +94,7 @@ export class GitOps_Stack extends AbstractStack {
   deployKey = this.provide(RepositoryDeployKey, 'deployKey', () => ({
     title: 'GitOps Deploy Key for ArgoCD',
     repository: this.gitOpsGithubRepository.element.name,
-    key: this.deployKeyPrivateKy.element.publicKeyOpenssh,
+    key: this.deployKeyPrivateKey.element.publicKeyOpenssh,
     readOnly: false,
   }));
 
@@ -106,7 +112,7 @@ export class GitOps_Stack extends AbstractStack {
     repository: this.gitOpsGithubRepository.element.name,
     events: ['push'],
     configuration: {
-      url: `https://${this.cloudflareRecordStack.argoCdRecord.element.name}/api/webhook`,
+      url: `https://${this.cloudflareRecordOkeStack.argoCdRecord.element.name}/api/webhook`,
       contentType: 'json',
       secret: this.webHookKey.element.result,
       insecureSsl: false,
@@ -213,7 +219,8 @@ export class GitOps_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
-    private readonly cloudflareRecordStack: Cloudflare_Record_Stack,
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
+    private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
   ) {
     super(terraformAppService.cdktfApp, GitOps_Stack.name, 'GitOps Stack');
   }

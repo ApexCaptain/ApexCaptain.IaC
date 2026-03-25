@@ -6,11 +6,13 @@ import dedent from 'dedent';
 import _ from 'lodash';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Authentik_Stack } from './authentik.stack';
+import { K8S_Workstation_Apps_IngressController_Stack } from './ingress-controller.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import {
   K8S_Oke_Apps_Authentik_Resources_Stack,
   K8S_Oke_Apps_Authentik_Stack,
 } from '../../oke';
+import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Cloudflare_Record_Workstation_Stack } from '@/terraform/stacks/cloudflare';
@@ -44,8 +46,13 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     ),
     providers: {
       null: this.provide(NullProvider, 'nullProvider', () => ({})),
-      kubernetes: this.provide(KubernetesProvider, 'kubernetesProvider', () =>
-        this.terraformConfigService.providers.kubernetes.ApexCaptain.workstation(),
+      kubernetes: this.provide(
+        KubernetesProvider,
+        'kubernetesProvider',
+        () => ({
+          configPath:
+            this.k8sWorkstationK8SStack.kubeConfigFile.element.filename,
+        }),
       ),
 
       authentik: this.provide(
@@ -362,10 +369,17 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
           }
           proxy_set_header X-Forwarded-Host $http_host;
         `,
+        'nginx.ingress.kubernetes.io/whitelist-source-range': [
+          this.globalConfigService.config.terraform.externalIpCidrBlocks
+            .apexCaptainHomeIpv4,
+        ].join(','),
+        'nginx.ingress.kubernetes.io/configuration-snippet': 'satisfy any;',
       },
     },
     spec: {
-      ingressClassName: 'nginx',
+      ingressClassName:
+        this.k8sWorkstationAppsIngressControllerStack.release.shared
+          .ingressClassName,
       rule: [
         {
           host: this.cloudflareRecordWorkstationStack.windowsRecord.element
@@ -401,12 +415,14 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
     private readonly terraformConfigService: TerraformConfigService,
 
     // Stacks
+    private readonly k8sWorkstationK8SStack: K8S_Workstation_K8S_Stack,
     private readonly cloudflareRecordWorkstationStack: Cloudflare_Record_Workstation_Stack,
     private readonly k8sWorkstationAppsAuthentikStack: K8S_Workstation_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikStack: K8S_Oke_Apps_Authentik_Stack,
     private readonly k8sOkeAppsAuthentikResourcesStack: K8S_Oke_Apps_Authentik_Resources_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
+    private readonly k8sWorkstationAppsIngressControllerStack: K8S_Workstation_Apps_IngressController_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -414,5 +430,6 @@ export class K8S_Workstation_Apps_Windows_Stack extends AbstractStack {
       'Windows stack for workstation k8s',
     );
     this.addDependency(this.k8sWorkstationLonghornStack);
+    this.addDependency(this.k8sWorkstationAppsIngressControllerStack);
   }
 }
