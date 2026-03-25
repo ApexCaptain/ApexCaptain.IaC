@@ -17,7 +17,6 @@ resource "coder_agent" "main" {
     # Rebase README and assets
     sudo rm -f $HOME/${var.workspace_directory_name}/README.md
     sudo rm -rf $HOME/${var.workspace_directory_name}/assets
-
     if [ "${data.coder_parameter.include_readme.value}" = "true" ]; then
       cp /etc/coder-workspace-readme/README.md $HOME/${var.workspace_directory_name}/README.md
       mkdir -p "$HOME/${var.workspace_directory_name}/assets/home"
@@ -26,6 +25,11 @@ resource "coder_agent" "main" {
       done
       sudo chown root:root "$HOME/${var.workspace_directory_name}/README.md"
       sudo chown -R root:root "$HOME/${var.workspace_directory_name}/assets"
+    fi
+
+    # Copy default bashrc file if not exists
+    if [ ! -f $HOME/.bashrc ]; then
+      cp /etc/coder-workspace-files/bashrc $HOME/.bashrc
     fi
 
   EOT

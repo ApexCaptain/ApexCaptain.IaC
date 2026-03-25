@@ -89,15 +89,16 @@ data "coder_parameter" "additional_ides" {
   icon         = local.icons_base64_data_url["development.png"]
 
   option {
-    name  = "VS Code Web"
-    value = "vscode-web"
-    icon  = local.icons_base64_data_url["vscode.png"]
-  }
-  option {
     name  = "Cursor"
     value = "cursor"
     icon = "/icon/cursor.svg"
   }
+  option {
+    name  = "VS Code Web"
+    value = "vscode-web"
+    icon  = local.icons_base64_data_url["vscode.png"]
+  }
+
   order        = 5
 
 }

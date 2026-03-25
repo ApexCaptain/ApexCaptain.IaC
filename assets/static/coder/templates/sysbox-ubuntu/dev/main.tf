@@ -80,6 +80,18 @@ resource "kubernetes_config_map_v1" "docker_daemon_json" {
   }
 }
 
+resource "kubernetes_config_map_v1" "files" {
+  count = data.coder_workspace.me.start_count
+  metadata {
+    name = "coder-${data.coder_workspace.me.id}-files"
+    namespace = var.namespace
+  }
+  data = {
+    for eachFile in fileset("./files", "*") :
+    eachFile => file("./files/${eachFile}")
+  }
+}
+
 resource "kubernetes_config_map_v1" "readme_home" {
   count = data.coder_workspace.me.start_count
   metadata {
@@ -403,6 +415,11 @@ resource "kubernetes_manifest" "main" {
                   mountPath = "/etc/docker/daemon.json"
                   subPath = "daemon.json"
                 },
+                // Files
+                {
+                  name = "files"
+                  mountPath = "/etc/coder-workspace-files"
+                },
                 // README
                 {
                   name = "readme-home"
@@ -469,6 +486,13 @@ resource "kubernetes_manifest" "main" {
                     path = "daemon.json"
                   }
                 ]
+              }
+            },
+            // Files
+            {
+              name = "files"
+              configMap = {
+                name = kubernetes_config_map_v1.files[count.index].metadata[0].name
               }
             },
             // README
