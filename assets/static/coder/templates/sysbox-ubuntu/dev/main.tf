@@ -339,6 +339,10 @@ resource "kubernetes_manifest" "main" {
                 "sh",
                  "-c", 
                  <<-EOT
+
+                  # Update apt package manager
+                  sudo apt-get update -y
+
                   # Create Workspace Directory
                   mkdir -p $HOME/${var.workspace_directory_name}/.on-start
 
@@ -383,44 +387,78 @@ resource "kubernetes_manifest" "main" {
                 }
               }
               volumeMounts = [
+                // User Data
                 {
                   name = "home"
                   mountPath = "/home/coder"
                 },
+                // Docker Data
                 {
                   name = "docker"
                   mountPath = "/var/lib/docker"
                 },
+                // Docker Daemon JSON CM
                 {
                   name = "docker-daemon-json"
                   mountPath = "/etc/docker/daemon.json"
                   subPath = "daemon.json"
                 },
+                // README
                 {
                   name = "readme-home"
                   mountPath = "/etc/coder-workspace-readme/README.md"
                   subPath = "README.md"
                 },
+                // README Assets
                 {
                   name = "readme-home-assets"
                   mountPath = "/etc/coder-workspace-readme/assets"
+                },
+                // LXCFS
+                {
+                  name = "lxcfs-meminfo"
+                  mountPath = "/proc/meminfo"
+                  readOnly = true
+                },
+                {
+                  name      = "lxcfs-cpuinfo"
+                  mountPath = "/proc/cpuinfo"
+                  readOnly  = true
+                },
+                {
+                  name      = "lxcfs-stat"
+                  mountPath = "/proc/stat"
+                  readOnly  = true
+                },
+                {
+                  name      = "lxcfs-loadavg"
+                  mountPath = "/proc/loadavg"
+                  readOnly  = true
+                },
+                {
+                  name      = "lxcfs-uptime"
+                  mountPath = "/proc/uptime"
+                  readOnly  = true
                 }
               ]
             },
           ]
           volumes = [
+            // User Data
             {
               name = "home"
               persistentVolumeClaim = {
                 claimName = kubernetes_persistent_volume_claim_v1.home.metadata[0].name
               }
             },
+            // Docker Data
             {
               name = "docker"
               persistentVolumeClaim = {
                 claimName = kubernetes_persistent_volume_claim_v1.docker.metadata[0].name
               }
             },
+            // Docker Daemon JSON ConfigMap
             {
               name = "docker-daemon-json"
               configMap = {
@@ -433,6 +471,7 @@ resource "kubernetes_manifest" "main" {
                 ]
               }
             },
+            // README
             {
               name = "readme-home"
               configMap = {
@@ -445,10 +484,47 @@ resource "kubernetes_manifest" "main" {
                 ]
               }
             },
+            // README Assets
             {
               name = "readme-home-assets"
               configMap = {
                 name = kubernetes_config_map_v1.readme_home_assets[count.index].metadata[0].name
+              }
+            },
+            // LXCFS
+            {
+              name = "lxcfs-meminfo",
+              hostPath = {
+                path = "${var.lxcfs_host_mount_path}/proc/meminfo"
+                type = "File"
+              }
+            },
+            {
+              name = "lxcfs-cpuinfo"
+              hostPath = {
+                path = "${var.lxcfs_host_mount_path}/proc/cpuinfo"
+                type = "File"
+              }
+            },
+            {
+              name = "lxcfs-stat"
+              hostPath = {
+                path = "${var.lxcfs_host_mount_path}/proc/stat"
+                type = "File"
+              }
+            },
+            {
+              name = "lxcfs-loadavg"
+              hostPath = {
+                path = "${var.lxcfs_host_mount_path}/proc/loadavg"
+                type = "File"
+              }
+            },
+            {
+              name = "lxcfs-uptime"
+              hostPath = {
+                path = "${var.lxcfs_host_mount_path}/proc/uptime"
+                type = "File"
               }
             }
           ]

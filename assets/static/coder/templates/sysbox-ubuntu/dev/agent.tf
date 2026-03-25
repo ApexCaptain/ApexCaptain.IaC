@@ -4,7 +4,8 @@ resource "coder_agent" "main" {
   startup_script = <<-EOT
     set -e
 
-    sudo apt-get update -y
+    sudo apt-get install -y \
+      curl
 
     # Install DevContainers CLI
     curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh -s -- --prefix /tmp/devcontainer-cli
@@ -59,5 +60,15 @@ resource "coder_agent" "main" {
     script       = "coder stat disk --path /var/lib/docker"
     interval     = 60
     timeout      = 1
+  }
+
+  metadata {
+    display_name = "Load Average"
+    key          = "4_load_host"
+    script   = <<EOT
+      echo "`cat /proc/loadavg | awk '{ print $1 }'` `nproc`" | awk '{ printf "%0.2f", $1/$2 }'
+    EOT
+    interval = 10
+    timeout  = 1
   }
 }

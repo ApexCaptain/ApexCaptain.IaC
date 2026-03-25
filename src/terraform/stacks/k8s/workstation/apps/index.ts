@@ -21,6 +21,9 @@ export * from './game.stack';
 // longhorn
 export * from './longhorn.stack';
 
+// lxcfs
+export * from './lxcfs.stack';
+
 // ingress controller
 export * from './ingress-controller.stack';
 // nas

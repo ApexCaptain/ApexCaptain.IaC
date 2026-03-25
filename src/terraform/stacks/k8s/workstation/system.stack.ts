@@ -460,6 +460,18 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
         }),
+
+        lxcfs: createK8sApplicationMetadata({
+          namespace: 'lxcfs',
+          // helm repo add lxcfs-on-kubernetes https://cndoit18.github.io/lxcfs-on-kubernetes/
+          helm: {
+            lxcfs: {
+              name: 'lxcfs',
+              chart: 'lxcfs-on-kubernetes',
+              repository: 'https://cndoit18.github.io/lxcfs-on-kubernetes/',
+            },
+          },
+        }),
       },
     ];
   });

@@ -2,9 +2,13 @@ data "coder_parameter" "cpu" {
   name         = "cpu"
   display_name = "CPU"
   description  = "사용 가능한 최대 CPU 코어 수입니다."
-  default      = "4"
+  default      = "2"
   icon         = local.icons_base64_data_url["cpu.png"]
   mutable      = true
+  option {
+    name  = "2 Cores"
+    value = "2"
+  }
   option {
     name  = "4 Cores"
     value = "4"

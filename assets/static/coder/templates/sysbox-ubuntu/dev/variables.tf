@@ -37,3 +37,9 @@ variable "workspace_directory_name" {
   type        = string
   description = "The name of the workspace directory"
 }
+
+variable "lxcfs_host_mount_path" {
+  type        = string
+  description = "The host mount path to use for the LXCFS"
+  default     = "/var/lib/lxc/lxcfs"
+}
