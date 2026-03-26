@@ -6,7 +6,14 @@ import yaml from 'yaml';
 import { K8S_Oke_Compartment_Stack } from '../compartment.stack';
 import { K8S_Oke_K8S_Stack } from '../k8s.stack';
 import { K8S_Oke_System_Stack } from '../system.stack';
-import { AbstractStack, createExpirationInterval } from '@/common';
+import { K8S_Oke_Apps_Istio_Gateway_Stack } from './istio.gateway.stack';
+import { K8S_Oke_Apps_Istio_Stack } from './istio.stack';
+import { K8S_Oke_Network_Stack } from '../network.stack';
+import {
+  AbstractStack,
+  createExpirationInterval,
+  IstioVirtualService,
+} from '@/common';
 import { GlobalConfigService } from '@/global/config/global.config.schema.service';
 import { Project_Stack } from '@/terraform/stacks/project.stack';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
@@ -480,58 +487,45 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     ];
   });
 
-  /*
-  ingress = this.provide(IngressV1, 'ingress', id => ({
-    metadata: {
-      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
-      namespace: this.namespace.element.metadata.name,
-      annotations: {
-        'nginx.ingress.kubernetes.io/backend-protocol': 'HTTP',
-        'nginx.ingress.kubernetes.io/rewrite-target': '/',
-        'nginx.ingress.kubernetes.io/auth-url':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authUrl,
-        'nginx.ingress.kubernetes.io/auth-signin':
-          this.k8sOkeAppsOAuth2ProxyStack.oauth2ProxyAdminRelease.shared
-            .authSignin,
-        'nginx.ingress.kubernetes.io/auth-snippet': dedent`
-          if ($request_uri ~ "/share") {
-            return 200;
-          }
-          if ($request_uri ~ "/api/public/dl") {
-            return 200;
-          }
-        `,
-      },
-    },
-    spec: {
-      ingressClassName: 'nginx',
-      rule: [
-        {
-          host: this.cloudflareRecordStack.filesRecord.element.name,
-          http: {
-            path: [
-              {
-                path: '/',
-                pathType: 'Prefix',
-                backend: {
-                  service: {
-                    name: this.service.element.metadata.name,
+  sftpVirtualService = this.provide(
+    IstioVirtualService,
+    'sftpVirtualService',
+    id => ({
+      manifest: {
+        metadata: {
+          name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+          namespace: this.namespace.element.metadata.name,
+        },
+        spec: {
+          hosts: ['*'],
+          gateways: [
+            this.k8sOkeAppsIstioGatewayStack.istioDirectGateway.shared
+              .gatewayPath,
+          ],
+          tcp: [
+            {
+              match: [
+                {
+                  port: this.k8sOkeNetworkStack.loadbalancerPortMappings
+                    .nfsSftpPort.inbound,
+                },
+              ],
+              route: [
+                {
+                  destination: {
+                    host: this.service.element.metadata.name,
                     port: {
-                      number:
-                        this.metadata.shared.services.nfs.ports['file-browser']
-                          .port,
+                      number: this.metadata.shared.services.nfs.ports.sftp.port,
                     },
                   },
                 },
-              },
-            ],
-          },
+              ],
+            },
+          ],
         },
-      ],
-    },
-  }));
-  */
+      },
+    }),
+  );
 
   release = this.provide(Release, 'release', () => {
     const storageClassName = 'nfs-client';
@@ -577,6 +571,9 @@ export class K8S_Oke_Apps_Nfs_Stack extends AbstractStack {
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly k8sOkeSystemStack: K8S_Oke_System_Stack,
+    private readonly k8sOkeAppsIstioGatewayStack: K8S_Oke_Apps_Istio_Gateway_Stack,
+    private readonly k8sOkeAppsIstioStack: K8S_Oke_Apps_Istio_Stack,
+    private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
