@@ -11,7 +11,8 @@ echo "🔄 Installing apt packages"
 sudo apt install -y \
     netcat-openbsd \
     iputils-ping \
-    parallel
+    parallel \
+    ripgrep
 
 install_oci() {
     echo "🔄 Installing OCI CLI"

@@ -396,6 +396,8 @@ resource "kubernetes_manifest" "main" {
                 limits = {
                   cpu = "${data.coder_parameter.cpu.value}"
                   memory = "${data.coder_parameter.memory.value}Gi"
+                  # device plugin 테스트, 정상
+                  # "squat.ai/fuse" = 1
                 }
               }
               volumeMounts = [
