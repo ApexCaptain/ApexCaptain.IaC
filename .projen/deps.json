@@ -40,6 +40,10 @@
       "type": "build"
     },
     {
+      "name": "chalk",
+      "type": "build"
+    },
+    {
       "name": "commander",
       "type": "build"
     },

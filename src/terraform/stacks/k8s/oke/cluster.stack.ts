@@ -71,7 +71,8 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
     compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
     // @Note https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm
-    kubernetesVersion: 'v1.32.1',
+    // kubernetesVersion: 'v1.32.1',
+    kubernetesVersion: 'v1.33.1',
     name: id,
     vcnId: this.k8sOkeNetworkStack.okeVcn.element.id,
 
@@ -127,47 +128,52 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
         ocpus: 2,
       },
       sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
+      lifecycle: {
+        preventDestroy: true,
+      },
     }),
   );
-  /*
-  okeArmNodePoolV2 = this.provide(
-    ContainerengineNodePool,
-    'okeArmNodePoolV2',
-    id => ({
-      clusterId: this.okeCluster.element.id,
-      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
-      displayName: id,
-      name: id,
 
-      nodeConfigDetails: {
-        placementConfigs: [
-          {
-            availabilityDomain:
-              this.projectStack.dataOciAvailabilityDomain.element.name,
-            subnetId:
-              this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
-          },
-        ],
-        size: 2,
-        nodePoolPodNetworkOptionDetails: {
-          cniType: 'FLANNEL_OVERLAY',
-        },
-      },
-      nodeSourceDetails: {
-        // https://docs.oracle.com/en-us/iaas/images/oke-worker-node-oracle-linux-8x/oracle-linux-8.10-aarch64-2025.11.20-0-oke-1.32.10-1345.htm
-        imageId:
-          'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaaxytyx2znh62ckwqtmq3eqd5zm2figtlgm7bxorlfshjba3eui63a',
-        sourceType: 'IMAGE',
-      },
-      nodeShape: 'VM.Standard.A1.Flex',
-      nodeShapeConfig: {
-        memoryInGbs: 12,
-        ocpus: 2,
-      },
-      sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
-    }),
-  );
-  */
+  // okeArmNodePoolV2 = this.provide(
+  //   ContainerengineNodePool,
+  //   'okeArmNodePoolV2',
+  //   id => ({
+  //     clusterId: this.okeCluster.element.id,
+  //     compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+  //     displayName: id,
+  //     name: id,
+
+  //     nodeConfigDetails: {
+  //       placementConfigs: [
+  //         {
+  //           availabilityDomain:
+  //             this.projectStack.dataOciAvailabilityDomain.element.name,
+  //           subnetId:
+  //             this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
+  //         },
+  //       ],
+  //       size: 4,
+  //       nodePoolPodNetworkOptionDetails: {
+  //         cniType: 'FLANNEL_OVERLAY',
+  //       },
+  //     },
+  //     nodeSourceDetails: {
+  //       // https://docs.oracle.com/en-us/iaas/images/oke-worker-node-oracle-linux-8x/oracle-linux-8.10-aarch64-2025.11.20-0-oke-1.33.1-1345.htm
+  //       imageId:
+  //         'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaa52lhvtuxyk5tbdhx5a6kptv4byvtefcvyyjh53errs234cnvildq',
+  //       sourceType: 'IMAGE',
+  //     },
+  //     nodeShape: 'VM.Standard.A1.Flex',
+  //     nodeShapeConfig: {
+  //       memoryInGbs: 6,
+  //       ocpus: 1,
+  //     },
+  //     sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
+  //     lifecycle: {
+  //       preventDestroy: true,
+  //     },
+  //   }),
+  // );
 
   constructor(
     // Global

@@ -52,6 +52,13 @@ export class K8S_Workstation_Apps_Lxcfs_Stack extends AbstractStack {
     },
   }));
 
+  /**
+   * @Note: Node에서 Fuse 마운트 포지션이 꼬일 경우 (가령, stat /var/lib/lxcfs-on-k8s/lxcfs: transport)
+   * 문제가 생긴 DaemonSet이 실행되는 Node에서 다음과 같이 실행.
+   * sudo umount -l /var/lib/lxcfs-on-k8s/lxcfs
+   * 이러면 대게 lxcfs DaemonSet이 재시작되면서 정상적으로 마운트 됨
+   * 다음에 이런 문제가 또 발생하면, 이를 자동으로 복구하는 별도의 Daemonset을 추가하도록 하자
+   */
   release = this.provide(Release, 'release', () => {
     const lxcfsHostMountPath = '/var/lib/lxcfs-on-k8s/lxcfs';
     return [
