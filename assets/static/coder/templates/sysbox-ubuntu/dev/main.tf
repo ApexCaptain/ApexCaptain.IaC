@@ -350,26 +350,7 @@ resource "kubernetes_manifest" "main" {
               command = [
                 "sh",
                  "-c", 
-                 <<-EOT
-
-                  # Update apt package manager
-                  sudo apt-get update -y
-
-                  # Create Workspace Directory
-                  mkdir -p $HOME/${var.workspace_directory_name}/.on-start
-
-                  # Create on-start script if not exists
-                  if [ ! -f $HOME/${var.workspace_directory_name}/.on-start/init.sh ]; then
-                    echo "#!/bin/bash" > $HOME/${var.workspace_directory_name}/.on-start/init.sh
-                    echo "# Add your on-start script here" >> $HOME/${var.workspace_directory_name}/.on-start/init.sh
-                    echo "echo 'On-start script executed'" >> $HOME/${var.workspace_directory_name}/.on-start/init.sh
-                    chmod +x $HOME/${var.workspace_directory_name}/.on-start/init.sh
-                  fi
-                  echo > $HOME/${var.workspace_directory_name}/.on-start/init.log
-
-                  ${coder_agent.main.init_script}
-
-                 EOT
+                 coder_agent.main.init_script,
               ]
               securityContext = {
                 runAsUser = 1000
@@ -396,8 +377,7 @@ resource "kubernetes_manifest" "main" {
                 limits = {
                   cpu = "${data.coder_parameter.cpu.value}"
                   memory = "${data.coder_parameter.memory.value}Gi"
-                  # device plugin 테스트, 정상
-                  # "squat.ai/fuse" = 1
+                  "${var.device_plugin_fuse_key}" = data.coder_parameter.fuse_count.value
                 }
               }
               volumeMounts = [

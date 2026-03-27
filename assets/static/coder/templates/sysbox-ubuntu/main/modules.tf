@@ -20,15 +20,3 @@ module "vscode-web" {
   disable_trust  = true
 }
 
-
-# https://registry.coder.com/modules/coder/personalize
-module "personalize" {
-  count    = data.coder_workspace.me.start_count
-  source   = "registry.coder.com/coder/personalize/coder"
-  version  = "1.0.32"
-  agent_id = coder_agent.main.id
-  path     = "/home/coder/${var.workspace_directory_name}/.on-start/init.sh"
-  log_path = "/home/coder/${var.workspace_directory_name}/.on-start/init.log"
-}
-
-

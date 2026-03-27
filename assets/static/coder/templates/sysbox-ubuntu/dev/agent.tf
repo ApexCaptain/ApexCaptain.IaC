@@ -32,6 +32,44 @@ resource "coder_agent" "main" {
       cp /etc/coder-workspace-files/bashrc $HOME/.bashrc
     fi
 
+    # On-start directory and files
+    onStartDirectory="$HOME/${var.workspace_directory_name}/.on-start"
+    onStartScript="$onStartDirectory/init.sh"
+    onStartLog="$onStartDirectory/init.log"
+    
+    # Create Workspace Directory
+    mkdir -p "$onStartDirectory"
+
+    # Create on-start script if not exists
+    if [ ! -f "$onStartScript" ]; then
+      echo "#!/bin/bash" > "$onStartScript"
+      echo "# 여기에 필요한 스크립트를 작성합니다." >> "$onStartScript"
+      echo "echo 'Hello, World!'" >> "$onStartScript"
+      chmod +x "$onStartScript"
+    fi
+
+    # Clear init.log
+    : > "$onStartLog"
+
+    # Execute on-start script and mirror log to terminal.
+    # Avoid pipe+tee here because background processes in init.sh may keep pipe FDs open.
+    
+    printf '\n---------------------\n시작 스크립트 실행중...\n---------------------\n\n'
+
+    tail -n 0 -f "$onStartLog" &
+    tailPid=$!
+
+    set +e
+    bash "$onStartScript" >> "$onStartLog" 2>&1
+    scriptExitCode=$?
+    set -e
+
+    sleep 0.2
+    kill "$tailPid" >/dev/null 2>&1 || true
+    wait "$tailPid" 2>/dev/null || true
+
+    printf '\n---------------------\n시작 스크립트 완료.\n---------------------\n\n'
+
   EOT
 
   metadata {

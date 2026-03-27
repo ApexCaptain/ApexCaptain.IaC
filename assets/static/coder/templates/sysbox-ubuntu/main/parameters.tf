@@ -114,6 +114,20 @@ data "coder_parameter" "include_readme" {
   order        = 6
 }
 
+data "coder_parameter" "fuse_count" { 
+  name         = "fuse_count"
+  display_name = "Fuse Device 수"
+  description  = "Fuse Device 수를 선택합니다. Rclone등으로 Google Drive, OneDrive 등을 마운트할 때 사용됩니다."
+  default      = "0"
+  type         = "number"
+  icon         = local.icons_base64_data_url["cloud.png"]
+  mutable      = true
+  order        = 7
+  validation {
+    min = 0
+    max = var.device_plugin_fuse_count_limit
+  }
+}
 
 data "coder_workspace" "me" {}
 

@@ -43,3 +43,14 @@ variable "lxcfs_host_mount_path" {
   description = "The host mount path to use for the LXCFS"
   default     = "/var/lib/lxc/lxcfs"
 }
+
+variable "device_plugin_fuse_key" {
+  type        = string
+  description = "The key to use for the device plugin fuse"
+}
+
+variable "device_plugin_fuse_count_limit" {
+  type        = number
+  description = "The count limit to use for the device plugin fuse per workspace"
+  default     = 2
+}

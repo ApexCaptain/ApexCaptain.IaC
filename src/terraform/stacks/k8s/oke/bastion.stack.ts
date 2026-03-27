@@ -138,7 +138,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     id => ({
       image: this.okeBastionSessionContainerImage.element.imageId,
       name: id,
-      rm: false,
+      rm: true,
       volumes: [
         {
           containerPath: '/root/.ssh/id_rsa',
@@ -147,7 +147,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
           readOnly: true,
         },
       ],
-      restart: 'unless-stopped',
+      restart: 'no',
       networkMode: 'bridge',
       command: [
         'sh',
