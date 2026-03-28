@@ -134,46 +134,46 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
     }),
   );
 
-  // okeArmNodePoolV2 = this.provide(
-  //   ContainerengineNodePool,
-  //   'okeArmNodePoolV2',
-  //   id => ({
-  //     clusterId: this.okeCluster.element.id,
-  //     compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
-  //     displayName: id,
-  //     name: id,
+  okeArmNodePoolV2 = this.provide(
+    ContainerengineNodePool,
+    'okeArmNodePoolV2',
+    id => ({
+      clusterId: this.okeCluster.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+      displayName: id,
+      name: id,
 
-  //     nodeConfigDetails: {
-  //       placementConfigs: [
-  //         {
-  //           availabilityDomain:
-  //             this.projectStack.dataOciAvailabilityDomain.element.name,
-  //           subnetId:
-  //             this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
-  //         },
-  //       ],
-  //       size: 4,
-  //       nodePoolPodNetworkOptionDetails: {
-  //         cniType: 'FLANNEL_OVERLAY',
-  //       },
-  //     },
-  //     nodeSourceDetails: {
-  //       // https://docs.oracle.com/en-us/iaas/images/oke-worker-node-oracle-linux-8x/oracle-linux-8.10-aarch64-2025.11.20-0-oke-1.33.1-1345.htm
-  //       imageId:
-  //         'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaa52lhvtuxyk5tbdhx5a6kptv4byvtefcvyyjh53errs234cnvildq',
-  //       sourceType: 'IMAGE',
-  //     },
-  //     nodeShape: 'VM.Standard.A1.Flex',
-  //     nodeShapeConfig: {
-  //       memoryInGbs: 6,
-  //       ocpus: 1,
-  //     },
-  //     sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
-  //     lifecycle: {
-  //       preventDestroy: true,
-  //     },
-  //   }),
-  // );
+      nodeConfigDetails: {
+        placementConfigs: [
+          {
+            availabilityDomain:
+              this.projectStack.dataOciAvailabilityDomain.element.name,
+            subnetId:
+              this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
+          },
+        ],
+        size: 4,
+        nodePoolPodNetworkOptionDetails: {
+          cniType: 'FLANNEL_OVERLAY',
+        },
+      },
+      nodeSourceDetails: {
+        // https://docs.oracle.com/en-us/iaas/images/oke-worker-node-oracle-linux-8x/oracle-linux-8.10-aarch64-2025.11.20-0-oke-1.33.1-1345.htm
+        imageId:
+          'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaa52lhvtuxyk5tbdhx5a6kptv4byvtefcvyyjh53errs234cnvildq',
+        sourceType: 'IMAGE',
+      },
+      nodeShape: 'VM.Standard.A1.Flex',
+      nodeShapeConfig: {
+        memoryInGbs: 6,
+        ocpus: 1,
+      },
+      sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
 
   constructor(
     // Global
