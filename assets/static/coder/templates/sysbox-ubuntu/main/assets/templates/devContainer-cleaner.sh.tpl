@@ -1,19 +1,26 @@
 #!/bin/bash
 
-# Docker가 실행되고 있는지 확인
-if ! docker ps > /dev/null 2>&1; then
-    echo "Docker is not running, skip the script"
-    exit 0
-fi
+
 
 disconnectedDevContainerMapDirPath='${main_dir_path}'
 mkdir -p "$disconnectedDevContainerMapDirPath"
+
+logOutFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map.log
 disconnectedDevContainerMapTmpFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map.tmp
 disconnectedDevContainerMapFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map.txt
+
+# Docker가 실행되고 있는지 확인
+if ! docker ps > /dev/null 2>&1; then
+    echo "Docker is not running, skip the script" >> "$logOutFilePath"
+    exit 0
+fi
+
 declare -A disconnectedDevContainerMap
 if [ -f "$disconnectedDevContainerMapFilePath" ]; then
     source "$disconnectedDevContainerMapFilePath"
 fi
+
+echo "Starting DevContainer Cleaner at $(date +%Y-%m-%dT%H:%M:%S) " >> "$logOutFilePath"
 
 get_container_name() {
     docker inspect --format '{{slice .Name 1}}' "$1"
@@ -29,17 +36,17 @@ while IFS= read -r eachDevContainerId; do
     if [ "$isContainerRunning" != "true" ]; then
         # 기존에 스테일 마크가 있는 경우 제거
         if [ -n "$${disconnectedDevContainerMap["$eachDevContainerId"]}" ]; then
-            echo "Container \"$containerName\" is not running, clear the stale mark"
+            echo "Container \"$containerName\" is not running, clear the stale mark" >> "$logOutFilePath"
             unset disconnectedDevContainerMap["$eachDevContainerId"]
         fi
         continue
     fi
 
     # Container가 실행중이고 extensionHost가 실행중인 경우(사용자 존재)
-    if docker exec "$eachDevContainerId" ps aux 2>/dev/null | grep -qE 'extensionHost'; then
+    if docker exec "$eachDevContainerId" pgrep -f "extensionHost" >/dev/null 2>&1; then
         # 기존에 스테일 마크가 있는 경우 제거
         if [ -n "$${disconnectedDevContainerMap["$eachDevContainerId"]}" ]; then
-            echo "Container \"$containerName\" is active, clear the stale mark"
+            echo "Container \"$containerName\" is active, clear the stale mark" >> "$logOutFilePath"
             unset disconnectedDevContainerMap["$eachDevContainerId"]
         fi
         continue
@@ -47,7 +54,7 @@ while IFS= read -r eachDevContainerId; do
 
     # 최종 상태, 실행중인데 extensionHost가 실행중이지 않은 경우(사용자 없음), 그리고 기존에 스테일 마크가 없는 경우
     if [ -z "$${disconnectedDevContainerMap["$eachDevContainerId"]}" ]; then
-        echo "Container \"$containerName\" is inactive, mark this as stale"
+        echo "Container \"$containerName\" is inactive, mark this as stale" >> "$logOutFilePath"
         disconnectedDevContainerMap["$eachDevContainerId"]=$(date +%Y-%m-%dT%H:%M:%S)
     fi
 
@@ -60,7 +67,7 @@ for eachDevContainerId in "$${!disconnectedDevContainerMap[@]}"; do
 
     # 컨테이너가 이미 rm 된 경우 맵에만 남아 있을 수 있음 → inspect 실패 시 항목 제거
     projectLabel=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' "$eachDevContainerId" 2>/dev/null) || {
-        echo "Map entry \"$${eachDevContainerId}\" no longer exists (removed), clear stale mark"
+        echo "Map entry \"$${eachDevContainerId}\" no longer exists (removed), clear stale mark" >> "$logOutFilePath"
         unset disconnectedDevContainerMap["$eachDevContainerId"]
         continue
     }
@@ -73,7 +80,7 @@ for eachDevContainerId in "$${!disconnectedDevContainerMap[@]}"; do
     )
     disconnectedTime=$${disconnectedDevContainerMap[$eachDevContainerId]}
     disconnectedEpoch=$(date -d "$disconnectedTime" +%s 2>/dev/null) || {
-        echo "Map entry \"$${eachDevContainerId}\": invalid disconnectedTime \"$disconnectedTime\", clear stale mark"
+        echo "Map entry \"$${eachDevContainerId}\": invalid disconnectedTime \"$disconnectedTime\", clear stale mark" >> "$logOutFilePath"
         unset disconnectedDevContainerMap["$eachDevContainerId"]
         continue
     }
@@ -82,7 +89,7 @@ for eachDevContainerId in "$${!disconnectedDevContainerMap[@]}"; do
     if (( now - disconnectedEpoch >= ${wait_seconds} )); then
         if [ -z "$derivedContainers" ]; then
             containerName=$(get_container_name "$eachDevContainerId")
-            echo "Stopping devContainer \"$containerName\""
+            echo "Stopping devContainer \"$containerName\"" >> "$logOutFilePath"
             docker stop "$eachDevContainerId" > /dev/null 2>&1
         else
             namesForLog=()
@@ -90,7 +97,7 @@ for eachDevContainerId in "$${!disconnectedDevContainerMap[@]}"; do
                 [[ -z "$stopCid" ]] && continue
                 namesForLog+=("\"$(get_container_name "$stopCid")\"")
             done
-            echo "Stopping devContainers $${namesForLog[*]} (compose project=$projectLabel)"
+            echo "Stopping devContainers $${namesForLog[*]} (compose project=$projectLabel)" >> "$logOutFilePath"
             docker stop $derivedContainers > /dev/null 2>&1
         fi
         unset disconnectedDevContainerMap["$eachDevContainerId"]

@@ -2,6 +2,14 @@ resource "coder_agent" "main" {
   os             = "linux"
   arch           = "amd64"
 
+  display_apps {
+    port_forwarding_helper = true
+    ssh_helper = true
+    vscode = contains(local.selected_additional_ides, "vscode-desktop")
+    vscode_insiders = false
+    web_terminal = contains(local.selected_additional_ides, "terminal")
+  }
+
   metadata {
     display_name = "CPU Usage"
     key          = "0_cpu_usage"

@@ -114,7 +114,15 @@ resource "coder_script" "devcontainer-cleaner" {
         wait_seconds = data.coder_parameter.devcontainer_cleaner_wait_mins[0].value * 60
         main_dir_path = local.directory_paths.devcontainer_cleaner_directory
     })
-    # Every 1 minute
     cron = "0 */1 * * * *"
-    log_path = "/tmp/devcontainer-cleaner.log"
+}
+
+resource "coder_script" "auto-stop-workspace" {
+    agent_id = coder_agent.main.id
+    display_name = "Auto Stop Workspace"
+    script = templatefile(local.template_paths["autostop-workspace.sh.tpl"], {
+        wait_seconds = data.coder_parameter.auto_stop_workspace_wait_mins[0].value * 60
+        main_dir_path = local.directory_paths.auto_stop_workspace_directory
+    })
+    cron = "0 */1 * * * *"
 }
