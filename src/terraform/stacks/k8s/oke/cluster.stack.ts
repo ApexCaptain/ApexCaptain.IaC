@@ -1,6 +1,6 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
@@ -70,7 +70,9 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
   okeCluster = this.provide(ContainerengineCluster, 'okeCluster', id => ({
     compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
     displayName: id,
-    kubernetesVersion: 'v1.32.1',
+    // @Note https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm
+    // kubernetesVersion: 'v1.32.1',
+    kubernetesVersion: 'v1.33.1',
     name: id,
     vcnId: this.k8sOkeNetworkStack.okeVcn.element.id,
 
@@ -91,6 +93,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
     type: 'BASIC_CLUSTER',
   }));
 
+  // Node Pools
   okeArmNodePool = this.provide(
     ContainerengineNodePool,
     'okeArmNodePool',
@@ -115,32 +118,61 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
         },
       },
       nodeSourceDetails: {
-        /**
-         * @note
-         * - 무슨 이유에서인지 dataCoreImages로는 검색이 안 됨. 별도로 output만들어서 수동으로 가져옴
-         * - 추후 자동화 필요
-         * @see: https://github.com/oracle/terraform-provider-oci/issues/1771
-         */
         imageId:
           'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaahe7qtoxzq42rdvll5mhx7bpgibtvguxipbt5ueyrmzc7q3hrwlla',
         sourceType: 'IMAGE',
       },
-      /**
-       * @note
-       * - Cycling 사용하려면 Basic Type으론 안된다.
-       * - Enhanced Cluster로 Type 변경시 시간당 $0.1 소모
-       */
-      // nodePoolCyclingDetails: {
-      //   isNodeCyclingEnabled: true,
-      //   maximumSurge: '0',
-      //   maximumUnavailable: '50%',
-      // },
       nodeShape: 'VM.Standard.A1.Flex',
       nodeShapeConfig: {
         memoryInGbs: 12,
         ocpus: 2,
       },
       sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
+      lifecycle: {
+        preventDestroy: true,
+      },
+    }),
+  );
+
+  okeArmNodePoolV2 = this.provide(
+    ContainerengineNodePool,
+    'okeArmNodePoolV2',
+    id => ({
+      count: process.env.UPGRADE_OKE_NODE_POOL === 'true' ? 1 : 0,
+      clusterId: this.okeCluster.element.id,
+      compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
+      displayName: id,
+      name: id,
+
+      nodeConfigDetails: {
+        placementConfigs: [
+          {
+            availabilityDomain:
+              this.projectStack.dataOciAvailabilityDomain.element.name,
+            subnetId:
+              this.k8sOkeNetworkStack.okeWorkerNodePrivateSubnet.element.id,
+          },
+        ],
+        size: 4,
+        nodePoolPodNetworkOptionDetails: {
+          cniType: 'FLANNEL_OVERLAY',
+        },
+      },
+      nodeSourceDetails: {
+        // https://docs.oracle.com/en-us/iaas/images/oke-worker-node-oracle-linux-8x/oracle-linux-8.10-aarch64-2025.11.20-0-oke-1.33.1-1345.htm
+        imageId:
+          'ocid1.image.oc1.ap-chuncheon-1.aaaaaaaa52lhvtuxyk5tbdhx5a6kptv4byvtefcvyyjh53errs234cnvildq',
+        sourceType: 'IMAGE',
+      },
+      nodeShape: 'VM.Standard.A1.Flex',
+      nodeShapeConfig: {
+        memoryInGbs: 6,
+        ocpus: 1,
+      },
+      sshPublicKey: this.privateKey.shared.key.element.publicKeyOpenssh,
+      lifecycle: {
+        preventDestroy: true,
+      },
     }),
   );
 

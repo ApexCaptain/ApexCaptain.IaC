@@ -20,7 +20,8 @@
     "ghcr.io/kreemer/features/chrometesting:1": {},
     "ghcr.io/devcontainers/features/desktop-lite:1": {
       "webPort": 6080
-    }
+    },
+    "ghcr.io/devcontainers-extra/features/rclone:1": {}
   },
   "forwardPorts": [6080],
   "portsAttributes": {

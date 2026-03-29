@@ -1,7 +1,9 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
+import dedent from 'dedent';
 import _ from 'lodash';
+import { K8S_Oke_Cluster_Stack } from './cluster.stack';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
 import { Project_Stack } from '../../project.stack';
@@ -138,7 +140,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     id => ({
       image: this.okeBastionSessionContainerImage.element.imageId,
       name: id,
-      rm: false,
+      rm: true,
       volumes: [
         {
           containerPath: '/root/.ssh/id_rsa',
@@ -147,18 +149,35 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
           readOnly: true,
         },
       ],
-      restart: 'unless-stopped',
+      restart: 'no',
       networkMode: 'bridge',
+      wait: true,
+      healthcheck: {
+        retries: 30,
+        startPeriod: '10s',
+        timeout: '2s',
+        interval: '2s',
+        test: [
+          'CMD',
+          'curl',
+          '-k',
+          '--socks5',
+          `localhost:${this.config.sessionTunnelPort}`,
+          `https://${Fn.lookup(this.k8sOkeClusterStack.okeCluster.element.endpoints.get(0), 'private_endpoint')}`,
+        ],
+      },
       command: [
-        'sh',
+        '/bin/bash',
         '-c',
-        [
-          'ssh',
-          '-o StrictHostKeyChecking=no',
-          '-N -D',
-          `0.0.0.0:${this.config.sessionTunnelPort}`,
-          `${this.okeBastionSession.element.id}@host.bastion.${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com`,
-        ].join(' '),
+        dedent`
+          apt-get update -y
+          apt-get install -y \
+            curl
+
+          ssh -o StrictHostKeyChecking=no \
+            -N -D 0.0.0.0:${this.config.sessionTunnelPort} \
+            ${this.okeBastionSession.element.id}@host.bastion.${this.projectStack.dataOciHomeRegion.element.regionSubscriptions.get(0).regionName}.oci.oraclecloud.com
+        `,
       ],
     }),
   );
@@ -175,6 +194,7 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     private readonly projectStack: Project_Stack,
     private readonly k8sOkeCompartmentStack: K8S_Oke_Compartment_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
+    private readonly k8sOkeClusterStack: K8S_Oke_Cluster_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,

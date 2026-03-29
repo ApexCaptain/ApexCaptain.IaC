@@ -12,6 +12,7 @@ import { GithubProvider } from '@lib/terraform/providers/github/provider';
 import { NullProvider } from '@lib/terraform/providers/null/provider';
 import { Resource } from '@lib/terraform/providers/null/resource';
 import { DataOciIdentityAvailabilityDomain } from '@lib/terraform/providers/oci/data-oci-identity-availability-domain';
+import { DataOciIdentityAvailabilityDomains } from '@lib/terraform/providers/oci/data-oci-identity-availability-domains';
 import { DataOciIdentityCompartment } from '@lib/terraform/providers/oci/data-oci-identity-compartment';
 import { DataOciIdentityRegionSubscriptions } from '@lib/terraform/providers/oci/data-oci-identity-region-subscriptions';
 import { DataOciIdentityTenancy } from '@lib/terraform/providers/oci/data-oci-identity-tenancy';

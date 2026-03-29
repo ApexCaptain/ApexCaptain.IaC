@@ -257,6 +257,20 @@ export class K8S_Oke_Apps_Istio_Stack extends AbstractStack {
           present: true,
         },
         {
+          port: this.k8sOkeNetworkStack.loadbalancerPortMappings.nfsSftpPort
+            .inbound,
+          name: 'nfs-sftp',
+          targetPort:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.nfsSftpPort
+              .inbound,
+          protocol:
+            this.k8sOkeNetworkStack.loadbalancerPortMappings.nfsSftpPort
+              .protocol === OciNetworkProtocol.TCP
+              ? 'TCP'
+              : 'UDP',
+          present: true,
+        },
+        {
           port: this.k8sOkeNetworkStack.loadbalancerPortMappings
             .prometheusRemoteWritePort.inbound,
           name: 'prometheus-remote-write',

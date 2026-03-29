@@ -1,34 +1,6 @@
 resource "coder_agent" "main" {
   os             = "linux"
   arch           = "amd64"
-  startup_script = <<-EOT
-    set -e
-
-    sudo apt-get install -y \
-      curl
-
-    # Install DevContainers CLI
-    curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh -s -- --prefix /tmp/devcontainer-cli
-    sudo cp -R /tmp/devcontainer-cli/* /usr
-
-    # Start Dockerd in the background.
-    sudo dockerd >/tmp/dockerd.log 2>&1 &
-
-    # Rebase README and assets
-    sudo rm -f $HOME/${var.workspace_directory_name}/README.md
-    sudo rm -rf $HOME/${var.workspace_directory_name}/assets
-
-    if [ "${data.coder_parameter.include_readme.value}" = "true" ]; then
-      cp /etc/coder-workspace-readme/README.md $HOME/${var.workspace_directory_name}/README.md
-      mkdir -p "$HOME/${var.workspace_directory_name}/assets/home"
-      for f in /etc/coder-workspace-readme/assets/*; do
-        [ -f "$f" ] && cp "$f" "$HOME/${var.workspace_directory_name}/assets/home/"
-      done
-      sudo chown root:root "$HOME/${var.workspace_directory_name}/README.md"
-      sudo chown -R root:root "$HOME/${var.workspace_directory_name}/assets"
-    fi
-
-  EOT
 
   metadata {
     display_name = "CPU Usage"

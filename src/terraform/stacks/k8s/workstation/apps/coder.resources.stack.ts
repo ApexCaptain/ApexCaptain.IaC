@@ -6,6 +6,7 @@ import { K8S_Workstation_Apps_Coder_Stack } from './coder.stack';
 import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { K8S_Workstation_Apps_Lxcfs_Stack } from './lxcfs.stack';
+import { K8S_Workstation_Plugin_Stack } from '../plugin.stack';
 import { AbstractStack, createExpirationInterval } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
@@ -114,6 +115,20 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
                 this.k8sWorkstationAppsLxcfsStack.release.shared
                   .lxcfsHostMountPath,
             },
+            {
+              name: 'device_plugin_fuse_key',
+              value: `${
+                this.k8sWorkstationPluginStack.genericDevicePluginDaemonSet
+                  .shared.deviceKeyPrefix
+              }/${
+                this.k8sWorkstationPluginStack.genericDevicePluginDaemonSet
+                  .shared.devices.fuse.name
+              }`,
+            },
+            {
+              name: 'device_plugin_fuse_count_limit',
+              value: '2'.toString(),
+            },
           ],
         },
       ],
@@ -175,6 +190,20 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
                 this.k8sWorkstationAppsLxcfsStack.release.shared
                   .lxcfsHostMountPath,
             },
+            {
+              name: 'device_plugin_fuse_key',
+              value: `${
+                this.k8sWorkstationPluginStack.genericDevicePluginDaemonSet
+                  .shared.deviceKeyPrefix
+              }/${
+                this.k8sWorkstationPluginStack.genericDevicePluginDaemonSet
+                  .shared.devices.fuse.name
+              }`,
+            },
+            {
+              name: 'device_plugin_fuse_count_limit',
+              value: '2'.toString(),
+            },
           ],
         },
       ],
@@ -191,6 +220,7 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
     private readonly k8sWorkstationSystemStack: K8S_Workstation_System_Stack,
     private readonly k8sWorkstationLonghornStack: K8S_Workstation_Apps_Longhorn_Stack,
     private readonly k8sWorkstationAppsLxcfsStack: K8S_Workstation_Apps_Lxcfs_Stack,
+    private readonly k8sWorkstationPluginStack: K8S_Workstation_Plugin_Stack,
   ) {
     super(
       terraformAppService.cdktfApp,
@@ -199,5 +229,6 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
     );
     this.addDependency(this.k8sWorkstationAppsCoderStack);
     this.addDependency(this.k8sWorkstationAppsLxcfsStack);
+    this.addDependency(this.k8sWorkstationPluginStack);
   }
 }

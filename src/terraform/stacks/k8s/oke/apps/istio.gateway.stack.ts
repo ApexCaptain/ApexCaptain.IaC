@@ -11,7 +11,10 @@ import {
   IstioGateway,
   IstioVirtualService,
 } from '@/common';
-import { Cloudflare_Zone_Stack } from '@/terraform/stacks/cloudflare';
+import {
+  Cloudflare_Record_Oke_Stack,
+  Cloudflare_Zone_Stack,
+} from '@/terraform/stacks/cloudflare';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
@@ -167,6 +170,7 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
       lbPortMappings.prometheusRemoteWritePort,
       lbPortMappings.lokiRemoteWritePort,
     ];
+    const tcpPorts = [lbPortMappings.nfsSftpPort];
 
     return [
       {
@@ -197,6 +201,15 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
                     this.istioIngressGatewayWildcardProductionCertificate.shared
                       .secretName,
                 },
+              })),
+              // TCP
+              ...tcpPorts.map(eachPort => ({
+                port: {
+                  number: eachPort.inbound,
+                  name: _.kebabCase(eachPort.description),
+                  protocol: 'TCP',
+                },
+                hosts: ['*'],
               })),
             ],
           },
@@ -368,6 +381,7 @@ export class K8S_Oke_Apps_Istio_Gateway_Stack extends AbstractStack {
     private readonly k8sOkeAppsCertManagerCRDStack: K8S_Oke_Apps_CertManager_CRD_Stack,
     private readonly k8sOkeK8SStack: K8S_Oke_K8S_Stack,
     private readonly cloudflareZoneStack: Cloudflare_Zone_Stack,
+    private readonly cloudflareRecordOkeStack: Cloudflare_Record_Oke_Stack,
     private readonly k8sOkeNetworkStack: K8S_Oke_Network_Stack,
   ) {
     super(

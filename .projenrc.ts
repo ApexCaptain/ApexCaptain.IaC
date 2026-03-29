@@ -253,6 +253,7 @@ const project = new typescript.TypeScriptAppProject({
     'koconut',
     'puppeteer',
     'wait',
+    'chalk',
   ],
 });
 
