@@ -80,24 +80,34 @@ data "coder_parameter" "docker_disk_size" {
 
 data "coder_parameter" "additional_ides" {
   name         = "additional_ides"
-  display_name = "추가 IDE 선택"
-  description  = "기본 IDE(VsCode Desktop) 이외 추가로 설치할 IDE를 선택합니다."
+  display_name = "IDE"
   mutable      = true
-  default      = "[]"
+  default      = "[\"vscode-desktop\"]"
   form_type    = "multi-select"
   type         = "list(string)"
   icon         = local.icons_base64_data_url["development.png"]
 
   option {
+    name  = "VS Code (Desktop)"
+    value = "vscode-desktop"
+    icon = local.icons_base64_data_url["vscode.png"]
+  }
+  option {
+    name  = "VS Code (Web)"
+    value = "vscode-web"
+    icon  = local.icons_base64_data_url["vscode.png"]
+  }
+  option {
+    name  = "Terminal"
+    value = "terminal"
+    icon = "/icon/terminal.svg"
+  }
+  option {
     name  = "Cursor"
     value = "cursor"
     icon = "/icon/cursor.svg"
   }
-  option {
-    name  = "VS Code Web"
-    value = "vscode-web"
-    icon  = local.icons_base64_data_url["vscode.png"]
-  }
+
 
   order        = 5
 
@@ -106,7 +116,7 @@ data "coder_parameter" "additional_ides" {
 data "coder_parameter" "fuse_count" { 
   name         = "fuse_count"
   display_name = "Fuse Device 수"
-  description  = "Fuse Device 수를 선택합니다. Rclone등으로 Google Drive, OneDrive 등을 마운트할 때 사용됩니다."
+  description  = "Fuse Device 수를 선택합니다. Rclone과 같은 도구를 사용해 Google Drive, OneDrive 등을 마운트할 때 사용됩니다."
   default      = "0"
   type         = "number"
   icon         = local.icons_base64_data_url["cloud.png"]
@@ -118,30 +128,56 @@ data "coder_parameter" "fuse_count" {
   }
 }
 
+data "coder_parameter" "auto_stop_workspace" {
+  name         = "auto_stop_workspace"
+  display_name = "Auto Stop Workspace"
+  description  = "비활성 상태일 때 워크스페이스를 종료합니다. Workspace 내부에 Running 상태의 Container가 있을 경우 동작하지 않습니다"
+  default      = true
+  type         = "bool"
+  icon         = local.icons_base64_data_url["stop.png"]
+  mutable      = true
+  order        = 7
+}
+
+data "coder_parameter" "auto_stop_workspace_wait_mins" {
+  count = data.coder_parameter.auto_stop_workspace.value ? 1 : 0
+  name         = "auto_stop_workspace_wait_mins"
+  display_name = "Auto Stop Workspace 대기 시간 (분)"
+  description  = "비활성 상태로 유지된 시간이 이 값을 초과하면 워크스페이스를 자동으로 종료합니다."
+  default      = 10
+  type         = "number"
+  icon         = local.icons_base64_data_url["time.png"]
+  mutable      = true
+  validation {
+    min = 10
+  }
+  order        = 8
+}
+
 data "coder_parameter" "enable_devcontainer_cleaner" {
   name         = "enable_devcontainer_cleaner"
   display_name = "DevContainer Cleaner 활성화"
-  description  = "DevContainer Cleaner를 활성화합니다. 미사용 DevContainer를 정기적으로 정리합니다."
+  description  = "미사용 DevContainer를 정기적으로 종료합니다. 'devcontainer-cleaner.skip=true' 라벨로 특정 컨테이너를 제외할 수 있습니다."
   default      = true
   type         = "bool"
   icon         = local.icons_base64_data_url["cleaning.png"]
   mutable      = true
-  order        = 7
+  order        = 9
 }
 
 data "coder_parameter" "devcontainer_cleaner_wait_mins" {
   count = data.coder_parameter.enable_devcontainer_cleaner.value ? 1 : 0
   name         = "devcontainer_cleaner_wait_mins"
   display_name = "DevContainer Cleaner 대기 시간 (분)"
-  description  = "DevContainer Cleaner가 미사용 DevContainer를 정리하기 전에 대기할 시간입니다."
+  description  = "비활성 상태로 유지된 시간이 이 값을 초과하면 미사용 DevContainer로 간주해 자동으로 종료(Stop)합니다."
   default      = 5
   type         = "number"
   icon         = local.icons_base64_data_url["time.png"]
   mutable      = true
-  order        = 8
   validation {
     min = 5
   }
+  order        = 10
 }
 
 data "coder_workspace" "me" {}

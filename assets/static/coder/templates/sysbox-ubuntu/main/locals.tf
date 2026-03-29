@@ -4,6 +4,7 @@ locals {
   directory_paths = {
     lifecycle_scripts_directory = "$HOME/${var.workspace_directory_name}/.lifecycle-scripts"
     devcontainer_cleaner_directory = "/tmp/devcontainer-cleaner"
+    auto_stop_workspace_directory = "/tmp/auto-stop-workspace"
   }
 
   file_paths = {
