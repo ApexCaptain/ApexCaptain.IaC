@@ -34,18 +34,20 @@ fi
 _eh1='extension'
 _eh2='Host'
 if pgrep -af "$_eh1$_eh2" >/dev/null 2>&1; then
+    echo "Workspace is active" >> "$logOutFilePath"
     # 기존에 스테일 마크가 있는 경우 제거
     if [ -n "$${workspaceStatusMap["last_inactive_date"]}" ]; then
         # Coder는 스크립트 본문이 실행 프로세스 argv에 실리므로, ps grep과 겹치는 부분 문자열을 로그에 넣지 말 것
-        echo "Workspace is active (IDE extension process), clear inactive mark" >> "$logOutFilePath"
+        echo "Clear inactive mark" >> "$logOutFilePath"
         unset workspaceStatusMap["last_inactive_date"]
     fi
 # 접속자가 없을 경우
 else
     # 기존에 스테일 마크가 없는 경우 마크 추가
+    echo "Workspace is inactive" >> "$logOutFilePath"
     if [ -z "$${workspaceStatusMap["last_inactive_date"]}" ]; then
         workspaceStatusMap["last_inactive_date"]=$(date +%Y-%m-%dT%H:%M:%S)
-        echo "Workspace inactive, mark inactive since \"$${workspaceStatusMap["last_inactive_date"]}\"" >> "$logOutFilePath"
+        echo "Mark workspace inactive since \"$${workspaceStatusMap["last_inactive_date"]}\"" >> "$logOutFilePath"
     fi
     inactiveTime=$${workspaceStatusMap["last_inactive_date"]}
     inactiveEpoch=$(date -d "$inactiveTime" +%s 2>/dev/null) || {
