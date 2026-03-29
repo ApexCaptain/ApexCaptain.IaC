@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { Command, Argument, Option } from 'commander';
 import wait from 'wait';
 
-// yarn ts-node ./scripts/try-script-repeatedly.script.ts "yarn tf@deploy:single K8S_Oke_Cluster_Stack --auto-approve" -d 60000 > ./tmp/try-script-repeatedly.log &
+// yarn ts-node ./scripts/try-script-repeatedly.script.ts "UPGRADE_OKE_NODE_POOL=true yarn tf@deploy:single K8S_Oke_Cluster_Stack --auto-approve" -d 60000 > ./tmp/try-script-repeatedly.log &
 const params = new Command('try-script-repeatedly')
   .addArgument(new Argument('[Script]', 'The script to run'))
   .addOption(

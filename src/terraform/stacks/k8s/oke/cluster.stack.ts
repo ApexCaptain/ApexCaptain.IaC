@@ -1,6 +1,6 @@
 import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalBackend } from 'cdktf';
+import { Fn, LocalBackend } from 'cdktf';
 import _ from 'lodash';
 import { K8S_Oke_Compartment_Stack } from './compartment.stack';
 import { K8S_Oke_Network_Stack } from './network.stack';
@@ -138,6 +138,7 @@ export class K8S_Oke_Cluster_Stack extends AbstractStack {
     ContainerengineNodePool,
     'okeArmNodePoolV2',
     id => ({
+      count: process.env.UPGRADE_OKE_NODE_POOL === 'true' ? 1 : 0,
       clusterId: this.okeCluster.element.id,
       compartmentId: this.k8sOkeCompartmentStack.okeCompartment.element.id,
       displayName: id,

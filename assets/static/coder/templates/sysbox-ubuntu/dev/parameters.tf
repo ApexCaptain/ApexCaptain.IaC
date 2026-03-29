@@ -103,17 +103,6 @@ data "coder_parameter" "additional_ides" {
 
 }
 
-data "coder_parameter" "include_readme" {
-  name         = "include_readme"
-  display_name = "README 포함"
-  description  = "README 파일을 Workspace에 포함할지 여부입니다. Disable 할 경우 기존 README 파일은 삭제됩니다."
-  default      = true
-  type         = "bool"
-  icon         = local.icons_base64_data_url["document.png"]
-  mutable      = true
-  order        = 6
-}
-
 data "coder_parameter" "fuse_count" { 
   name         = "fuse_count"
   display_name = "Fuse Device 수"
@@ -122,10 +111,36 @@ data "coder_parameter" "fuse_count" {
   type         = "number"
   icon         = local.icons_base64_data_url["cloud.png"]
   mutable      = true
-  order        = 7
+  order        = 6
   validation {
     min = 0
     max = var.device_plugin_fuse_count_limit
+  }
+}
+
+data "coder_parameter" "enable_devcontainer_cleaner" {
+  name         = "enable_devcontainer_cleaner"
+  display_name = "DevContainer Cleaner 활성화"
+  description  = "DevContainer Cleaner를 활성화합니다. 미사용 DevContainer를 정기적으로 정리합니다."
+  default      = true
+  type         = "bool"
+  icon         = local.icons_base64_data_url["cleaning.png"]
+  mutable      = true
+  order        = 7
+}
+
+data "coder_parameter" "devcontainer_cleaner_wait_mins" {
+  count = data.coder_parameter.enable_devcontainer_cleaner.value ? 1 : 0
+  name         = "devcontainer_cleaner_wait_mins"
+  display_name = "DevContainer Cleaner 대기 시간 (분)"
+  description  = "DevContainer Cleaner가 미사용 DevContainer를 정리하기 전에 대기할 시간입니다."
+  default      = 5
+  type         = "number"
+  icon         = local.icons_base64_data_url["time.png"]
+  mutable      = true
+  order        = 8
+  validation {
+    min = 5
   }
 }
 

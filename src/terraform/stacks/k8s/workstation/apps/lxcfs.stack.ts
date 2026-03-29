@@ -119,15 +119,15 @@ export class K8S_Workstation_Apps_Lxcfs_Stack extends AbstractStack {
 
                   args: [
                     dedent`
-                while true; do
-                  OUT=$(nsenter -t 1 -m -- stat "$MOUNT_PATH" 2>&1 || true)
-                  if echo "$OUT" | grep -qiE 'transport endpoint|not connected|stale'; then
-                    echo "$(date +%Y-%m-%dT%H:%M:%SZ) broken lxcfs mount at $MOUNT, lazy unmount" >&2
-                    nsenter -t 1 -m -- umount -l "$MOUNT_PATH" 2>/dev/null || true
-                  fi
-                  sleep "$INTERVAL"
-                done
-              `,
+                      while true; do
+                        OUT=$(nsenter -t 1 -m -- stat "$MOUNT_PATH" 2>&1 || true)
+                        if echo "$OUT" | grep -qiE 'transport endpoint|not connected|stale'; then
+                          echo "$(date +%Y-%m-%dT%H:%M:%SZ) broken lxcfs mount at $MOUNT, lazy unmount" >&2
+                          nsenter -t 1 -m -- umount -l "$MOUNT_PATH" 2>/dev/null || true
+                        fi
+                        sleep "$INTERVAL"
+                      done
+                    `,
                   ],
                   securityContext: {
                     privileged: true,
@@ -166,9 +166,6 @@ export class K8S_Workstation_Apps_Lxcfs_Stack extends AbstractStack {
   );
 
   constructor(
-    // Global
-    private readonly globalConfigService: GlobalConfigService,
-
     // Terraform
     private readonly terraformAppService: TerraformAppService,
     private readonly terraformConfigService: TerraformConfigService,

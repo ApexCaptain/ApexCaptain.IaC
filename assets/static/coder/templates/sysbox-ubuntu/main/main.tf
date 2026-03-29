@@ -80,41 +80,6 @@ resource "kubernetes_config_map_v1" "docker_daemon_json" {
   }
 }
 
-resource "kubernetes_config_map_v1" "files" {
-  count = data.coder_workspace.me.start_count
-  metadata {
-    name = "coder-${data.coder_workspace.me.id}-files"
-    namespace = var.namespace
-  }
-  data = {
-    for eachFile in fileset("./files", "*") :
-    eachFile => file("./files/${eachFile}")
-  }
-}
-
-resource "kubernetes_config_map_v1" "readme_home" {
-  count = data.coder_workspace.me.start_count
-  metadata {
-    name = "coder-${data.coder_workspace.me.id}-readme-home"
-    namespace = var.namespace
-  }
-  data = {
-    "README.md" = file("README_HOME.md")
-  }
-}
-
-resource "kubernetes_config_map_v1" "readme_home_assets" {
-  count = data.coder_workspace.me.start_count
-  metadata {
-    name = "coder-${data.coder_workspace.me.id}-readme-home-assets"
-    namespace = var.namespace
-  }
-  binary_data = {
-    for eachFile in fileset("./assets/home", "*") :
-    eachFile => filebase64("./assets/home/${eachFile}")
-  }
-}
-
 resource "kubernetes_service_v1" "proxy" {
   count = data.coder_workspace.me.start_count
   metadata {
@@ -349,13 +314,21 @@ resource "kubernetes_manifest" "main" {
               imagePullPolicy = "Always"
               command = [
                 "sh",
-                 "-c", 
-                 coder_agent.main.init_script,
+                 "-c",
+                 <<-EOT
+                 sudo apt-get update -y
+                 ${coder_agent.main.init_script}
+                 EOT
+                 
               ]
               securityContext = {
                 runAsUser = 1000
               }
               env = [
+                {
+                  name = "TZ",
+                  value = "Asia/Seoul"
+                },
                 {
                   name = "CODER_AGENT_TOKEN"
                   value = coder_agent.main.token
@@ -396,22 +369,6 @@ resource "kubernetes_manifest" "main" {
                   name = "docker-daemon-json"
                   mountPath = "/etc/docker/daemon.json"
                   subPath = "daemon.json"
-                },
-                // Files
-                {
-                  name = "files"
-                  mountPath = "/etc/coder-workspace-files"
-                },
-                // README
-                {
-                  name = "readme-home"
-                  mountPath = "/etc/coder-workspace-readme/README.md"
-                  subPath = "README.md"
-                },
-                // README Assets
-                {
-                  name = "readme-home-assets"
-                  mountPath = "/etc/coder-workspace-readme/assets"
                 },
                 // LXCFS
                 {
@@ -468,33 +425,6 @@ resource "kubernetes_manifest" "main" {
                     path = "daemon.json"
                   }
                 ]
-              }
-            },
-            // Files
-            {
-              name = "files"
-              configMap = {
-                name = kubernetes_config_map_v1.files[count.index].metadata[0].name
-              }
-            },
-            // README
-            {
-              name = "readme-home"
-              configMap = {
-                name = kubernetes_config_map_v1.readme_home[count.index].metadata[0].name
-                items = [
-                  {
-                    key = "README.md"
-                    path = "README.md"
-                  }
-                ]
-              }
-            },
-            // README Assets
-            {
-              name = "readme-home-assets"
-              configMap = {
-                name = kubernetes_config_map_v1.readme_home_assets[count.index].metadata[0].name
               }
             },
             // LXCFS

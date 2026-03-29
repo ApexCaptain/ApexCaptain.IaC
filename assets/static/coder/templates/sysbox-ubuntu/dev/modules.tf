@@ -20,3 +20,10 @@ module "vscode-web" {
   disable_trust  = true
 }
 
+# https://registry.coder.com/modules/coder/coder-login
+module "coder-login" {
+  count    = data.coder_workspace.me.start_count
+  source   = "registry.coder.com/coder/coder-login/coder"
+  version  = "1.1.1"
+  agent_id = coder_agent.main.id
+}
