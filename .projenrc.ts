@@ -241,7 +241,6 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.5.1',
     '@types/lodash',
     'commander',
     'flatley',
@@ -254,7 +253,7 @@ const project = new typescript.TypeScriptAppProject({
     'chalk',
     'rxjs',
   ],
-  devDeps: [],
+  devDeps: ['constructs@^10.5.1'],
 });
 
 void (async () => {
