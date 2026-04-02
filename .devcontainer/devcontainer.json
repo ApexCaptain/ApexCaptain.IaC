@@ -18,17 +18,18 @@
       "installDockerBuildx": false
     },
     "ghcr.io/kreemer/features/chrometesting:1": {},
-    "ghcr.io/devcontainers/features/desktop-lite:1": {
-      "webPort": 6080
-    },
     "ghcr.io/devcontainers-extra/features/rclone:1": {}
+    // Desktop Lite 기능이 필요하면 활성화 (Crwaling Debugging 용)
+    // "ghcr.io/devcontainers/features/desktop-lite:1": {
+    //   "webPort": 6080
+    // }
   },
-  "forwardPorts": [6080],
-  "portsAttributes": {
-    "6080": {
-      "label": "Desktop-Lite"
-    }
-  },
+  // "forwardPorts": [6080],
+  // "portsAttributes": {
+  //   "6080": {
+  //     "label": "Desktop-Lite"
+  //   }
+  // },
   // Custom
   "customizations": {
     "vscode": {

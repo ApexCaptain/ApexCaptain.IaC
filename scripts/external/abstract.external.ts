@@ -74,7 +74,7 @@ export abstract class ExternalProgram<
       if (this.option.calledFromTerraform) console.log(output);
       process.exit(0);
     } catch (error) {
-      this.log(error, 'error');
+      this.log((error as any).toString(), 'error');
       process.exit(1);
     }
   }

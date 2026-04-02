@@ -50,6 +50,3 @@ export * from './kiali-operator.stack';
 
 // Price Quest
 export * from './price-quest.stack';
-
-// Test
-export * from './test.stack';

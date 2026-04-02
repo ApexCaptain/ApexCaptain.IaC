@@ -32,6 +32,6 @@ echo "🔄 Building cdktf project"
 yarn tf@build
 
 echo "🔄 Installing terraform providers"
-yarn tf@upgrade && yarn tf@install
+yarn tf@install
 
 echo "✅ Synchronization is complete"

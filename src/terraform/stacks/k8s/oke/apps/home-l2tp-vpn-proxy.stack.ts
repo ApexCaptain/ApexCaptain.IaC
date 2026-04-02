@@ -120,7 +120,7 @@ export class K8S_Oke_Apps_HomeL2tpVpnProxy_Stack extends AbstractStack {
 
   statefulSet = this.provide(StatefulSetV1, 'statefulSet', id => ({
     metadata: {
-      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}`,
+      name: `${this.namespace.element.metadata.name}-${_.kebabCase(id)}-v2`,
       namespace: this.namespace.element.metadata.name,
     },
     spec: {

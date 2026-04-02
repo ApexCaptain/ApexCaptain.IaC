@@ -9,6 +9,9 @@ export * from './coder.resources.stack';
 // dashboard
 export * from './dashboard.stack';
 
+// dockerd
+export * from './dockerd.stack';
+
 // istio
 export * from './istio.stack';
 export * from './istio.gateway.stack';
@@ -58,3 +61,7 @@ export * from './ollama.stack';
 
 // open-web-ui
 export * from './open-web-ui.stack';
+
+// harbor
+export * from './harbor.stack';
+export * from './harbor.resources.stack';

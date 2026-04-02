@@ -1,31 +1,6 @@
 {
   "dependencies": [
     {
-      "name": "@inquirer/prompts",
-      "type": "build"
-    },
-    {
-      "name": "@nestjs/cli",
-      "type": "build"
-    },
-    {
-      "name": "@nestjs/schematics",
-      "type": "build"
-    },
-    {
-      "name": "@nestjs/testing",
-      "type": "build"
-    },
-    {
-      "name": "@types/flat",
-      "version": "5.0.2",
-      "type": "build"
-    },
-    {
-      "name": "@types/lodash",
-      "type": "build"
-    },
-    {
       "name": "@types/node",
       "type": "build"
     },
@@ -40,16 +15,8 @@
       "type": "build"
     },
     {
-      "name": "chalk",
-      "type": "build"
-    },
-    {
-      "name": "commander",
-      "type": "build"
-    },
-    {
       "name": "constructs",
-      "version": "^10.5.1",
+      "version": "^10.0.0",
       "type": "build"
     },
     {
@@ -74,31 +41,11 @@
       "type": "build"
     },
     {
-      "name": "flatley",
-      "type": "build"
-    },
-    {
-      "name": "fuzzy",
-      "type": "build"
-    },
-    {
-      "name": "inquirer-autocomplete-standalone",
-      "type": "build"
-    },
-    {
-      "name": "koconut",
-      "type": "build"
-    },
-    {
       "name": "prettier",
       "type": "build"
     },
     {
       "name": "projen",
-      "type": "build"
-    },
-    {
-      "name": "puppeteer",
       "type": "build"
     },
     {
@@ -110,11 +57,15 @@
       "type": "build"
     },
     {
-      "name": "wait",
-      "type": "build"
+      "name": "@hapi/joi",
+      "type": "runtime"
     },
     {
-      "name": "@hapi/joi",
+      "name": "@inquirer/prompts",
+      "type": "runtime"
+    },
+    {
+      "name": "@nestjs/cli",
       "type": "runtime"
     },
     {
@@ -130,6 +81,23 @@
       "type": "runtime"
     },
     {
+      "name": "@nestjs/schematics",
+      "type": "runtime"
+    },
+    {
+      "name": "@nestjs/testing",
+      "type": "runtime"
+    },
+    {
+      "name": "@types/flat",
+      "version": "5.0.2",
+      "type": "runtime"
+    },
+    {
+      "name": "@types/lodash",
+      "type": "runtime"
+    },
+    {
       "name": "cdktf",
       "type": "runtime"
     },
@@ -142,6 +110,10 @@
       "type": "runtime"
     },
     {
+      "name": "chalk",
+      "type": "runtime"
+    },
+    {
       "name": "class-transformer",
       "type": "runtime"
     },
@@ -150,7 +122,12 @@
       "type": "runtime"
     },
     {
+      "name": "commander",
+      "type": "runtime"
+    },
+    {
       "name": "constructs",
+      "version": "^10.5.1",
       "type": "runtime"
     },
     {
@@ -171,7 +148,23 @@
       "type": "runtime"
     },
     {
+      "name": "flatley",
+      "type": "runtime"
+    },
+    {
+      "name": "fuzzy",
+      "type": "runtime"
+    },
+    {
+      "name": "inquirer-autocomplete-standalone",
+      "type": "runtime"
+    },
+    {
       "name": "joi-extract-type",
+      "type": "runtime"
+    },
+    {
+      "name": "koconut",
       "type": "runtime"
     },
     {
@@ -187,11 +180,23 @@
       "type": "runtime"
     },
     {
+      "name": "puppeteer",
+      "type": "runtime"
+    },
+    {
       "name": "reflect-metadata",
       "type": "runtime"
     },
     {
+      "name": "rxjs",
+      "type": "runtime"
+    },
+    {
       "name": "timezone-enum",
+      "type": "runtime"
+    },
+    {
+      "name": "wait",
       "type": "runtime"
     },
     {

@@ -151,13 +151,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@18 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@inquirer/prompts,@nestjs/cli,@nestjs/schematics,@nestjs/testing,@types/lodash,@types/node,chalk,commander,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,flatley,fuzzy,inquirer-autocomplete-standalone,koconut,prettier,projen,puppeteer,ts-node,typescript,wait,@hapi/joi,@nestjs/common,@nestjs/config,@nestjs/core,cdktf,cdktf-cli,cdktf-injector,class-transformer,class-validator,constructs,cron-time-generator,dedent,deepmerge,joi-extract-type,lodash,moment,moment-timezone,reflect-metadata,timezone-enum,yaml"
+          "exec": "npx npm-check-updates@18 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@types/node,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,prettier,projen,ts-node,typescript,@hapi/joi,@inquirer/prompts,@nestjs/cli,@nestjs/common,@nestjs/config,@nestjs/core,@nestjs/schematics,@nestjs/testing,@types/lodash,cdktf,cdktf-cli,cdktf-injector,chalk,class-transformer,class-validator,commander,cron-time-generator,dedent,deepmerge,flatley,fuzzy,inquirer-autocomplete-standalone,joi-extract-type,koconut,lodash,moment,moment-timezone,puppeteer,reflect-metadata,rxjs,timezone-enum,wait,yaml"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @inquirer/prompts @nestjs/cli @nestjs/schematics @nestjs/testing @types/flat @types/lodash @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser chalk commander constructs eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint flatley fuzzy inquirer-autocomplete-standalone koconut prettier projen puppeteer ts-node typescript wait @hapi/joi @nestjs/common @nestjs/config @nestjs/core cdktf cdktf-cli cdktf-injector class-transformer class-validator cron-time-generator dedent deepmerge flat joi-extract-type lodash moment moment-timezone reflect-metadata timezone-enum yaml"
+          "exec": "yarn upgrade @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser constructs eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint prettier projen ts-node typescript @hapi/joi @inquirer/prompts @nestjs/cli @nestjs/common @nestjs/config @nestjs/core @nestjs/schematics @nestjs/testing @types/flat @types/lodash cdktf cdktf-cli cdktf-injector chalk class-transformer class-validator commander cron-time-generator dedent deepmerge flat flatley fuzzy inquirer-autocomplete-standalone joi-extract-type koconut lodash moment moment-timezone puppeteer reflect-metadata rxjs timezone-enum wait yaml"
         },
         {
           "exec": "npx projen"

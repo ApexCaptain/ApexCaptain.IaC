@@ -225,6 +225,8 @@ export class ExternalGenerateCoderAdminToken extends ExternalProgram<
       ) as [TokenInfo]
     ).find(eachToken => eachToken.token_name === tokenName);
 
+    this.log(`Prev token: ${prevToken}`);
+
     if (prevToken) {
       const expirationDate = new Date(prevToken.expires_at);
       const now = new Date();
