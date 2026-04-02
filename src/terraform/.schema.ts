@@ -5,6 +5,7 @@ export const TerraformSchema = Joi.object({
   externalIpCidrBlocks: Joi.object({
     apexCaptainHomeIpv4: Joi.string().required(),
     nayuntechCorpIpv4: Joi.string().required(),
+    nayuntechCorpGabiaAiClusterIpv4: Joi.string().required(),
   }).required(),
   externalGithubUsers: Joi.object({
     ApexCaptain: Joi.object({

@@ -276,6 +276,16 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
                       mountPath: '/incomplete',
                     },
                   ],
+                  livenessProbe: {
+                    httpGet: {
+                      path: '/',
+                      port: this.k8sWorkstationAppsNasStack.metadata.shared.services.qbittorrent.ports.web.targetPort.toString(),
+                    },
+                    initialDelaySeconds: 120,
+                    timeoutSeconds: 5,
+                    periodSeconds: 15,
+                    failureThreshold: 3,
+                  },
                 },
               ],
               volume: [
@@ -315,6 +325,11 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
               ],
             },
           },
+        },
+        lifecycle: {
+          replaceTriggeredBy: [
+            `${this.nordLynxPrivateKeySecret.element.terraformResourceType}.${this.nordLynxPrivateKeySecret.element.friendlyUniqueId}`,
+          ],
         },
       };
     },

@@ -456,6 +456,9 @@ void (async () => {
         apexCaptainHomeIpv4: `${workstationIpAddress}/32`,
         nayuntechCorpIpv4:
           process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_IPV4!!,
+        nayuntechCorpGabiaAiClusterIpv4:
+          process.env
+            .EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_GABIA_AI_CLUSTER_IPV4!!,
       },
       externalGithubUsers: {
         ApexCaptain: {

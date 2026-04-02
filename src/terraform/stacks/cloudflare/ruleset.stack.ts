@@ -37,6 +37,10 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
       this.globalConfigService.config.terraform.externalIpCidrBlocks.nayuntechCorpIpv4.split(
         '/',
       )[0];
+    const ipv4NayuntechCorpGabiaAiCluster =
+      this.globalConfigService.config.terraform.externalIpCidrBlocks.nayuntechCorpGabiaAiClusterIpv4.split(
+        '/',
+      )[0];
 
     const ociNgwPublicIp = this.k8sOkeNetworkStack.okeNatGateway.element.natIp;
 
@@ -97,7 +101,12 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
           action: 'block',
           expression: dedent`
             http.host eq "${this.cloudflareRecordOkeStack.authentikRecord.element.name}"
-            ${[ipv4Home, ipv4NayuntechCorp, ociNgwPublicIp]
+            ${[
+              ipv4Home,
+              ipv4NayuntechCorp,
+              ipv4NayuntechCorpGabiaAiCluster,
+              ociNgwPublicIp,
+            ]
               .map(ip => `and ip.src ne ${ip}`)
               .join('\n')}
           `,
