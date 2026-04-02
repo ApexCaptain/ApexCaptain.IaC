@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import path from 'path';
+import axios from 'axios';
 import dedent from 'dedent';
 import { flatten } from 'flat';
 import {
@@ -252,6 +253,7 @@ const project = new typescript.TypeScriptAppProject({
     'wait',
     'chalk',
     'rxjs',
+    'axios',
   ],
   devDeps: ['constructs@^10.5.1'],
 });
@@ -435,6 +437,15 @@ void (async () => {
     committed: false,
   });
 
+  const nordLynxPrivateKey: string = (
+    await axios.get('https://api.nordvpn.com/v1/users/services/credentials', {
+      auth: {
+        username: 'token',
+        password: process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!,
+      },
+    })
+  ).data.nordlynx_private_key;
+
   // ENV
   const workstationIpAddress = (
     await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
@@ -586,9 +597,7 @@ void (async () => {
               domain: {
                 iptime: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
               },
-              nordLynxPrivateKey: execSync(
-                `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
-              ).toString(),
+              nordLynxPrivateKey,
             },
             nodeMeta: {
               node0: {

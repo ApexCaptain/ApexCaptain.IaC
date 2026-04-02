@@ -62,6 +62,7 @@
     "@nestjs/testing": "^11.1.17",
     "@types/flat": "5.0.2",
     "@types/lodash": "^4.17.24",
+    "axios": "^1.14.0",
     "cdktf": "^0.21.0",
     "cdktf-cli": "^0.21.0",
     "cdktf-injector": "^1.0.139",
