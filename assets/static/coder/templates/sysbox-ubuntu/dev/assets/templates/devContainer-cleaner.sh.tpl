@@ -9,6 +9,10 @@ logOutFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map
 disconnectedDevContainerMapTmpFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map.tmp
 disconnectedDevContainerMapFilePath=$disconnectedDevContainerMapDirPath/disconnected-devcontainer-map.txt
 
+# pgrep 패턴은 합쳐 쓰지 않음 — Coder argv에 연속 토큰이 들어가면 다른 bash -c 스크립트가 오탐됨
+_eh1='extension'
+_eh2='Host'
+
 # Docker가 실행되고 있는지 확인
 if ! docker ps > /dev/null 2>&1; then
     echo "Docker is not running, skip the script" >> "$logOutFilePath"
@@ -42,8 +46,8 @@ while IFS= read -r eachDevContainerId; do
         continue
     fi
 
-    # Container가 실행중이고 extensionHost가 실행중인 경우(사용자 존재)
-    if docker exec "$eachDevContainerId" pgrep -f "extensionHost" >/dev/null 2>&1; then
+    # 컨테이너 안에 IDE 확장 프로세스가 있으면(사용자 존재)
+    if docker exec "$eachDevContainerId" pgrep -f "$_eh1$_eh2" >/dev/null 2>&1; then
         # 기존에 스테일 마크가 있는 경우 제거
         if [ -n "$${disconnectedDevContainerMap["$eachDevContainerId"]}" ]; then
             echo "Container \"$containerName\" is active, clear the stale mark" >> "$logOutFilePath"
@@ -52,7 +56,7 @@ while IFS= read -r eachDevContainerId; do
         continue
     fi
 
-    # 최종 상태, 실행중인데 extensionHost가 실행중이지 않은 경우(사용자 없음), 그리고 기존에 스테일 마크가 없는 경우
+    # 실행 중인데 위 확장 프로세스가 없음(사용자 없음), 스테일 마크도 없을 때
     if [ -z "$${disconnectedDevContainerMap["$eachDevContainerId"]}" ]; then
         echo "Container \"$containerName\" is inactive, mark this as stale" >> "$logOutFilePath"
         disconnectedDevContainerMap["$eachDevContainerId"]=$(date +%Y-%m-%dT%H:%M:%S)

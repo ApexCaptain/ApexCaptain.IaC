@@ -7,14 +7,12 @@ import { K8S_Workstation_System_Stack } from '../system.stack';
 import { K8S_Workstation_Apps_Longhorn_Stack } from './longhorn.stack';
 import { K8S_Workstation_Apps_Lxcfs_Stack } from './lxcfs.stack';
 import { K8S_Workstation_Plugin_Stack } from '../plugin.stack';
-import { AbstractStack, createExpirationInterval } from '@/common';
+import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
 import { CoderdProvider } from '@lib/terraform/providers/coderd/provider';
 import { Template } from '@lib/terraform/providers/coderd/template';
 import { User } from '@lib/terraform/providers/coderd/user';
-import { Integer } from '@lib/terraform/providers/random/integer';
-import { RandomProvider } from '@lib/terraform/providers/random/provider';
 
 @Injectable()
 export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
@@ -25,7 +23,6 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
       }),
     ),
     providers: {
-      random: this.provide(RandomProvider, 'randomProvider', () => ({})),
       coderd: this.provide(
         CoderdProvider,
         'coderdProvider',
@@ -45,20 +42,6 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
   }));
 
   // Templates
-  sysboxUbuntuSocks5ProxyPort = this.provide(
-    Integer,
-    'sysboxUbuntuSocks5ProxyPort',
-    () => ({
-      min: 10000,
-      max: 65535,
-      keepers: {
-        expirationDate: createExpirationInterval({
-          days: 10,
-        }).toString(),
-      },
-    }),
-  );
-
   sysboxUbuntuTemplate = this.provide(
     Template,
     'sysboxUbuntuTemplate',
@@ -103,7 +86,7 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
             },
             {
               name: 'socks5_proxy_port',
-              value: `${this.sysboxUbuntuSocks5ProxyPort.element.result}`,
+              value: '18420',
             },
             {
               name: 'workspace_directory_name',
@@ -178,7 +161,7 @@ export class K8S_Workstation_Apps_Coder_Resources_Stack extends AbstractStack {
             },
             {
               name: 'socks5_proxy_port',
-              value: `${this.sysboxUbuntuSocks5ProxyPort.element.result}`,
+              value: '18420',
             },
             {
               name: 'workspace_directory_name',

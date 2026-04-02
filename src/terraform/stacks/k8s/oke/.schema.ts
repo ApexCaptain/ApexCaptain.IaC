@@ -34,6 +34,7 @@ export const OkeSchema = Joi.object({
         userName: Joi.string().required(),
       }).required(),
     }).required(),
+
     homeL2tpVpnProxy: Joi.object({
       vpnServerAddr: Joi.string().required(),
       vpnIpsToRoute: Joi.array().items(Joi.string()).required(),

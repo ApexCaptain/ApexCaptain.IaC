@@ -15,9 +15,6 @@ export const WorkstationSchema = Joi.object({
       iptime: Joi.string().required(),
     }).required(),
   }).required(),
-  devPods: Joi.object({
-    kubeConfigDirPath: Joi.string().required(),
-  }).required(),
   apps: Joi.object({
     metallb: Joi.object({
       loadbalancerIpRange: Joi.string().required(),
@@ -45,6 +42,9 @@ export const WorkstationSchema = Joi.object({
         clientSecret: Joi.string().required(),
       }).required(),
       templateAssetsRelativeDirPath: Joi.string().required(),
+    }).required(),
+    harbor: Joi.object({
+      adminPassword: Joi.string().required(),
     }).required(),
     longhorn: Joi.object({
       nodes: Joi.array()
@@ -83,9 +83,6 @@ export const WorkstationSchema = Joi.object({
     windows: Joi.object({
       username: Joi.string().required(),
       password: Joi.string().required(),
-    }).required(),
-    wink: Joi.object({
-      userName: Joi.string().required(),
     }).required(),
   }).required(),
   nodeMeta: Joi.object({

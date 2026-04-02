@@ -14,12 +14,17 @@ services:
       # Auto Sync 활성화
       ENABLE_AUTO_SYNC: true
       # 소유자를 변경할 디렉토리 경로 (복수 지정시 Space 구분)
-      DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_GEMINI_CONFIG_DIR_PATH}
+      DIR_PATHS_TO_CHANGE_OWNER: ${CONTAINER_NODE_MODULES_DIR_PATH} ${CONTAINER_GEMINI_CONFIG_DIR_PATH} ${TF_PLUGIN_CACHE_DIR}
 
     env_file:
       - .env
 
     command: sleep infinity
+
+    deploy:
+      resources:
+        limits:
+          memory: 4GB
 
     volumes:
       # Workspace Cache
@@ -31,7 +36,11 @@ services:
       - ApexCaptain.IaC.Workspace.node_modules:${CONTAINER_NODE_MODULES_DIR_PATH}
       ## Gemini Config
       - ApexCaptain.IaC.Workspace.gemini-config:${CONTAINER_GEMINI_CONFIG_DIR_PATH}
+      # Terraform Plugin Cache
+      - Terraform-Plugin-Cache:${TF_PLUGIN_CACHE_DIR}
 
 volumes:
   ApexCaptain.IaC.Workspace.node_modules:
   ApexCaptain.IaC.Workspace.gemini-config:
+  Terraform-Plugin-Cache:
+    name: Shared-Volume_Terraform-Plugin-Cache

@@ -237,8 +237,6 @@ const project = new typescript.TypeScriptAppProject({
     'moment',
     'moment-timezone',
     'timezone-enum',
-  ],
-  devDeps: [
     '@nestjs/cli',
     '@nestjs/schematics',
     '@nestjs/testing',
@@ -254,7 +252,9 @@ const project = new typescript.TypeScriptAppProject({
     'puppeteer',
     'wait',
     'chalk',
+    'rxjs',
   ],
+  devDeps: [],
 });
 
 void (async () => {
@@ -269,7 +269,7 @@ void (async () => {
   project.addScripts({
     // Projen Hooks
     postprojen: dedent`
-      yarn tf@install && \
+      cdktf get &&
       yarn tf@backup
     `,
 
@@ -290,11 +290,8 @@ void (async () => {
     'tf@plan': 'cdktf diff',
     'tf@clean': `rm -rf ${constants.paths.dirs.cdktfOutDir}`,
     'tf@upgrade': 'cdktf get --force',
-    'tf@install': `cdktf get && find ./${constants.paths.dirs.cdktfOutDir}/stacks/ -mindepth 1 -maxdepth 1 -type d | xargs -I {} -P 0 sh -c 'cd "{}" && terraform init || true'`,
-    'tf@backup': 'ts-node ./scripts/backup-tfstate.script.ts',
-
-    // Terminal
-    // terminal: 'ts-node ./scripts/terminal-v2.script.ts',
+    'tf@backup': `ts-node ./scripts/backup-tfstate.script.ts`,
+    'tf@install': `ts-node ./scripts/install-tf-providers.script.ts -p 5 ${constants.paths.dirs.cdktfOutDir}`,
   });
 
   // Oci Private Key
@@ -429,6 +426,11 @@ void (async () => {
           name: 'kubectl',
           source: 'gavinbunney/kubectl',
         },
+        {
+          // https://registry.terraform.io/providers/goharbor/harbor/latest
+          name: 'harbor',
+          source: 'goharbor/harbor',
+        },
       ],
     },
     committed: false,
@@ -538,6 +540,8 @@ void (async () => {
                         .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_PROD!!,
                       process.env
                         .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_NAYUNTECH_IMPORT_EDI_DEV!!,
+                      process.env
+                        .WORKSTATION_VPN_L2TP_IP_TO_ROUTE_FOR_KPBMA_DELIBERATE_PROD!!,
                     ].map(ip => dns.lookup(ip)),
                   )
                 ).map(ip => ip.address),
@@ -586,13 +590,6 @@ void (async () => {
               nordLynxPrivateKey: execSync(
                 `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
               ).toString(),
-            },
-            devPods: {
-              kubeConfigDirPath: path.join(
-                process.env.CONTAINER_SECRETS_DIR_PATH ??
-                  path.join(project.outdir, '.secrets'),
-                '.kube',
-              ),
             },
             nodeMeta: {
               node0: {
@@ -647,6 +644,10 @@ void (async () => {
                   'templates',
                 ),
               },
+              harbor: {
+                adminPassword:
+                  process.env.WORKSTATION_APPS_HARBOR_ADMIN_PASSWORD!!,
+              },
               longhorn: {
                 nodes: [
                   {
@@ -696,9 +697,6 @@ void (async () => {
               windows: {
                 username: process.env.WORKSTATION_APPS_WINDOWS_USERNAME!!,
                 password: process.env.WORKSTATION_APPS_WINDOWS_PASSWORD!!,
-              },
-              wink: {
-                userName: process.env.WORKSTATION_APPS_WINK_USERNAME!!,
               },
             },
           },

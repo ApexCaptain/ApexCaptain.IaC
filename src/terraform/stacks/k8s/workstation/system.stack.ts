@@ -122,9 +122,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
       game7dtdGamePort3: 26902,
       gameSftp: 10023,
 
-      // Wink
-      winkSsh: 10024,
-
       // Windows
       windowsRdp: 60000,
       windowsVnc: 60001,
@@ -440,27 +437,6 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
           },
         }),
 
-        wink: createK8sApplicationMetadata({
-          namespace: 'wink',
-          services: {
-            wink: {
-              labels: {
-                app: 'wink',
-              },
-              name: 'wink',
-              ports: {
-                ssh: {
-                  portBasedIngressPort: this.metallbPorts.winkSsh,
-                  name: 'ssh',
-                  port: 22,
-                  targetPort: '22',
-                  protocol: 'TCP',
-                },
-              },
-            },
-          },
-        }),
-
         lxcfs: createK8sApplicationMetadata({
           namespace: 'lxcfs',
           // helm repo add lxcfs-on-kubernetes https://cndoit18.github.io/lxcfs-on-kubernetes/
@@ -472,20 +448,37 @@ export class K8S_Workstation_System_Stack extends AbstractStack {
             },
           },
         }),
-      },
-    ];
-  });
 
-  devPodsMetadata = this.provide(Resource, 'devPodsMetadata', () => {
-    // 이 부분은 아직 schema가 명확히 정해져 있지 않고, 현재로서 home cluster에서 devpod 사용자는 나밖에 없으니 dynamic 하게 처리함.
-    // 추후 회사 k8s에 devpod를 도입하게 될 경우 재고 필요.
-    const namespacePrefix = 'devpod';
-    return [
-      {},
-      {
-        ApexCaptain: {
-          namespace: `${namespacePrefix}-apex-captain`,
-        },
+        harbor: createK8sApplicationMetadata({
+          namespace: 'harbor',
+          helm: {
+            harbor: {
+              name: 'harbor',
+              chart: 'harbor',
+              repository: 'https://helm.goharbor.io',
+            },
+          },
+        }),
+
+        dockerd: createK8sApplicationMetadata({
+          namespace: 'dockerd',
+          services: {
+            dockerd: {
+              labels: {
+                app: 'dockerd',
+              },
+              name: 'dockerd',
+              ports: {
+                dockerd: {
+                  name: 'dockerd',
+                  port: 2376,
+                  targetPort: '2376',
+                  protocol: 'TCP',
+                },
+              },
+            },
+          },
+        }),
       },
     ];
   });
