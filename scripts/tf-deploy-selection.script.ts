@@ -30,7 +30,7 @@ const params = new Command('tf-deploy-selection')
       'The parallelism of the deployment',
     )
       .argParser(value => parseInt(value))
-      .default(10),
+      .default(20),
   )
   .parse();
 
