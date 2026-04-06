@@ -106,6 +106,17 @@ resource "coder_script" "copy-default-bashrc" {
     run_on_start = true
 }
 
+resource "coder_script" "auto-stop-workspace" {
+    count = data.coder_parameter.auto_stop_workspace.value ? 1 : 0
+    agent_id = coder_agent.main.id
+    display_name = "Auto Stop Workspace"
+    script = templatefile(local.template_paths["autostop-workspace.sh.tpl"], {
+        wait_seconds = data.coder_parameter.auto_stop_workspace_wait_mins[0].value * 60
+        main_dir_path = local.directory_paths.auto_stop_workspace_directory
+    })
+    cron = "0 */1 * * * *"
+}
+
 resource "coder_script" "devcontainer-cleaner" {
     count = data.coder_parameter.enable_devcontainer_cleaner.value ? 1 : 0
     agent_id = coder_agent.main.id
@@ -117,12 +128,3 @@ resource "coder_script" "devcontainer-cleaner" {
     cron = "0 */1 * * * *"
 }
 
-resource "coder_script" "auto-stop-workspace" {
-    agent_id = coder_agent.main.id
-    display_name = "Auto Stop Workspace"
-    script = templatefile(local.template_paths["autostop-workspace.sh.tpl"], {
-        wait_seconds = data.coder_parameter.auto_stop_workspace_wait_mins[0].value * 60
-        main_dir_path = local.directory_paths.auto_stop_workspace_directory
-    })
-    cron = "0 */1 * * * *"
-}

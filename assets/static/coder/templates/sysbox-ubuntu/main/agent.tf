@@ -13,7 +13,7 @@ resource "coder_agent" "main" {
   metadata {
     display_name = "CPU Usage"
     key          = "0_cpu_usage"
-    script       = "coder stat cpu"
+    script       = "coder stat cpu --host"
     interval     = 10
     timeout      = 1
   }
@@ -21,7 +21,7 @@ resource "coder_agent" "main" {
   metadata {
     display_name = "RAM Usage"
     key          = "1_ram_usage"
-    script       = "coder stat mem"
+    script       = "coder stat mem --host"
     interval     = 10
     timeout      = 1
   }

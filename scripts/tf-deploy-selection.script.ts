@@ -21,12 +21,21 @@ const params = new Command('tf-deploy-selection')
       false,
     ),
   )
+  .addOption(
+    new Option(
+      '-p, --parallelism <number>',
+      'The parallelism of the deployment',
+    )
+      .argParser(value => parseInt(value))
+      .default(10),
+  )
   .parse();
 
 const option = params.opts<{
   cdktfOut: string;
   force: boolean;
   autoApprove: boolean;
+  parallelism: number;
 }>();
 const targetStack: string | undefined = params.args[0];
 const manifestFilePath = path.join(option.cdktfOut, 'manifest.json');
@@ -129,6 +138,7 @@ const deployTargetStacks = async (targetStacks: string[]) => {
       `yarn tf@deploy ${finalStacks.join(' ')} ${[
         includeDependencies ? undefined : '--ignore-missing-stack-dependencies',
         autoApprove ? '--auto-approve' : undefined,
+        `--parallelism ${option.parallelism}`,
       ]
         .filter(each => each !== undefined)
         .join(' ')}`,

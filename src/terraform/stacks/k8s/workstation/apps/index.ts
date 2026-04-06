@@ -65,3 +65,6 @@ export * from './open-web-ui.stack';
 // harbor
 export * from './harbor.stack';
 export * from './harbor.resources.stack';
+
+// test
+export * from './test.stack';
