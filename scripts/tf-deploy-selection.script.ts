@@ -9,7 +9,10 @@ import fuzzy from 'fuzzy';
 const params = new Command('tf-deploy-selection')
   .addArgument(new Argument('[Stack]', 'The name of the stack to deploy'))
   .addOption(
-    new Option('-c, --cdktf-out <path>', 'The path to the cdktf out directory'),
+    new Option(
+      '-c, --cdktf-out <path>',
+      'The path to the cdktf out directory',
+    ).makeOptionMandatory(),
   )
   .addOption(
     new Option('-f, --force', 'Force deploy the selected stacks').default(

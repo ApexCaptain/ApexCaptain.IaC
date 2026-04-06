@@ -285,7 +285,6 @@ void (async () => {
 
     'pretf@deploy:selection': `cdktf synth`,
     'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
-    'posttf@deploy:selection': 'yarn tf@merge-kube-config',
 
     'tf@merge-kube-config': 'ts-node scripts/merge-kube-config.script.ts',
     'tf@plan': 'cdktf diff',

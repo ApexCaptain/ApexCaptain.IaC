@@ -23,7 +23,6 @@
     "posttf@deploy:single": "yarn tf@merge-kube-config",
     "pretf@deploy:selection": "cdktf synth",
     "tf@deploy:selection": "ts-node ./scripts/tf-deploy-selection.script.ts -c cdktf.out",
-    "posttf@deploy:selection": "yarn tf@merge-kube-config",
     "tf@merge-kube-config": "ts-node scripts/merge-kube-config.script.ts",
     "tf@plan": "cdktf diff",
     "tf@clean": "rm -rf cdktf.out",
