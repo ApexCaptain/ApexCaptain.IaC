@@ -162,6 +162,8 @@ const project = new typescript.TypeScriptAppProject({
     ),
   },
   // Node Project Options
+  packageManager: javascript.NodePackageManager.YARN_CLASSIC,
+  addPackageManagerToDevEngines: false,
   npmignoreEnabled: false,
   buildWorkflow: false,
   jest: false,

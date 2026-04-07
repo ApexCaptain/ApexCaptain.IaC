@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { LocalBackend } from 'cdktf';
+import dedent from 'dedent';
 import { K8S_Workstation_K8S_Stack } from '../k8s.stack';
 import { AbstractStack } from '@/common';
 import { TerraformAppService } from '@/terraform/terraform.app.service';
 import { TerraformConfigService } from '@/terraform/terraform.config.service';
+import { DeploymentV1 } from '@lib/terraform/providers/kubernetes/deployment-v1';
 import { NamespaceV1 } from '@lib/terraform/providers/kubernetes/namespace-v1';
 import { PodV1 } from '@lib/terraform/providers/kubernetes/pod-v1';
 import { KubernetesProvider } from '@lib/terraform/providers/kubernetes/provider';
@@ -28,27 +30,11 @@ export class K8S_Workstation_Apps_Test_Stack extends AbstractStack {
     },
   };
 
-  namespace = this.provide(NamespaceV1, 'namespace', () => ({
-    metadata: {
-      name: 'test',
-    },
-  }));
-
-  testPod = this.provide(PodV1, 'testPod', () => ({
-    metadata: {
-      name: 'test',
-      namespace: this.namespace.element.metadata.name,
-    },
-    spec: {
-      container: [
-        {
-          name: 'test',
-          image: 'alpine',
-          command: ['sleep', 'infinity'],
-        },
-      ],
-    },
-  }));
+  // namespace = this.provide(NamespaceV1, 'namespace', () => ({
+  //   metadata: {
+  //     name: 'test',
+  //   },
+  // }));
 
   constructor(
     // Terraform
