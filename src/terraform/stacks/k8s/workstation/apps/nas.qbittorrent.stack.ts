@@ -277,11 +277,14 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
                     },
                   ],
                   livenessProbe: {
-                    httpGet: {
-                      path: '/',
-                      port: this.k8sWorkstationAppsNasStack.metadata.shared.services.qbittorrent.ports.web.targetPort.toString(),
+                    exec: {
+                      command: [
+                        '/bin/sh',
+                        '-c',
+                        `curl -fsS http://localhost:${this.k8sWorkstationAppsNasStack.metadata.shared.services.qbittorrent.ports.web.targetPort}`,
+                      ],
                     },
-                    initialDelaySeconds: 120,
+                    initialDelaySeconds: 30,
                     timeoutSeconds: 5,
                     periodSeconds: 15,
                     failureThreshold: 3,
