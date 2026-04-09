@@ -107,6 +107,8 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
     clientCidrBlockAllowList: [
       this.globalConfigService.config.terraform.externalIpCidrBlocks
         .apexCaptainHomeIpv4,
+      this.globalConfigService.config.terraform.externalIpCidrBlocks
+        .nayuntechCorpGabiaAiClusterIpv4,
     ],
     dnsProxyStatus: 'ENABLED',
   }));

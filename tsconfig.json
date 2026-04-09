@@ -26,6 +26,11 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "es2017",
+    "types": [
+      "node",
+      "flat",
+      "lodash"
+    ],
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./",

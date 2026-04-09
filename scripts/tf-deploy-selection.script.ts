@@ -9,7 +9,10 @@ import fuzzy from 'fuzzy';
 const params = new Command('tf-deploy-selection')
   .addArgument(new Argument('[Stack]', 'The name of the stack to deploy'))
   .addOption(
-    new Option('-c, --cdktf-out <path>', 'The path to the cdktf out directory'),
+    new Option(
+      '-c, --cdktf-out <path>',
+      'The path to the cdktf out directory',
+    ).makeOptionMandatory(),
   )
   .addOption(
     new Option('-f, --force', 'Force deploy the selected stacks').default(
@@ -21,12 +24,21 @@ const params = new Command('tf-deploy-selection')
       false,
     ),
   )
+  .addOption(
+    new Option(
+      '-p, --parallelism <number>',
+      'The parallelism of the deployment',
+    )
+      .argParser(value => parseInt(value))
+      .default(20),
+  )
   .parse();
 
 const option = params.opts<{
   cdktfOut: string;
   force: boolean;
   autoApprove: boolean;
+  parallelism: number;
 }>();
 const targetStack: string | undefined = params.args[0];
 const manifestFilePath = path.join(option.cdktfOut, 'manifest.json');
@@ -129,6 +141,7 @@ const deployTargetStacks = async (targetStacks: string[]) => {
       `yarn tf@deploy ${finalStacks.join(' ')} ${[
         includeDependencies ? undefined : '--ignore-missing-stack-dependencies',
         autoApprove ? '--auto-approve' : undefined,
+        `--parallelism ${option.parallelism}`,
       ]
         .filter(each => each !== undefined)
         .join(' ')}`,

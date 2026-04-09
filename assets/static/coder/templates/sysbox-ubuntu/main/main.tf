@@ -303,10 +303,25 @@ resource "kubernetes_manifest" "main" {
           hostUsers = false
           securityContext = {
             runAsUser = 1000
-            fsGroup = 1000
             runAsNonRoot = false
           }
           hostname = "sysbox-ubuntu"
+          initContainers = [
+            {
+              name = "setup-home-directory"
+              image = "busybox"
+              command = ["sh", "-c", "chown -R 1000:1000 /home/coder"]
+              securityContext = {
+                runAsUser = 0
+              }
+              volumeMounts = [
+                {
+                  name = "home"
+                  mountPath = "/home/coder"
+                }
+              ]
+            }
+          ],
           containers = [
             {
               name = "dev"

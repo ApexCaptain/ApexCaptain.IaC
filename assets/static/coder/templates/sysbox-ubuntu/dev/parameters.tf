@@ -43,6 +43,14 @@ data "coder_parameter" "memory" {
     name  = "8 GB"
     value = "8"
   }
+  option {
+    name  = "10 GB"
+    value = "10"
+  }
+  option {
+    name  = "12 GB"
+    value = "12"
+  }
   order = 2
 }
 

@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import path from 'path';
+import axios from 'axios';
 import dedent from 'dedent';
 import { flatten } from 'flat';
 import {
@@ -161,6 +162,8 @@ const project = new typescript.TypeScriptAppProject({
     ),
   },
   // Node Project Options
+  packageManager: javascript.NodePackageManager.YARN_CLASSIC,
+  addPackageManagerToDevEngines: false,
   npmignoreEnabled: false,
   buildWorkflow: false,
   jest: false,
@@ -241,7 +244,6 @@ const project = new typescript.TypeScriptAppProject({
     '@nestjs/schematics',
     '@nestjs/testing',
     '@types/flat@5.0.2',
-    'constructs@^10.5.1',
     '@types/lodash',
     'commander',
     'flatley',
@@ -253,8 +255,9 @@ const project = new typescript.TypeScriptAppProject({
     'wait',
     'chalk',
     'rxjs',
+    'axios',
   ],
-  devDeps: [],
+  devDeps: ['constructs@^10.5.1'],
 });
 
 void (async () => {
@@ -284,7 +287,6 @@ void (async () => {
 
     'pretf@deploy:selection': `cdktf synth`,
     'tf@deploy:selection': `ts-node ./scripts/tf-deploy-selection.script.ts -c ${constants.paths.dirs.cdktfOutDir}`,
-    'posttf@deploy:selection': 'yarn tf@merge-kube-config',
 
     'tf@merge-kube-config': 'ts-node scripts/merge-kube-config.script.ts',
     'tf@plan': 'cdktf diff',
@@ -436,6 +438,15 @@ void (async () => {
     committed: false,
   });
 
+  const nordLynxPrivateKey: string = (
+    await axios.get('https://api.nordvpn.com/v1/users/services/credentials', {
+      auth: {
+        username: 'token',
+        password: process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!,
+      },
+    })
+  ).data.nordlynx_private_key;
+
   // ENV
   const workstationIpAddress = (
     await dns.lookup(process.env.WORKSTATION_COMMON_DOMAIN_IPTIME || '')
@@ -446,6 +457,9 @@ void (async () => {
         apexCaptainHomeIpv4: `${workstationIpAddress}/32`,
         nayuntechCorpIpv4:
           process.env.EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_IPV4!!,
+        nayuntechCorpGabiaAiClusterIpv4:
+          process.env
+            .EXTERNAL_IP_CIDR_BLOCK_NAYUNTECH_CORP_GABIA_AI_CLUSTER_IPV4!!,
       },
       externalGithubUsers: {
         ApexCaptain: {
@@ -587,9 +601,7 @@ void (async () => {
               domain: {
                 iptime: process.env.WORKSTATION_COMMON_DOMAIN_IPTIME!!,
               },
-              nordLynxPrivateKey: execSync(
-                `docker run --rm --cap-add=NET_ADMIN -e TOKEN=${process.env.NORD_VPN_APEX_CAPTAIN_ACCESS_TOKEN!!} ghcr.io/bubuntux/nordvpn:get_private_key | grep "Private Key:" | cut -d' ' -f3 | tr -d '\n'`,
-              ).toString(),
+              nordLynxPrivateKey,
             },
             nodeMeta: {
               node0: {

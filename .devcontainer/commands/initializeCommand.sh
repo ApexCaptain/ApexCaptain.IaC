@@ -7,7 +7,7 @@ localWorkspaceFolderBasename=$3
 containerWorkspaceFolderBasename=$4   
 
 # System Arguments (depend on workstation settings)
-SECRETS_DIR_PATH=$HOME/google-drive/secrets 
+SECRETS_DIR_PATH=$HOME/google-drive 
 SECRETS_ENV_DIR_PATH=$SECRETS_DIR_PATH/env
 KEYS_DIR_PATH=$containerWorkspaceFolder/keys
 MERGED_ENV_FILE_PATH=.devcontainer/.env
