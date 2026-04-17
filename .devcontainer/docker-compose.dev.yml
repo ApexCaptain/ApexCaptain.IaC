@@ -1,9 +1,10 @@
 services:
   workspace:
     container_name: apex_captain_iac_devcon_workspace
-    # Base On Ubuntu Noble
-    image: mcr.microsoft.com/devcontainers/base:dev-noble
-    shm_size: '1gb'
+    build:
+      context: ./
+      dockerfile: Dockerfile.workspace
+    # shm_size: '1gb'
     environment:
       # Timezone
       TZ: 'Asia/Seoul'
@@ -29,6 +30,8 @@ services:
     volumes:
       # Workspace Cache
       - ..:${containerWorkspaceFolder}:cached
+      # Files
+      - ./data/workspace/dockerd.daemon.json:/etc/docker/daemon.json
       # Mount Secrets
       - ${HOST_SECRETS_DIR_PATH}:${CONTAINER_SECRETS_DIR_PATH}
       # Named Volume

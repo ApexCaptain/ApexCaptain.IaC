@@ -51,19 +51,6 @@ export class Cloudflare_Record_Oke_Stack extends AbstractStack {
     comment: 'Cloudflare record for Authentik service',
   }));
 
-  dbRecord = this.provide(DnsRecord, 'dbRecord', () => ({
-    name: `db.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
-    ttl: 1,
-    type: 'A',
-    zoneId: this.cloudflareZoneStack.dataAyteneve93Zone.element.zoneId,
-    content:
-      this.k8sOkeNetworkStack
-        .ingressControllerFlexibleLoadbalancerReservedPublicIp.element
-        .ipAddress,
-    proxied: true,
-    comment: 'Cloudflare record for Database Client service',
-  }));
-
   filesRecord = this.provide(DnsRecord, 'filesRecord', () => ({
     name: `files.${this.cloudflareZoneStack.dataAyteneve93Zone.element.name}`,
     ttl: 1,

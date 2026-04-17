@@ -33,7 +33,7 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 
 - **미디어/게임**: Jellyfin, qBittorrent, 7 Days to Die
 - **AI 서비스**: Ollama, Open WebUI
-- **개발 도구**: CloudBeaver, Redis UI, Windows Desktop
+- **개발 도구**: Redis UI, Windows Desktop
 - **DevOps**: ArgoCD GitOps, Longhorn 분산 스토리지
 
 ## 🏗️ 기술 스택
@@ -65,7 +65,7 @@ On-Premise, Oracle Cloud Infrastructure 기반의 멀티 k8s 클러스터를 구
 - 시스템: ArgoCD, Istio Gateway, Vault, Prometheus+Grafana+Kiali+Loki, Cert-Manager, Authentik
 - 모니터링: istiod ServiceMonitor, Envoy PodMonitor
 - 로그: Loki(중앙화) + Promtail
-- 애플리케이션: CloudBeaver, Redis UI, L2TP VPN Proxy, NFS Server, Dashboard
+- 애플리케이션: Redis UI, L2TP VPN Proxy, NFS Server, Dashboard
 
 **Workstation (On-premise)**
 

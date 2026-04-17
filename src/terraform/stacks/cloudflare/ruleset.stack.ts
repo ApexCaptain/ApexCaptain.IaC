@@ -45,8 +45,6 @@ export class Cloudflare_Ruleset_Stack extends AbstractStack {
     const ociNgwPublicIp = this.k8sOkeNetworkStack.okeNatGateway.element.natIp;
 
     const domainsCoveredByAuthentik = [
-      // OKE
-      this.cloudflareRecordOkeStack.dbRecord,
       // Workstation
       this.cloudflareRecordWorkstationStack.windowsRecord,
       this.cloudflareRecordWorkstationStack.torrentRecord,

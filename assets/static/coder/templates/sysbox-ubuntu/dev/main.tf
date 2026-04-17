@@ -174,6 +174,7 @@ resource "kubernetes_deployment_v1" "proxy" {
         }
       }
       spec {
+        enable_service_links = false
         container {
           name              = "proxy"
           image             = "alpine"
@@ -245,6 +246,37 @@ resource "kubernetes_deployment_v1" "proxy" {
   }
 }
 
+resource "kubernetes_service_v1" "main" {
+  count = data.coder_workspace.me.start_count
+  metadata {
+    name = "coder-${data.coder_workspace.me.id}"
+    namespace = var.namespace
+    labels = {
+      "app.kubernetes.io/name"     = "coder-workspace-svc"
+      "app.kubernetes.io/instance" = "coder-workspace-svc-${data.coder_workspace.me.id}"
+      "app.kubernetes.io/part-of"  = "coder"
+      "com.coder.resource"         = "true"
+      "com.coder.workspace.id"     = data.coder_workspace.me.id
+      "com.coder.workspace.name"   = data.coder_workspace.me.name
+      "com.coder.user.id"          = data.coder_workspace_owner.me.id
+      "com.coder.user.username"    = data.coder_workspace_owner.me.name
+    }
+  }
+  spec {
+    selector = {
+      "app.kubernetes.io/name"     = "coder-workspace"
+      "app.kubernetes.io/instance" = "coder-workspace-${data.coder_workspace.me.id}"
+      "app.kubernetes.io/part-of"  = "coder"
+      "com.coder.resource"         = "true"
+      "com.coder.workspace.id"     = data.coder_workspace.me.id
+      "com.coder.workspace.name"   = data.coder_workspace.me.name
+      "com.coder.user.id"          = data.coder_workspace_owner.me.id
+      "com.coder.user.username"    = data.coder_workspace_owner.me.name
+    }
+    cluster_ip = "None"
+  }
+}
+
 resource "kubernetes_manifest" "main" {
   count = data.coder_workspace.me.start_count
   manifest = {
@@ -301,6 +333,7 @@ resource "kubernetes_manifest" "main" {
         spec = {
           runtimeClassName = var.runtime_class_name
           hostUsers = false
+          enableServiceLinks = false
           securityContext = {
             runAsUser = 1000
             runAsNonRoot = false
@@ -331,8 +364,12 @@ resource "kubernetes_manifest" "main" {
                 "sh",
                  "-c",
                  <<-EOT
-                 sudo apt-get update -y
-                 ${coder_agent.main.init_script}
+                  # Ubuntu 기본 Mirror 설정을 Kakao로 변경; @ToDO 추후 사용자 환경에 맞게 변경 필요
+                  sudo sed -i 's/kr.archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list
+                  sudo sed -i 's|http://archive.ubuntu.com|http://mirror.kakao.com|g' /etc/apt/sources.list.d/ubuntu.sources
+                  sudo sed -i 's|http://security.ubuntu.com|http://mirror.kakao.com|g' /etc/apt/sources.list.d/ubuntu.sources
+                  sudo apt-get update -y
+                  ${coder_agent.main.init_script}
                  EOT
                  
               ]
@@ -347,6 +384,10 @@ resource "kubernetes_manifest" "main" {
                 {
                   name = "CODER_AGENT_TOKEN"
                   value = coder_agent.main.token
+                },
+                {
+                  name = "CODER_WORKSPACE_SERVICE_DOMAIN"
+                  value = "${kubernetes_service_v1.main[count.index].metadata[0].name}.${var.namespace}.svc.cluster.local"
                 },
                 {
                   name = "CODER_ISTIO_PROXY_HOST"

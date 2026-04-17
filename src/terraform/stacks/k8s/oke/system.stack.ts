@@ -278,26 +278,6 @@ export class K8S_Oke_System_Stack extends AbstractStack {
           },
         }),
 
-        cloudbeaver: createK8sApplicationMetadata({
-          namespace: 'cloudbeaver',
-          services: {
-            cloudbeaver: {
-              name: 'cloudbeaver',
-              labels: {
-                app: 'cloudbeaver',
-              },
-              ports: {
-                cloudbeaver: {
-                  name: 'cloudbeaver',
-                  port: 8978,
-                  targetPort: '8978',
-                  protocol: 'TCP',
-                },
-              },
-            },
-          },
-        }),
-
         priceQuest: createK8sApplicationMetadata({
           namespace: 'price-quest',
           services: {

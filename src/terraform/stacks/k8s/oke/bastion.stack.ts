@@ -172,6 +172,9 @@ export class K8S_Oke_Bastion_Stack extends AbstractStack {
         '/bin/bash',
         '-c',
         dedent`
+          sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirror.kakao.com/ubuntu|g' /etc/apt/sources.list
+          sed -i 's|http://security.ubuntu.com/ubuntu|http://mirror.kakao.com/ubuntu|g' /etc/apt/sources.list
+          
           apt-get update -y
           apt-get install -y \
             curl

@@ -21,9 +21,6 @@ export * from './istio.gateway.stack';
 export * from './nfs.stack';
 export * from './nfs.file-browser.stack';
 
-// Cloudbeaver
-export * from './cloudbeaver.stack';
-
 // Redis UI
 export * from './redis-ui.stack';
 

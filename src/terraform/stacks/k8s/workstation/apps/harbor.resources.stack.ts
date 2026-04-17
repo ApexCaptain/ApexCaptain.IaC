@@ -65,8 +65,11 @@ export class K8S_Workstation_Apps_Harbor_Resources_Stack extends AbstractStack {
         StringResource,
         `${idPrefix}-managerRobotAccountPassword`,
         () => ({
-          length: 12,
+          length: 64,
           special: false,
+          minLower: 1,
+          minUpper: 1,
+          minNumeric: 1,
           keepers: {
             expirationDate: createExpirationInterval({
               days: 10,
