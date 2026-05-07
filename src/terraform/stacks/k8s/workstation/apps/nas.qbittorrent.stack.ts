@@ -197,7 +197,7 @@ export class K8S_Workstation_Apps_Nas_Qbittorrent_Stack extends AbstractStack {
                 {
                   name: this.k8sWorkstationAppsNasStack.metadata.shared.services
                     .qbittorrent.ports.web.name,
-                  image: 'lscr.io/linuxserver/qbittorrent:latest',
+                  image: 'lscr.io/linuxserver/qbittorrent:amd64-5.1.4-r3-ls451',
                   imagePullPolicy: 'Always',
                   port: [
                     {
