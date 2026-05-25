@@ -2,13 +2,6 @@ FROM mcr.microsoft.com/devcontainers/base:dev-noble
 
 USER root
 
-# RUN set -eux; \
-#     sed -i 's/kr.archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list; \
-#     sed -i 's|http://archive.ubuntu.com|http://mirror.kakao.com|g' /etc/apt/sources.list.d/ubuntu.sources; \
-#     sed -i 's|http://security.ubuntu.com|http://mirror.kakao.com|g' /etc/apt/sources.list.d/ubuntu.sources;
-
-# mirror.kakao.com은 noble-updates 동기화가 지연되어 베이스 이미지의
-# libgnutls30t64(3.8.3-1.1ubuntu3.6)와 -dev 패키지(.5)가 충돌할 수 있음.
 RUN set -eux; \
     sed -i 's|http://archive.ubuntu.com|http://kr.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources; \
     sed -i 's|http://security.ubuntu.com|http://kr.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources;
